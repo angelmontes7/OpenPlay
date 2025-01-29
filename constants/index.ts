@@ -24,8 +24,14 @@ import to from "@/assets/icons/to.png";
 import check from "@/assets/images/check.png";
 import message from "@/assets/images/message.png";
 import noResult from "@/assets/images/no-result.png";
+import onboarding1 from "@/assets/images/onboarding1.png";
+import onboarding2 from "@/assets/images/onboarding2.png";
+import onboarding3 from "@/assets/images/onboarding3.png";
 
 export const images = {
+    onboarding1,
+    onboarding2,
+    onboarding3,
     check,
     noResult,
     message,
@@ -60,24 +66,24 @@ export const icons = {
 export const onboarding = [
     {
         id: 1,
-        title: "Page 1",
+        title: "Hit the Court: Find Your Next Pickup Game",
         description:
-            "Description",
-        image: null,
+            "Locate courts, see who's playing, and join games instantly",
+        image: images.onboarding1,
     },
     {
         id: 2,
-        title: "Page 2",
+        title: "Kickoff Anywhere: Join Local Matches",
         description:
-            "Description",
-        image: null,
+            "Find fields, connect with players, and jump into matches.",
+        image: images.onboarding2,
     },
     {
         id: 3,
-        title: "Page 3",
+        title: "Step Up to the Plate: Play Ball Anytime",
         description:
-            "Description",
-        image: null,
+            "Discover fields, organize games, and join local teams.",
+        image: images.onboarding3,
     },
 ];
 
