@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Image, Alert } from "react-native";
+import { ScrollView, Text, View, Image, Alert, KeyboardAvoidingView } from "react-native";
 import { images, icons } from "@/constants";
 import InputField from "@/components/InputField";
 import { useState } from "react";
@@ -87,9 +87,9 @@ const SignUp = () => {
                 </View>
                 <View className="p-5">
                     <InputField 
-                        label="Name"
+                        label="Username"
                         placeholderTextColor="#A0A0A0"
-                        placeholder="Enter your name" 
+                        placeholder="Enter your username" 
                         icon={icons.person} 
                         value={form.name} 
                         onChangeText={(value) => setForm({ ...form, name: value })}
@@ -110,6 +110,14 @@ const SignUp = () => {
                         secureTextEntry={true}
                         value={form.password} 
                         onChangeText={(value) => setForm({ ...form, password: value })}
+                    />
+                    <InputField 
+                        label="DOB"
+                        placeholderTextColor="#A0A0A0"
+                        placeholder="Enter your MM-DD-YYYY" 
+                        icon={icons.person} 
+                        value={form.name} 
+                        onChangeText={(value) => setForm({ ...form, name: value })}
                     />
 
                     <CustomButton title="Sign Up" onPress={onSignUpPress} className="mt-6" />
