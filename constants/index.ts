@@ -27,6 +27,7 @@ import noResult from "@/assets/images/no-result.png";
 import onboarding1 from "@/assets/images/onboarding1.png";
 import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
+import defaultProfile from "@/assets/images/defaultProfile.png";
 
 export const images = {
     onboarding1,
@@ -35,6 +36,7 @@ export const images = {
     check,
     noResult,
     message,
+    defaultProfile,
 };
 
 export const icons = {
@@ -90,3 +92,4 @@ export const onboarding = [
 export const data = {
     onboarding,
 };
+

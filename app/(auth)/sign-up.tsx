@@ -15,6 +15,7 @@ const SignUp = () => {
         name: "",
         email: "",
         password: "",
+        dob: "",
     });
 
     const [verification, setVerification] = useState({
@@ -118,8 +119,9 @@ const SignUp = () => {
                                 placeholderTextColor="#A0A0A0"
                                 placeholder="MM-DD-YYYY" 
                                 icon={icons.person} 
-                                value={form.name} 
-                                onChangeText={(value) => setForm({ ...form, name: value })}
+                                value={form.dob} 
+                                onChangeText={(value) => setForm({ ...form, dob: value })}
+                                keyboardType="number-pad"
                             />
 
                             <CustomButton title="Sign Up" onPress={onSignUpPress} className="mt-6" />
