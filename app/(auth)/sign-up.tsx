@@ -116,7 +116,7 @@ const SignUp = () => {
                             <InputField 
                                 label="DOB"
                                 placeholderTextColor="#A0A0A0"
-                                placeholder="Enter your MM-DD-YYYY" 
+                                placeholder="MM-DD-YYYY" 
                                 icon={icons.person} 
                                 value={form.name} 
                                 onChangeText={(value) => setForm({ ...form, name: value })}
