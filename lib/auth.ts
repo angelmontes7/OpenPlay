@@ -1,5 +1,4 @@
 import * as SecureStore from 'expo-secure-store'
-import { Platform } from 'react-native'
 import { TokenCache } from '@clerk/clerk-expo/dist/cache'
 
 export const createTokenCache = (): TokenCache => {
