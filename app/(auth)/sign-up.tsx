@@ -8,6 +8,7 @@ import OAuth from "@/components/OAuth";
 import { useSignUp } from "@clerk/clerk-expo";
 import { ReactNativeModal } from "react-native-modal";
 import { router } from "expo-router";
+import { fetchAPI } from "@/lib/fetch";
 const SignUp = () => {
     const { isLoaded, signUp, setActive } = useSignUp();
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -61,13 +62,17 @@ const SignUp = () => {
             // If verification was completed, set the session to active
             // and redirect the user
             if (signUpAttempt.status === 'complete') {
-                // TODO: CREATE A DATABASE USER!!!!
-                // TODO: CREATE A DATABASE USER!!!!
-                // TODO: CREATE A DATABASE USER!!!!
-                // TODO: CREATE A DATABASE USER!!!!
-                // TODO: CREATE A DATABASE USER!!!!
-                // TODO: CREATE A DATABASE USER!!!!
-                // TODO: CREATE A DATABASE USER!!!!
+                await fetchAPI("/(api)/user", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        name: form.name,
+                        email: form.email,
+                        clerkId: signUpAttempt.createdUserId,
+                    }),
+                });
+
+
+
                 await setActive({ session: signUpAttempt.createdSessionId })
                 setVerification({ ...verification, state: 'success' })
             } else {
