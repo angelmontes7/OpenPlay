@@ -14,7 +14,7 @@ const Profile = () => {
 
     const [profilePic, setProfilePic] = useState(user?.imageUrl || images.defaultProfile);
     const [showModal, setShowModal] = useState(false);
-    const [activeSection, setActiveSection] = useState("profile"); // Track which section is active
+    const [activeSection, setActiveSection] = useState("profile"); //track which section is active
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
