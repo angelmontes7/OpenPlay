@@ -111,7 +111,6 @@ const Profile = () => {
                     />
                 </View>
 
-                {/* Modal */}
                 <ReactNativeModal isVisible={showModal}>
                     <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
                         <Image source={images.check} className="w-[110px] mx-auto my-5" />
