@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch } from "react-native";
+import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch, TextInput } from "react-native";
 import { images, icons } from "@/constants";
 import { useState } from "react";
 import { useUser, useAuth } from "@clerk/clerk-expo";
@@ -18,7 +18,8 @@ const Profile = () => {
     const [isPrivate, setIsPrivate] = useState(false);
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [pushNotifications, setPushNotifications] = useState(false);
-
+    const [locationEnabled, setLocationEnabled] = useState(false);
+    const [newPassword, setNewPassword] = useState("");
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -32,9 +33,14 @@ const Profile = () => {
         }
     };
 
+    const handlePasswordChange = () => {
+        Alert.alert("Success", "Your password has been updated.");
+    };
+
     const handleSaveChanges = () => {
-        // TODO: Implement API call to update user profile
-        Alert.alert("Success", "Your profile has been updated.");
+        //Implement API call to update user profile!!!
+        setShowModal(true);
+        //Alert.alert("Success", "Your profile has been updated.");
     };
 
     const renderContent = () => {
@@ -47,6 +53,17 @@ const Profile = () => {
                             <Text className="text-black text-base">Make Account Private</Text>
                             <Switch value={isPrivate} onValueChange={setIsPrivate} />
                         </View>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Location</Text>
+                            <Switch value={locationEnabled} onValueChange={setLocationEnabled} />
+                        </View>
+                        <View className="py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Username: {user?.username}</Text>
+                        </View>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Password: {'****'}</Text>
+                        </View>
+                        <CustomButton title="Change Password" onPress={handlePasswordChange} className="mt-6 space-y-4 mx-auto w-3/4" />
                     </View>
                 );
             case "notifications":
@@ -109,7 +126,7 @@ const Profile = () => {
                         <TouchableOpacity onPress={pickImage}>
                             <Image source={{ uri: profilePic }} className="w-28 h-28 rounded-full border-2 border-gray-300" />
                         </TouchableOpacity>
-                        <Text className="text-black text-lg font-JakartaSemiBold mt-2">{user?.fullName}</Text>
+                        <Text className="text-black text-md font-JakartaSemiBold mt-2">{user?.primaryEmailAddress?.emailAddress}</Text>
                         <Text className="text-gray-500 text-sm">Member since {user?.createdAt?.getFullYear()}</Text>
                     </View>
                 )}
@@ -135,9 +152,9 @@ const Profile = () => {
                 </View>
 
                 <ReactNativeModal isVisible={showModal}>
-                    <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
-                        <Image source={images.check} className="w-[110px] mx-auto my-5" />
-                        <Text className="text-3xl font-JakartaBold text-center">Profile Updated</Text>
+                    <View className="bg-white px-7 py-3 rounded-3xl min-h-[300px]">
+                        <Image source={images.check} className="w-[px] mx-auto my-2" />
+                        <Text className="text-2xl font-JakartaBold text-center">Profile Updated</Text>
                         <CustomButton title="OK" onPress={() => setShowModal(false)} className="mt-5" />
                     </View>
                 </ReactNativeModal>
