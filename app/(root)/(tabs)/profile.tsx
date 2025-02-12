@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Image, Alert, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch } from "react-native";
 import { images, icons } from "@/constants";
 import { useState } from "react";
 import { useUser, useAuth } from "@clerk/clerk-expo";
@@ -15,6 +15,9 @@ const Profile = () => {
     const [profilePic, setProfilePic] = useState(user?.imageUrl || images.defaultProfile);
     const [showModal, setShowModal] = useState(false);
     const [activeSection, setActiveSection] = useState("profile"); //track which section is active
+    const [isPrivate, setIsPrivate] = useState(false);
+    const [emailNotifications, setEmailNotifications] = useState(true);
+    const [pushNotifications, setPushNotifications] = useState(false);
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -37,9 +40,29 @@ const Profile = () => {
     const renderContent = () => {
         switch (activeSection) {
             case "privacy":
-                return <Text className="text-lg font-Jakarta p-4">Privacy Settings: Manage data sharing, account visibility, etc.</Text>;
+                return (
+                    <View className="p-4">
+                        <Text className="text-lg font-Jakarta p-4">Privacy Settings: Manage data sharing, account visibility, etc.</Text>;
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Make Account Private</Text>
+                            <Switch value={isPrivate} onValueChange={setIsPrivate} />
+                        </View>
+                    </View>
+                );
             case "notifications":
-                return <Text className="text-lg font-Jakarta p-4">Notification Settings: Adjust email, SMS, and push notifications.</Text>;
+                return ( 
+                    <View className="p-4">
+                        <Text className="text-lg font-Jakarta p-4">Notification Settings: Adjust email, SMS, and push notifications.</Text>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Email Notifications</Text>
+                            <Switch value={emailNotifications} onValueChange={setEmailNotifications} />
+                        </View>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Push Notifications</Text>
+                            <Switch value={pushNotifications} onValueChange={setPushNotifications} />
+                        </View>
+                    </View>
+                );
             case "support":
                 return <Text className="text-lg font-Jakarta p-4">Support: Contact us for help or report an issue.</Text>;
             default:
