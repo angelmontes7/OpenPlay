@@ -9,11 +9,12 @@ import { useSignUp } from "@clerk/clerk-expo";
 import { ReactNativeModal } from "react-native-modal";
 import { router } from "expo-router";
 import { fetchAPI } from "@/lib/fetch";
+
 const SignUp = () => {
     const { isLoaded, signUp, setActive } = useSignUp();
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [form, setForm] = useState({
-        name: "",
+        username: "",
         email: "",
         password: "",
         dob: "",
@@ -28,10 +29,14 @@ const SignUp = () => {
     const onSignUpPress = async () => {
         if (!isLoaded) return
 
-        // Start sign-up process using email and password provided
+        if(!validateDOB(form.dob)) {
+            return;
+        }
+
         try {
         await signUp.create({
             emailAddress: form.email,
+            username: form.username,
             password: form.password,
         })
 
@@ -65,13 +70,12 @@ const SignUp = () => {
                 await fetchAPI("/(api)/user", {
                     method: "POST",
                     body: JSON.stringify({
-                        name: form.name,
+                        username: form.username,
                         email: form.email,
+                        dob: form.dob,
                         clerkId: signUpAttempt.createdUserId,
                     }),
                 });
-
-
 
                 await setActive({ session: signUpAttempt.createdSessionId })
                 setVerification({ ...verification, state: 'success' })
@@ -84,6 +88,49 @@ const SignUp = () => {
         }
     };
 
+    const formatDOB = (value: string) => {
+        // Remove all non-digit characters
+        value = value.replace(/\D/g, '');
+
+        // Format the value as MM-DD-YYYY
+        if (value.length > 2 && value.length <= 4) {
+            value = value.slice(0, 2) + '-' + value.slice(2);
+        } else if (value.length > 4) {
+            value = value.slice(0, 2) + '-' + value.slice(2, 4) + '-' + value.slice(4, 8);
+        }
+
+        return value;
+    };
+
+    const validateDOB = (dob: string) => {
+        // Ensure the input is not empty
+        if (!dob) {
+            Alert.alert("Invalid Date", "Date of birth is required.");
+            return false;
+        }
+
+        // Split the date string into components
+        const [month, day, year] = dob.split('-').map(Number);
+
+        // Check if the date components are valid numbers
+        if (!month || !day || !year) {
+            Alert.alert("Invalid Date", "The entered date is not valid.");
+            return false;
+        }
+
+        // Create a date object from the components
+        const date = new Date(year, month - 1, day);
+
+        const today = new Date();
+
+        if (year < 1900 || date > today) {
+            Alert.alert("Invalid Date", "The entered date must be between 1900 and the current year.");
+            return false;
+        }
+
+        return true;
+    };
+    
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -99,8 +146,8 @@ const SignUp = () => {
                                 placeholderTextColor="#A0A0A0"
                                 placeholder="Enter your username" 
                                 icon={icons.person} 
-                                value={form.name} 
-                                onChangeText={(value) => setForm({ ...form, name: value })}
+                                value={form.username} 
+                                onChangeText={(value) => setForm({ ...form, username: value })}
                             />
                             <InputField 
                                 label="Email"
@@ -120,12 +167,12 @@ const SignUp = () => {
                                 onChangeText={(value) => setForm({ ...form, password: value })}
                             />
                             <InputField 
-                                label="DOB"
+                                label="Date of Birth"
+                                placeholder="MM-DD-YYYY"
                                 placeholderTextColor="#A0A0A0"
-                                placeholder="MM-DD-YYYY" 
-                                icon={icons.person} 
-                                value={form.dob} 
-                                onChangeText={(value) => setForm({ ...form, dob: value })}
+                                icon={icons.calendar} 
+                                value={form.dob}
+                                onChangeText={(value) => setForm({ ...form, dob: formatDOB(value) })}
                                 keyboardType="number-pad"
                             />
 

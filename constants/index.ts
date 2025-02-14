@@ -29,6 +29,7 @@ import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
 import defaultProfile from "@/assets/images/defaultProfile.png";
 import wager from "@/assets/icons/wager.png";
+import calendar from "@/assets/icons/calendar.png";
 
 export const images = {
     onboarding1,
@@ -65,6 +66,7 @@ export const icons = {
     target,
     to,
     wager,
+    calendar
 };
 
 export const onboarding = [
