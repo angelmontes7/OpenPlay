@@ -77,6 +77,17 @@ const SignUp = () => {
                     }),
                 });
 
+                await fetchAPI("/(api)/connected-account", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        clerkId: signUpAttempt.createdUserId,
+                        email: form.email,
+                    }),
+                });
+
                 await setActive({ session: signUpAttempt.createdSessionId })
                 setVerification({ ...verification, state: 'success' })
             } else {
@@ -230,3 +241,5 @@ const SignUp = () => {
 };
 
 export default SignUp;
+
+
