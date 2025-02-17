@@ -94,8 +94,58 @@ const Wallet = () => {
         }
     };
 
-    const onWithdraw = () => {
+    const onWithdraw = async () => {
+        try {
+            // Fetch the connected account ID from your database
+            const accountResponse = await fetchAPI(`/(api)/connected-account?clerkId=${user?.id}`, {
+                method: "GET",
+            });
 
+            const connectedAccountId = accountResponse.connected_account_id;
+
+            const response = await fetchAPI("/(api)/payout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    clerkId: user?.id,
+                    amount: parseFloat(amount),
+                    destination: connectedAccountId,
+                }),
+            });
+
+            if (response.payout) {
+                setBalance(balance - parseFloat(amount));
+
+                // Store the transaction
+                await fetchAPI("/(api)/transactions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        clerkId: user?.id,
+                        type: "withdraw",
+                        amount: parseFloat(amount),
+                    }),
+                });
+
+                // Fetch the updated transactions
+                const transactionsResponse = await fetchAPI(`/(api)/transactions?clerkId=${user?.id}`, {
+                    method: "GET",
+                });
+
+                if (transactionsResponse.transactions) {
+                    setTransactions(transactionsResponse.transactions);
+                }
+
+                Alert.alert("Success", "Withdrawal successful.");
+            }
+        } catch (error) {
+            console.error("Error processing withdrawal:", error);
+            Alert.alert("Error", "Failed to process withdrawal. Please try again.");
+        }
     };
 
     const onAddCard = () => {  
@@ -118,7 +168,7 @@ const Wallet = () => {
 
                 <View className="flex-row items-center justify-between p-2">
                     <RoundButton icon={"add"} text={"Add funds"} onPress={onAddMoney} />
-                    <RoundButton icon={"arrow-undo-sharp"} text={"Withdraw"} />
+                    <RoundButton icon={"arrow-undo-sharp"} text={"Withdraw"} onPress={onWithdraw} />
                     <RoundButton icon={"card-sharp"} text={"Add Card"} />
                     <RoundButton icon={"albums"} text={"More"} />
                 </View>
