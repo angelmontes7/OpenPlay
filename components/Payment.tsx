@@ -44,47 +44,35 @@ const Payment = forwardRef(({ fullName, email, amount }: PaymentProps, ref) => {
           shouldSavePaymentMethod,
           intentCreationCallback,
         ) => {
-          const { paymentIntent, customer } = await fetchAPI(
-            "/(api)/(stripe)/create",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                name: fullName || email.split("@")[0],
-                email: email,
-                amount: amount,
-                paymentMethodId: paymentMethod.id,
-              }),
-            },
-          );
-
-          if (paymentIntent.client_secret) {
-            const { result } = await fetchAPI("/(api)/(stripe)/pay", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                payment_method_id: paymentMethod.id,
-                payment_intent_id: paymentIntent.id,
-                customer_id: customer,
-                client_secret: paymentIntent.client_secret,
-                return_url: "myapp://wallet",
-              }),
-            });
-
-            if (result.client_secret) {
-              await fetchAPI("/(api)/ride/create", {
+          try {
+            const { paymentIntent, customer } = await fetchAPI(
+              "/(api)/(stripe)/create",
+              {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  fare_price: parseInt(amount) * 100,
-                  payment_status: "paid",
-                  user_id: userId,
+                  name: fullName || email.split("@")[0],
+                  email: email,
+                  amount: amount,
+                  paymentMethodId: paymentMethod.id,
+                }),
+              },
+            );
+
+            if (paymentIntent.client_secret) {
+              const { result } = await fetchAPI("/(api)/(stripe)/pay", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  payment_method_id: paymentMethod.id,
+                  payment_intent_id: paymentIntent.id,
+                  customer_id: customer,
+                  client_secret: paymentIntent.client_secret,
+                  return_url: "myapp://wallet",
                 }),
               });
 
@@ -92,14 +80,18 @@ const Payment = forwardRef(({ fullName, email, amount }: PaymentProps, ref) => {
                 clientSecret: result.client_secret,
               });
             }
+          } catch (error) {
+            console.error("Error during payment process:", error);
+            Alert.alert("Payment Error", "An error occurred during the payment process. Please try again.");
           }
         },
       },
       returnURL: "myapp://wallet",
     });
 
-    if (!error) {
-      // setLoading(true);
+    if (error) {
+      console.error("Error initializing payment sheet:", error);
+      Alert.alert("Payment Initialization Error", "An error occurred while initializing the payment sheet. Please try again.");
     }
   };
 
@@ -121,10 +113,10 @@ const Payment = forwardRef(({ fullName, email, amount }: PaymentProps, ref) => {
           </Text>
 
           <CustomButton
-            title="Back to Profile"
+            title="Back to Wallet"
             onPress={() => {
               setSuccess(false);
-              router.push("/(root)/(tabs)/profile");
+              router.push("/(root)/wallet");
             }}
             className="mt-5"
           />
