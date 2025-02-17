@@ -136,6 +136,10 @@ export default function Home() {
         />
       </View>
 
+      <View style={styles.searchFilters}>
+
+      </View>
+
       {/* Interactive Map Section */}
       <View style={styles.mapContainer}>
         <MapView
@@ -189,7 +193,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: SEARCH_BAR_HEIGHT,
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
     padding: 15,
     justifyContent: 'center',
     zIndex: 10,
@@ -198,6 +202,15 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     backgroundColor: '#eee',
+  },
+  searchFilters: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: SEARCH_BAR_HEIGHT,
+    backgroundColor: 'Transparent',
+    padding: 15,
   },
   mapContainer: {
     position: 'absolute',
