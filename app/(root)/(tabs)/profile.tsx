@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch, TextInput } from "react-native";
+import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch, TextInput, Linking } from "react-native";
 import { images, icons } from "@/constants";
 import { useState } from "react";
 import { useUser, useAuth } from "@clerk/clerk-expo";
@@ -18,6 +18,9 @@ const Profile = () => {
     const [isPrivate, setIsPrivate] = useState(false);
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [pushNotifications, setPushNotifications] = useState(false);
+    const [smsNotifications, setsmsNotifications] = useState(false);
+    const [socialNotifications, setsocialNotifications] = useState(false);
+    const [gameNotifications, setgameNotifications] = useState(false);
     const [locationEnabled, setLocationEnabled] = useState(false);
     const [newPassword, setNewPassword] = useState("");
     const pickImage = async () => {
@@ -78,10 +81,61 @@ const Profile = () => {
                             <Text className="text-black text-base">Push Notifications</Text>
                             <Switch value={pushNotifications} onValueChange={setPushNotifications} />
                         </View>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">SMS Notifications</Text>
+                            <Switch value={smsNotifications} onValueChange={setsmsNotifications} />
+                        </View>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Social Notifications</Text>
+                            <Switch value={socialNotifications} onValueChange={setsocialNotifications} />
+                        </View>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Game Notifications</Text>
+                            <Switch value={gameNotifications} onValueChange={setgameNotifications} />
+                        </View>
                     </View>
                 );
             case "support":
-                return <Text className="text-lg font-Jakarta p-4">Support: Contact us for help or report an issue.</Text>;
+                return (
+                    <View className="p-4">
+                    <Text className="text-lg font-JakartaBold p-4">FAQs</Text>
+                    {[
+                        { question: "How do I reset my password?", answer: "Go to Settings > Privacy and click 'Change Password'." },
+                        { question: "How can I contact support?", answer: "You can email us at support@openplay.com." },
+                        { question: "Where can I find OpenPlay’s Terms of Service?", answer: "Check our website at www.openplay.com/terms." }
+                    ].map((faq, index) => (
+                        <View key={index} className="py-3 border-b border-gray-300">
+                            <TouchableOpacity onPress={() => Alert.alert(faq.question, faq.answer)}>
+                                <Text className="text-black text-base font-JakartaSemiBold">{faq.question}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                                <Text className="text-lg font-JakartaBold p-4 mt-4">Contact Us</Text>
+                                <Text className="text-black text-base px-4">📩 support@openplay.com</Text>
+                    
+                                <Text className="text-lg font-JakartaBold p-4 mt-4">Socials</Text>
+                                <View className="flex-row justify-around p-4">
+                                    {[
+                                        { name: "Instagram", icon: icons.instagram, link: "https://instagram.com/openplay" },
+                                        { name: "Snapchat", icon: icons.snapchat, link: "https://snapchat.com/add/openplay" },
+                                        { name: "Facebook", icon: icons.facebook, link: "https://facebook.com/openplay" }
+                                    ].map((social, index) => (
+                                        <TouchableOpacity key={index} onPress={() => Linking.openURL(social.link)}>
+                                            <Image source={social.icon} className="w-10 h-10" />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                    
+                                {/* Community Forum Section */}
+                                <View className="p-4 mt-4">
+                                    <CustomButton
+                                        title="Join Community Forum"
+                                        onPress={() => Linking.openURL("https://community.openplay.com")}
+                                    />
+                                </View>
+                            </View>
+                );
+                
             default:
                 return (
                     <View className="mt-6 mx-6 bg-gray-100 p-4 rounded-lg">
