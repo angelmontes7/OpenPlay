@@ -93,8 +93,6 @@ declare interface PaymentProps {
     fullName: string;
     email: string;
     amount: string;
-    driverId: number;
-    rideTime: number;
 }
 
 declare interface LocationStore {
@@ -122,18 +120,4 @@ declare interface LocationStore {
         longitude: number;
         address: string;
     }) => void;
-}
-
-declare interface DriverStore {
-    drivers: MarkerData[];
-    selectedDriver: number | null;
-    setSelectedDriver: (driverId: number) => void;
-    setDrivers: (drivers: MarkerData[]) => void;
-    clearSelectedDriver: () => void;
-}
-
-declare interface DriverCardProps {
-    item: MarkerData;
-    selected: number;
-    setSelected: () => void;
 }
