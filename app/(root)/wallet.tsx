@@ -1,21 +1,61 @@
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TextInput, View } from "react-native";
 import RoundButton from "@/components/RoundButton";
 import { Ionicons } from "@expo/vector-icons";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { useUser } from "@clerk/clerk-expo";
 import Payment from "@/components/Payment";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { fetchAPI } from "@/lib/fetch";
 
 const Wallet = () => {
     const { user } = useUser();
-    const balance = 1500;
+    const [balance, setBalance] = useState(0); // Initial balance set to 0
+    const [amount, setAmount] = useState(""); // Initial amount set to an empty string
     const paymentRef = useRef(null);
 
-    const onAddMoney = () => {
+    useEffect(() => {
+        const fetchBalance = async () => {
+            try {
+                const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
+                    method: "GET",
+                });
+
+                if (response.balance !== undefined) {
+                    setBalance(response.balance);
+                }
+            } catch (error) {
+                console.error("Error fetching balance:", error);
+            }
+        };
+
+        fetchBalance();
+    }, [user?.id]);
+    
+    const onAddMoney = async () => {
         if (paymentRef.current) {
             paymentRef.current.openPaymentSheet();
         }
+
+        try {
+            const response = await fetchAPI("/(api)/balance", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    clerkId: user?.id,
+                    amount: parseFloat(amount), // Amount to add, you can change this as needed
+                }),
+            });
+
+            if (response.balance) {
+                setBalance(response.balance);
+            }
+        } catch (error) {
+            console.error("Error updating balance:", error);
+        }
     };
+
 
     const onWithdraw = () => {
 
@@ -92,7 +132,7 @@ const Wallet = () => {
                     ref={paymentRef}
                     fullName={user?.fullName!} 
                     email={user?.emailAddresses[0].emailAddress!} 
-                    amount={"5"}                    
+                    amount={amount}                    
                 />
             </ScrollView>
         </StripeProvider>
