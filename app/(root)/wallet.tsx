@@ -10,7 +10,7 @@ import { fetchAPI } from "@/lib/fetch";
 const Wallet = () => {
     const { user } = useUser();
     const [balance, setBalance] = useState(0); // Initial balance set to 0
-    const amount = 5; // Initial amount set to an empty string
+    const amount = "5"; // Initial amount set to an empty string
     const [transactions, setTransactions] = useState([]); // State to store transactions
     const paymentRef = useRef(null);
 
