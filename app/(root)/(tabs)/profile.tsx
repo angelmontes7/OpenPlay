@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch, TextInput, Linking } from "react-native";
+import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch, TextInput, Linking, KeyboardAvoidingView, Platform } from "react-native";
 import { images, icons } from "@/constants";
 import { useState } from "react";
 import { useUser, useAuth } from "@clerk/clerk-expo";
@@ -10,6 +10,7 @@ import * as ImagePicker from "expo-image-picker";
 const Profile = () => {
     const { user } = useUser();
     const { signOut } = useAuth();
+    const { updatePassword } = useAuth();
     const router = useRouter();
 
     const [profilePic, setProfilePic] = useState(user?.imageUrl || images.defaultProfile);
@@ -22,6 +23,8 @@ const Profile = () => {
     const [socialNotifications, setsocialNotifications] = useState(false);
     const [gameNotifications, setgameNotifications] = useState(false);
     const [locationEnabled, setLocationEnabled] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -36,9 +39,23 @@ const Profile = () => {
         }
     };
 
-    const handlePasswordChange = () => {
-        Alert.alert("Success", "Your password has been updated.");
+    const handlePasswordChange = async () => {
+        if (!oldPassword || !newPassword) {
+            Alert.alert("Error", "Both old and new passwords are required.");
+            return;
+        }
+
+        try {
+            await updatePassword({ oldPassword, newPassword });
+            Alert.alert("Success", "Your password has been updated.");
+            setOldPassword("");
+            setNewPassword("");
+            setIsChangingPassword(false); // Hide inputs after successful update
+        } catch (error) {
+            Alert.alert("Error", (error as any).message || "Something went wrong.");
+        }
     };
+
 
     const handleSaveChanges = () => {
         //Implement API call to update user profile!!!
@@ -50,7 +67,8 @@ const Profile = () => {
         switch (activeSection) {
             case "privacy":
                 return (
-                    <View className="p-4">
+                    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+                    <ScrollView className="p-4">
                         <Text className="text-lg font-Jakarta p-4">Privacy Settings: Manage data sharing, account visibility, etc.</Text>;
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Make Account Private</Text>
@@ -60,19 +78,51 @@ const Profile = () => {
                             <Text className="text-black text-base">Location</Text>
                             <Switch value={locationEnabled} onValueChange={setLocationEnabled} />
                         </View>
-                        <View className="py-3 border-b border-gray-300">
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Username: {user?.username}</Text>
+                        </View>
+                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                            <Text className="text-black text-base">Email: {user?.primaryEmailAddress?.emailAddress}</Text>
                         </View>
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Password: {'****'}</Text>
                         </View>
-                        <CustomButton title="Change Password" onPress={handlePasswordChange} className="mt-6 space-y-4 mx-auto w-3/4" />
-                    </View>
+                        <CustomButton
+                            title={isChangingPassword ? "Cancel" : "Change Password"}
+                            onPress={() => setIsChangingPassword(!isChangingPassword)}
+                            className="mt-6 space-y-4 mx-auto w-3/4"
+                        />
+
+                        {isChangingPassword && (
+                            <>
+                                <TextInput
+                                    className="border border-gray-300 rounded p-2 mt-3"
+                                    placeholder="Enter old password"
+                                    secureTextEntry
+                                    value={oldPassword}
+                                    onChangeText={setOldPassword}
+                                />
+                                <TextInput
+                                    className="border border-gray-300 rounded p-2 mt-3"
+                                    placeholder="Enter new password"
+                                    secureTextEntry
+                                    value={newPassword}
+                                    onChangeText={setNewPassword}
+                                />
+                                <CustomButton
+                                    title="Submit New Password"
+                                    onPress={handlePasswordChange}
+                                    className="mt-6 space-y-4 mx-auto w-3/4"
+                                />
+                            </>
+                        )}
+
+                    </ScrollView>
+                </KeyboardAvoidingView>
                 );
             case "notifications":
-                return ( 
+                return (
                     <View className="p-4">
-                        <Text className="text-lg font-Jakarta p-4">Notification Settings: Adjust email, SMS, and push notifications.</Text>
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Email Notifications</Text>
                             <Switch value={emailNotifications} onValueChange={setEmailNotifications} />
@@ -98,44 +148,44 @@ const Profile = () => {
             case "support":
                 return (
                     <View className="p-4">
-                    <Text className="text-lg font-JakartaBold p-4">FAQs</Text>
-                    {[
-                        { question: "How do I reset my password?", answer: "Go to Settings > Privacy and click 'Change Password'." },
-                        { question: "How can I contact support?", answer: "You can email us at support@openplay.com." },
-                        { question: "Where can I find OpenPlay’s Terms of Service?", answer: "Check our website at www.openplay.com/terms." }
-                    ].map((faq, index) => (
-                        <View key={index} className="py-3 border-b border-gray-300">
-                            <TouchableOpacity onPress={() => Alert.alert(faq.question, faq.answer)}>
-                                <Text className="text-black text-base font-JakartaSemiBold">{faq.question}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ))}
-                                <Text className="text-lg font-JakartaBold p-4 mt-4">Contact Us</Text>
-                                <Text className="text-black text-base px-4">📩 support@openplay.com</Text>
-                    
-                                <Text className="text-lg font-JakartaBold p-4 mt-4">Socials</Text>
-                                <View className="flex-row justify-around p-4">
-                                    {[
-                                        { name: "Instagram", icon: icons.instagram, link: "https://instagram.com/openplay" },
-                                        { name: "Snapchat", icon: icons.snapchat, link: "https://snapchat.com/add/openplay" },
-                                        { name: "Facebook", icon: icons.facebook, link: "https://facebook.com/openplay" }
-                                    ].map((social, index) => (
-                                        <TouchableOpacity key={index} onPress={() => Linking.openURL(social.link)}>
-                                            <Image source={social.icon} className="w-10 h-10" />
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                    
-                                {/* Community Forum Section */}
-                                <View className="p-4 mt-4">
-                                    <CustomButton
-                                        title="Join Community Forum"
-                                        onPress={() => Linking.openURL("https://community.openplay.com")}
-                                    />
-                                </View>
+                        <Text className="text-lg font-JakartaBold p-4">FAQs</Text>
+                        {[
+                            { question: "How do I reset my password?", answer: "Go to Settings > Privacy and click 'Change Password'." },
+                            { question: "How can I contact support?", answer: "You can email us at support@openplay.com." },
+                            { question: "Where can I find OpenPlay’s Terms of Service?", answer: "Check our website at www.openplay.com/terms." }
+                        ].map((faq, index) => (
+                            <View key={index} className="py-3 border-b border-gray-300">
+                                <TouchableOpacity onPress={() => Alert.alert(faq.question, faq.answer)}>
+                                    <Text className="text-black text-base font-JakartaSemiBold">{faq.question}</Text>
+                                </TouchableOpacity>
                             </View>
+                        ))}
+                        <Text className="text-lg font-JakartaBold p-4 mt-4">Contact Us</Text>
+                        <Text className="text-black text-base px-4">📩 support@openplay.com</Text>
+
+                        <Text className="text-lg font-JakartaBold p-4 mt-4">Socials</Text>
+                        <View className="flex-row justify-around p-4">
+                            {[
+                                { name: "Instagram", icon: icons.Instagram, link: "https://instagram.com/openplay1" },
+                                { name: "Snapchat", icon: icons.snapchat, link: "https://snapchat.com/add/openplay" },
+                                { name: "Facebook", icon: icons.facebook, link: "https://facebook.com/openplay" }
+                            ].map((social, index) => (
+                                <TouchableOpacity key={index} onPress={() => Linking.openURL(social.link)}>
+                                    <Image source={social.icon} className="w-10 h-10" />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        {/* Community Forum Section */}
+                        <View className="mt-6 space-y-4 mx-auto w-3/4">
+                            <CustomButton
+                                title="Join Community Forum"
+                                onPress={() => Linking.openURL("https://community.openplay.com")}
+                            />
+                        </View>
+                    </View>
                 );
-                
+
             default:
                 return (
                     <View className="mt-6 mx-6 bg-gray-100 p-4 rounded-lg">
@@ -163,14 +213,14 @@ const Profile = () => {
         <View className="flex-1 bg-white">
             {/* Header */}
             <View className="flex-row justify-between items-center p-4">
-               {/* Back Button for Subsections */}
-               {activeSection !== "profile" && (
+                {/* Back Button for Subsections */}
+                {activeSection !== "profile" && (
                     <TouchableOpacity onPress={() => setActiveSection("profile")} className="flex-row items-center">
                         <Text className="text-black text-lg font-Jakarta">&lt; {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}</Text>
                     </TouchableOpacity>
                 )}
                 {/* Username */}
-                {activeSection === "profile" && <Text className="text-lg font-JakartaBold">{user?.username}</Text>}
+                {activeSection === "profile" && <Text className="text-lg font-JakartaBold">ANKARA MESSI</Text>}
             </View>
 
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -180,7 +230,7 @@ const Profile = () => {
                         <TouchableOpacity onPress={pickImage}>
                             <Image source={{ uri: profilePic }} className="w-28 h-28 rounded-full border-2 border-gray-300" />
                         </TouchableOpacity>
-                        <Text className="text-black text-md font-JakartaSemiBold mt-2">{user?.primaryEmailAddress?.emailAddress}</Text>
+                        <Text className="text-black text-md font-JakartaSemiBold mt-2">{user?.username}</Text>
                         <Text className="text-gray-500 text-sm">Member since {user?.createdAt?.getFullYear()}</Text>
                     </View>
                 )}
@@ -189,21 +239,23 @@ const Profile = () => {
                 {renderContent()}
 
                 {/* Action Buttons */}
-                <View className="mt-6 space-y-4 mx-auto w-3/4">
-                    <CustomButton title="Save Changes" onPress={handleSaveChanges} />
-                    <CustomButton
-                        title="Log Out"
-                        onPress={async () => {
-                            try {
-                                await signOut();
-                                router.replace("/(auth)/sign-in");
-                            } catch (error) {
-                                Alert.alert("Error", "Failed to log out. Please try again.");
-                            }
-                        }}
-                        className="bg-red-500"
-                    />
-                </View>
+                {activeSection === "profile" && (
+                    <View className="mt-6 space-y-4 mx-auto w-3/4">
+                        <CustomButton title="Save Changes" onPress={handleSaveChanges} />
+                        <CustomButton
+                            title="Log Out"
+                            onPress={async () => {
+                                try {
+                                    await signOut();
+                                    router.replace("/(auth)/sign-in");
+                                } catch (error) {
+                                    Alert.alert("Error", "Failed to log out. Please try again.");
+                                }
+                            }}
+                            className="bg-red-500"
+                        />
+                    </View>
+                )}
 
                 <ReactNativeModal isVisible={showModal}>
                     <View className="bg-white px-7 py-3 rounded-3xl min-h-[300px]">
