@@ -6,6 +6,8 @@ import { useUser } from "@clerk/clerk-expo";
 import Payment from "@/components/Payment";
 import { useEffect, useRef, useState } from "react";
 import { fetchAPI } from "@/lib/fetch";
+import ChargeCardModal from "@/components/ChargeCardModal";
+import StoredCardModal from "@/components/StoredCardModal";
 
 const Wallet = () => {
     const { user } = useUser();
@@ -13,11 +15,8 @@ const Wallet = () => {
     const [amount, setAmount] = useState(""); // Initial amount set to an empty string
     const [transactions, setTransactions] = useState([]); // State to store transactions
     const [isCardModalVisible, setIsCardModalVisible] = useState(false); // State for card modal visibility
-    const [cardNumber, setCardNumber] = useState("");
-    const [expiryMonth, setExpiryMonth] = useState("");
-    const [expiryYear, setExpiryYear] = useState("");
-    const [cvc, setCvc] = useState("");
-    const [storedCard, setStoredCard] = useState(null); // State to store the card information
+    const [isStoredCardModalVisible, setIsStoredCardModalVisible] = useState(false); // State for stored card modal visibility
+    const [storedCards, setStoredCards] = useState([]); // Store an array of cards
     const paymentRef = useRef(null);
 
     useEffect(() => {
@@ -49,23 +48,8 @@ const Wallet = () => {
             }
         };
 
-        const fetchStoredCard = async () => {
-            try {
-                const response = await fetchAPI(`/(api)/charge_cards?clerkId=${user?.id}`, {
-                    method: "GET",
-                });
-
-                if (response.card) {
-                    setStoredCard(response.card);
-                }
-            } catch (error) {
-                console.error("Error fetching stored card:", error);
-            }
-        };
-
         fetchBalance();
         fetchTransactions();
-        fetchStoredCard();
     }, [user?.id]);
     
     const onAddMoney = async () => {
@@ -173,7 +157,7 @@ const Wallet = () => {
         setIsCardModalVisible(true);
     };
 
-    const handleAddCard = async () => {
+    const handleAddCard = async (model: FormModel) => {
         try {
             const response = await fetchAPI("/(api)/charge_cards", {
                 method: "POST",
@@ -182,15 +166,15 @@ const Wallet = () => {
                 },
                 body: JSON.stringify({
                     clerkId: user?.id,
-                    cardNumber,
-                    expiryMonth,
-                    expiryYear,
-                    cvc,
+                    cardNumber: model.cardNumber,
+                    expiryMonth: model.expiration.split("/")[0],
+                    expiryYear: model.expiration.split("/")[1],
+                    cvc: model.cvv,
                 }),
             });
 
             if (response.card) {
-                setStoredCard(response.card);
+                setStoredCards(response.cards);
                 setIsCardModalVisible(false);
                 Alert.alert("Success", "Card added successfully.");
             }
@@ -200,12 +184,8 @@ const Wallet = () => {
         }
     };
 
-    const onMore = () => {
-        if (storedCard) {
-            Alert.alert("Stored Card", `Card Number: ${storedCard.card_number}\nExpiry: ${storedCard.expiry_month}/${storedCard.expiry_year}`);
-        } else {
-            Alert.alert("No Card", "No card stored.");
-        }
+    const onStoredCards = () => {
+        setIsStoredCardModalVisible(true);
     };
 
     return (
@@ -226,7 +206,7 @@ const Wallet = () => {
                     <RoundButton icon={"add"} text={"Add funds"} onPress={onAddMoney} />
                     <RoundButton icon={"arrow-undo-sharp"} text={"Withdraw"} onPress={onWithdraw} />
                     <RoundButton icon={"card-sharp"} text={"Add Card"} onPress={onAddCard}/>
-                    <RoundButton icon={"albums"} text={"More"} onPress={onMore}/>
+                    <RoundButton icon={"albums"} text={"Stored Cards"} onPress={onStoredCards}/>
                 </View>
 
                 <Text className="font-bold mt-5 ml-3 text-xl">Transactions</Text>
@@ -264,6 +244,8 @@ const Wallet = () => {
                         ))
                     )}
                 </View>
+
+                {/* Modal for add funds payment */}
                 <Payment
                     ref={paymentRef}
                     fullName={user?.fullName!} 
@@ -272,47 +254,18 @@ const Wallet = () => {
                 />
 
                 {/* Modal for adding a card */}
-                <Modal
+                <ChargeCardModal
                     visible={isCardModalVisible}
-                    transparent={true}
-                    animationType="slide"
-                    onRequestClose={() => setIsCardModalVisible(false)}
-                >
-                    <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
-                        <View className="bg-white p-5 rounded-lg w-3/4">
-                            <Text className="text-lg font-bold mb-4">Add Card</Text>
-                            <TextInput
-                                className="border p-2 rounded-lg w-full mb-2"
-                                placeholder="Card Number"
-                                keyboardType="numeric"
-                                value={cardNumber}
-                                onChangeText={setCardNumber}
-                            />
-                            <TextInput
-                                className="border p-2 rounded-lg w-full mb-2"
-                                placeholder="Expiry Month"
-                                keyboardType="numeric"
-                                value={expiryMonth}
-                                onChangeText={setExpiryMonth}
-                            />
-                            <TextInput
-                                className="border p-2 rounded-lg w-full mb-2"
-                                placeholder="Expiry Year"
-                                keyboardType="numeric"
-                                value={expiryYear}
-                                onChangeText={setExpiryYear}
-                            />
-                            <TextInput
-                                className="border p-2 rounded-lg w-full mb-2"
-                                placeholder="CVC"
-                                keyboardType="numeric"
-                                value={cvc}
-                                onChangeText={setCvc}
-                            />
-                            <Button title="Add Card" onPress={handleAddCard} />
-                        </View>
-                    </View>
-                </Modal>
+                    onClose={() => setIsCardModalVisible(false)}
+                    onSubmit={handleAddCard}
+                />
+                
+                {/* Modal for showing stored cards */}
+                <StoredCardModal
+                    visible={isStoredCardModalVisible}
+                    onClose={() => setIsStoredCardModalVisible(false)}
+                    clerkId={user?.id}
+                />
             </ScrollView>
         </StripeProvider>
     );
