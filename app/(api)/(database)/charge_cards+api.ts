@@ -2,8 +2,7 @@ import { neon } from '@neondatabase/serverless';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { clerkId, cardNumber, expiryMonth, expiryYear, cvc } = body;
+    const { clerkId, cardNumber, expiryMonth, expiryYear, cvc } = await request.json();
 
     if (!clerkId || !cardNumber || !expiryMonth || !expiryYear || !cvc) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -16,8 +15,7 @@ export async function POST(request: Request) {
     await sql`
       INSERT INTO charge_cards (clerk_id, card_number, expiry_month, expiry_year, cvc)
       VALUES (${clerkId}, ${cardNumber}, ${expiryMonth}, ${expiryYear}, ${cvc})
-      ON CONFLICT (clerk_id)
-      DO UPDATE SET card_number = ${cardNumber}, expiry_month = ${expiryMonth}, expiry_year = ${expiryYear}, cvc = ${cvc};
+      RETURNING *;
     `;
 
     return new Response(JSON.stringify({ card: { cardNumber, expiryMonth, expiryYear, cvc } }), { status: 200 });
@@ -49,7 +47,7 @@ export async function GET(request: Request) {
       return new Response(JSON.stringify({ error: "Card not found" }), { status: 404 });
     }
 
-    return new Response(JSON.stringify({ card: result[0] }), { status: 200 });
+    return new Response(JSON.stringify({ cards: result }), { status: 200 });
   } catch (error) {
     console.error("Error in GET /api/card:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
