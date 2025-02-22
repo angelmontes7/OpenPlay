@@ -1,16 +1,26 @@
-// StoredCards.tsx
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View, Alert, Modal, Button, SafeAreaView } from "react-native";
-import { fetchAPI } from "@/lib/fetch"; // Assuming this fetch function is already set up
+import {
+  ScrollView,
+  Text,
+  View,
+  Alert,
+  Modal,
+  TouchableOpacity,
+  SafeAreaView,
+} from "react-native";
+import { fetchAPI } from "@/lib/fetch";
+import { CreditCard } from "lucide-react-native";
+import CustomButton from "@/components/CustomButton";
 
 interface StoredCardModalProps {
   visible: boolean;
   onClose: () => void;
-  clerkId: string; // The clerkId to fetch the cards
+  clerkId: string;
 }
 
 const StoredCardModal: React.FC<StoredCardModalProps> = ({ visible, onClose, clerkId }) => {
-  const [storedCards, setStoredCards] = useState<any[]>([]); // State to store the list of cards
+  const [storedCards, setStoredCards] = useState<any[]>([]);
+  const [revealedIndex, setRevealedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchStoredCards = async () => {
@@ -22,7 +32,7 @@ const StoredCardModal: React.FC<StoredCardModalProps> = ({ visible, onClose, cle
         if (response.cards && Array.isArray(response.cards)) {
           setStoredCards(response.cards);
         } else {
-          Alert.alert("No Cards", "No cards stored.");
+          setStoredCards([]);
         }
       } catch (error) {
         console.error("Error fetching stored cards:", error);
@@ -30,40 +40,35 @@ const StoredCardModal: React.FC<StoredCardModalProps> = ({ visible, onClose, cle
       }
     };
 
-    fetchStoredCards();
-  }, [clerkId]); // Fetch cards when clerkId changes
-
-  const renderStoredCards = () => {
-    return storedCards.map((card, index) => {
-      // Check if card and card properties exist before trying to access them
-      if (card && card.card_number && card.expiry_month && card.expiry_year) {
-        return (
-          <View key={index} className="p-4 border-b border-gray-200">
-            <Text>Card Number: {card.card_number}</Text>
-            <Text>Expiry: {card.expiry_month}/{card.expiry_year}</Text>
-          </View>
-        );
-      } else {
-        return (
-          <View key={index} className="p-4 border-b border-gray-200">
-            <Text>Invalid card data</Text>
-          </View>
-        );
-      }
-    });
-  };
+    if (visible) fetchStoredCards();
+  }, [clerkId, visible]);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView className="flex-1 justify-center items-center bg-white">
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaView className="flex-1 bg-gray-100 p-4">
+        <Text className="text-lg font-semibold text-center mb-4">Stored Cards</Text>
         <ScrollView className="w-full">
-          {storedCards.length > 0 ? renderStoredCards() : <Text>No cards stored.</Text>}
+          {storedCards.length > 0 ? (
+            storedCards.map((card, index) => (
+              <TouchableOpacity
+                key={index}
+                className="bg-white p-4 rounded-lg shadow-md mb-3 flex-row items-center"
+                onPress={() => setRevealedIndex(revealedIndex === index ? null : index)}
+              >
+                <CreditCard size={24} className="text-blue-500 mr-3" />
+                <View>
+                  <Text className="text-sm font-medium">
+                    {revealedIndex === index ? card.card_number : `**** **** **** ${card.card_number.slice(-4)}`}
+                  </Text>
+                  <Text className="text-xs text-gray-500">Exp: {card.expiry_month}/{card.expiry_year}</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text className="text-center text-gray-500">No cards stored.</Text>
+          )}
         </ScrollView>
-        <Button title="Close" onPress={onClose} />
+        <CustomButton onPress={onClose} title="Close" bgVariant="danger" textVariant="default" className="mt-4" />
       </SafeAreaView>
     </Modal>
   );
