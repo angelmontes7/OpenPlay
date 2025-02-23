@@ -4,13 +4,12 @@ import { ReactNativeModal } from "react-native-modal";
 import { useAuth } from "@clerk/clerk-expo";
 import { useStripe } from "@stripe/stripe-react-native";
 import { router } from "expo-router";
-
 import CustomButton from "@/components/CustomButton";
 import { images } from "@/constants";
 import { fetchAPI } from "@/lib/fetch";
 import { PaymentProps } from "@/types/type";
 
-const Payment = forwardRef(({ fullName, email, amount }: PaymentProps, ref) => {
+const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps, ref) => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const { userId } = useAuth();
   const [success, setSuccess] = useState<boolean>(false);
@@ -24,6 +23,7 @@ const Payment = forwardRef(({ fullName, email, amount }: PaymentProps, ref) => {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
       setSuccess(true);
+      onSuccess();
     }
   };
 
