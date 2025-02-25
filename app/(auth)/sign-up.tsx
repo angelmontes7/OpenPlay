@@ -25,28 +25,6 @@ const SignUp = () => {
         error: '',
         code: '',
     });
-
-    const onSignInPress = async () => {
-        if (!isLoaded) return
-
-        try {
-            const signInAttempt = await signIn.create({
-            identifier: form.email,
-            password: form.password,
-            })
-
-            if (signInAttempt.status === 'complete') {
-            await setActive({ session: signInAttempt.createdSessionId })
-            router.replace('/')
-            } else {
-
-            console.error(JSON.stringify(signInAttempt, null, 2))
-            }
-        } catch (err) {
-            
-            console.error(JSON.stringify(err, null, 2))
-        }
-    }
     
     // Handle submission of sign-up form
     const onSignUpPress = async () => {
