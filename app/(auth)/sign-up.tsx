@@ -25,6 +25,29 @@ const SignUp = () => {
         error: '',
         code: '',
     });
+
+    const onSignInPress = async () => {
+        if (!isLoaded) return
+
+        try {
+            const signInAttempt = await signIn.create({
+            identifier: form.email,
+            password: form.password,
+            })
+
+            if (signInAttempt.status === 'complete') {
+            await setActive({ session: signInAttempt.createdSessionId })
+            router.replace('/')
+            } else {
+
+            console.error(JSON.stringify(signInAttempt, null, 2))
+            }
+        } catch (err) {
+            
+            console.error(JSON.stringify(err, null, 2))
+        }
+    }
+    
     // Handle submission of sign-up form
     const onSignUpPress = async () => {
         if (!isLoaded) return
@@ -191,8 +214,7 @@ const SignUp = () => {
 
                             <OAuth />
 
-
-                            <Link href="/sign-in" className='text-lg text-center text-general-200 mt-10'>
+                            <Link href="/sign-in" className='text-lg text-center text-general-200 m-10'>
                                 <Text>Already have an account? </Text>
                                 <Text className="text-primary-500">Log In</Text>
                             </Link>
