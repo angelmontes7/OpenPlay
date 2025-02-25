@@ -42,6 +42,34 @@ export async function POST(request: Request) {
     }
 }
 
+export async function PATCH(request: Request) {
+    try {
+        const sql = neon(`${process.env.DATABASE_URL}`);
+        const { clerkId, dob } = await request.json();
+
+        if (!clerkId) {
+            return Response.json({ error: "Missing Clerk ID" }, { status: 400 });
+        }
+
+        if (!dob) {
+            return Response.json({ error: "Missing Date of Birth" }, { status: 400 });
+        }
+
+        const formattedDob = formatDateToISO(dob);
+
+        const response = await sql`
+            UPDATE users 
+            SET dob = ${formattedDob}
+            WHERE clerk_id = ${clerkId};
+        `;
+
+        return new Response(JSON.stringify({ message: "DOB updated successfully" }), { status: 200 });
+    } catch (error) {
+        console.log(error);
+        return Response.json({ error: error }, { status: 500 });
+    }
+}
+
 export async function GET(request: Request) {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);
