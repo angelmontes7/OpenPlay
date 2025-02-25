@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,16 @@ import {
   StyleSheet,
   PanResponder,
   PanResponderGestureState,
+  Modal,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView from 'react-native-maps';
 import { useUser } from '@clerk/clerk-expo';
+import { fetchAPI } from '@/lib/fetch';
+import { icons } from '@/constants';
+import InputField from '@/components/InputField';
+import CustomButton from '@/components/CustomButton';
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60; 
@@ -28,6 +34,13 @@ interface Court {
 
 export default function Home() {
   const { user } = useUser();
+
+  // Consts for DOB check
+  const [dob, setDob] = useState<string | null>(null);
+  const [showDOBModal, setShowDOBModal] = useState(false);
+  const [data, setData] = useState<{ dob: string } | null>(null);
+  
+
   const [search, setSearch] = useState('');
   // When the sheet is fully expanded (i.e. near 0), we allow inner list scrolling.
   const [scrollEnabled, setScrollEnabled] = useState(false);
@@ -124,8 +137,135 @@ export default function Home() {
     </View>
   );
 
+
+  // Collecting DOB if not set
+  useEffect(() => {
+    const checkUserDOB = async () => {
+        if (!user?.id) return;
+        try {
+            const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
+            console.log(response);  // Log the response data for debugging
+            setData(response);
+            console.log('Fetched user data:', response);
+      
+            if (response?.dob === null) {
+              setShowDOBModal(true);  // Show the modal if DOB is null
+            }
+        } catch (error) {
+          console.error("Error fetching DOB:", error);
+        }
+    };
+    checkUserDOB();
+  }, [user?.id]);
+
+  const handleSaveDOB = async () => {
+    if (!dob) {
+      Alert.alert("Error", "Please enter your Date of Birth.");
+      return;
+    }
+
+    if(!validateDOB(dob)) {
+      return;
+    }
+
+    try {
+      const response = await fetchAPI("/(api)/user", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clerkId: user?.id,
+          dob: dob,
+        }),
+      }); 
+      setData(response)
+      setShowDOBModal(false);
+      setDob(dob); // Update state with the saved DOB
+      Alert.alert("Success", "Your DOB has been updated.");
+      
+    } catch (error) {
+      console.error("Error updating DOB:", error);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    }
+
+  };
+  const formatDOB = (value: string) => {
+    // Remove all non-digit characters
+    value = value.replace(/\D/g, '');
+
+    // Format the value as MM-DD-YYYY
+    if (value.length > 2 && value.length <= 4) {
+        value = value.slice(0, 2) + '-' + value.slice(2);
+    } else if (value.length > 4) {
+        value = value.slice(0, 2) + '-' + value.slice(2, 4) + '-' + value.slice(4, 8);
+    }
+
+    return value;
+  };
+
+  const validateDOB = (dob: string) => {
+    // Ensure the input is not empty
+    if (!dob) {
+        Alert.alert("Invalid Date", "Date of birth is required.");
+        return false;
+    }
+
+    // Split the date string into components
+    const [month, day, year] = dob.split('-').map(Number);
+
+    // Check if the date components are valid numbers
+    if (!month || !day || !year) {
+        Alert.alert("Invalid Date", "The entered date is not valid.");
+        return false;
+    }
+
+    // Create a date object from the components
+    const date = new Date(year, month - 1, day);
+
+    const today = new Date();
+
+    if (year < 1900 || date > today) {
+        Alert.alert("Invalid Date", "The entered date must be between 1900 and the current year.");
+        return false;
+    }
+
+    return true;
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
+      {/* Modal for entering DOB */}
+      <Modal
+        visible={showDOBModal}
+        onRequestClose={() => setShowDOBModal(false)}
+      >
+        <View className='flex-1 justify-center items-center bg-black bg-opacity-50'>
+          <View className='bg-white rounded-lg p-6 w-4/5 max-w-lg'>
+            <Text className='text-xl font-semibold text-center mb-4'>Please enter your date of birth:</Text>
+
+            <InputField 
+              label="Date of Birth"
+              placeholder="MM-DD-YYYY"
+              placeholderTextColor="#A0A0A0"
+              icon={icons.calendar} 
+              value={dob}
+              onChangeText={(value) => {
+                const formattedValue = formatDOB(value);  // Format the input value
+                setDob(formattedValue);  // Update the state with the formatted value
+              }}
+              keyboardType="number-pad"
+            />
+
+            <CustomButton 
+              title="Save DOB" 
+              onPress={handleSaveDOB} 
+            />
+          </View>
+        </View>
+      </Modal>
+
+
       {/* Fixed Search Bar */}
       <View style={styles.searchBar}>
         <TextInput
