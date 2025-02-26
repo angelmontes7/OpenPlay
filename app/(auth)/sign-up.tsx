@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Image, Alert, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from "react-native";
+import { ScrollView, Text, View, Image, Alert, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform, TextInput, TouchableOpacity } from "react-native";
 import { images, icons } from "@/constants";
 import InputField from "@/components/InputField";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { useSignUp } from "@clerk/clerk-expo";
 import { ReactNativeModal } from "react-native-modal";
 import { router } from "expo-router";
 import { fetchAPI } from "@/lib/fetch";
+import { Ionicons } from "@expo/vector-icons";
 
 const SignUp = () => {
     const { isLoaded, signUp, setActive } = useSignUp();
@@ -17,8 +18,12 @@ const SignUp = () => {
         username: "",
         email: "",
         password: "",
+        confirmPassword: "",
         dob: "",
     });
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [verification, setVerification] = useState({
         state: 'default',
@@ -29,28 +34,34 @@ const SignUp = () => {
     const onSignUpPress = async () => {
         if (!isLoaded) return
 
-        if(!validateDOB(form.dob)) {
+        if (!validateDOB(form.dob)) {
             return;
         }
 
+        if (form.password !== form.confirmPassword) {
+            Alert.alert("Passwords do not match", "Please ensure both passwords match.");
+            return;
+        }
+
+
         try {
-        await signUp.create({
-            emailAddress: form.email,
-            username: form.username,
-            password: form.password,
-        })
+            await signUp.create({
+                emailAddress: form.email,
+                username: form.username,
+                password: form.password,
+            })
 
-        // Send user an email with verification code
-        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
+            // Send user an email with verification code
+            await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
 
-        // Set 'pendingVerification' to true to display second form
-        // and capture OTP code
-        setVerification({ 
-            ...verification, 
-            state: 'pending' 
+            // Set 'pendingVerification' to true to display second form
+            // and capture OTP code
+            setVerification({
+                ...verification,
+                state: 'pending'
             })
         } catch (err: any) {
-        Alert.alert('Error', err.errors[0].longMessage)
+            Alert.alert('Error', err.errors[0].longMessage)
         }
     }
 
@@ -141,7 +152,7 @@ const SignUp = () => {
 
         return true;
     };
-    
+
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -152,36 +163,72 @@ const SignUp = () => {
                             <Text className="text-black text-2xl font-JakartaSemiBold left-5">Create Your Account</Text>
                         </View>
                         <View className="p-5">
-                            <InputField 
+                            <InputField
                                 label="Username"
                                 placeholderTextColor="#A0A0A0"
-                                placeholder="Enter your username" 
-                                icon={icons.person} 
-                                value={form.username} 
+                                placeholder="Enter your username"
+                                icon={icons.person}
+                                value={form.username}
                                 onChangeText={(value) => setForm({ ...form, username: value })}
                             />
-                            <InputField 
+                            <InputField
                                 label="Email"
-                                placeholderTextColor="#A0A0A0" 
-                                placeholder="Enter your email" 
-                                icon={icons.email} 
-                                value={form.email} 
+                                placeholderTextColor="#A0A0A0"
+                                placeholder="Enter your email"
+                                icon={icons.email}
+                                value={form.email}
                                 onChangeText={(value) => setForm({ ...form, email: value })}
                             />
-                            <InputField 
-                                label="Password"
-                                placeholderTextColor="#A0A0A0" 
-                                placeholder="Enter your password" 
-                                icon={icons.lock} 
-                                secureTextEntry={true}
-                                value={form.password} 
-                                onChangeText={(value) => setForm({ ...form, password: value })}
-                            />
-                            <InputField 
+                            <View className="relative">
+                                <InputField
+                                    label="Password"
+                                    placeholderTextColor="#A0A0A0"
+                                    placeholder="Enter your password"
+                                    icon={icons.lock}
+                                    secureTextEntry={!showPassword}
+                                    value={form.password}
+                                    onChangeText={(value) => setForm({ ...form, password: value })}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-2/3 transform -translate-y-1">
+                                    <Ionicons
+                                        name={showPassword ? "eye" : "eye-off"}
+                                        size={20}
+                                        color="gray"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            <View className="relative">
+                                <InputField
+                                    label="Confirm Password"
+                                    placeholderTextColor="#A0A0A0"
+                                    placeholder="Confirm your password"
+                                    icon={icons.lock}
+                                    secureTextEntry={!showConfirmPassword}
+                                    value={form.confirmPassword}
+                                    onChangeText={(value) => setForm({ ...form, confirmPassword: value })}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-4 top-2/3 transform -translate-y-1">
+                                    <Ionicons
+                                        name={showConfirmPassword ? "eye" : "eye-off"}
+                                        size={20}
+                                        color="gray"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            <Text className={`text-sm mt-1 ${form.password !== form.confirmPassword ? 'text-red-500' : 'text-green-500'}`}>
+                                {form.password && form.confirmPassword ?
+                                    (form.password !== form.confirmPassword ? "Passwords do not match" : "Passwords match")
+                                    : ""}
+                            </Text>
+                            <InputField
                                 label="Date of Birth"
                                 placeholder="MM-DD-YYYY"
                                 placeholderTextColor="#A0A0A0"
-                                icon={icons.calendar} 
+                                icon={icons.calendar}
                                 value={form.dob}
                                 onChangeText={(value) => setForm({ ...form, dob: formatDOB(value) })}
                                 keyboardType="number-pad"
@@ -198,20 +245,21 @@ const SignUp = () => {
                             </Link>
                         </View>
 
-                        <ReactNativeModal 
+                        <ReactNativeModal
                             isVisible={verification.state === 'pending'}
                             onModalHide={() => {
-                                if(verification.state === 'success') setShowSuccessModal(true)}}>
+                                if (verification.state === 'success') setShowSuccessModal(true)
+                            }}>
                             <View className='bg-white px-7 py-9 rounded-2xl min-h-[300px]'>
                                 <Text className='text-2xl font-JakartaExtraBold mb-2'>Verification</Text>
                                 <Text className='font-Jakarta mb-5'>We have sent a verification code to {form.email}</Text>
-                                <InputField 
+                                <InputField
                                     label="Code"
                                     icon={icons.lock}
                                     placeholder="12345"
                                     value={verification.code}
                                     keyboardType="numeric"
-                                    onChangeText={(code) => setVerification({ ...verification, code})}
+                                    onChangeText={(code) => setVerification({ ...verification, code })}
                                 />
                                 {verification.error && (
                                     <Text className="text-red-500 text-sm mt-1">
@@ -221,15 +269,15 @@ const SignUp = () => {
                                 <CustomButton title="Verify Email" onPress={onVerifyPress} className="mt-5 bg-success-500" />
                             </View>
                         </ReactNativeModal>
-                        
+
                         <ReactNativeModal isVisible={showSuccessModal}>
                             <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
                                 <Image source={images.check} className="w-[110px] mx-auto my-5" />
                                 <Text className='text-3xl font-JakartaBold text-center'> Verified</Text>
                                 <Text className='text-base text-gray-400 font-Jakarta text-center mt-2'>You have successfully verified your account.</Text>
-                                <CustomButton 
-                                    title="Browse Home" 
-                                    onPress={() => router.replace('/(root)/(tabs)/profile')} 
+                                <CustomButton
+                                    title="Browse Home"
+                                    onPress={() => router.replace('/(root)/(tabs)/profile')}
                                     className='mt-5' />
                             </View>
                         </ReactNativeModal>

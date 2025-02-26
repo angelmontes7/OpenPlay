@@ -1,17 +1,19 @@
 import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch, TextInput, Linking, KeyboardAvoidingView, Platform } from "react-native";
 import { images, icons } from "@/constants";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { useUser, useAuth } from "@clerk/clerk-expo";
+import { useUser, useAuth, getClerkInstance } from "@clerk/clerk-expo";
 import CustomButton from "@/components/CustomButton";
 import { useRouter } from "expo-router";
 import { ReactNativeModal } from "react-native-modal";
 import * as ImagePicker from "expo-image-picker";
+import { UpdateUserPasswordParams } from "@clerk/types";
 
 const Profile = () => {
     const { user } = useUser();
     const { signOut } = useAuth();
-    const { updatePassword } = useAuth();
     const router = useRouter();
+    const client = getClerkInstance();
 
     const [profilePic, setProfilePic] = useState(user?.imageUrl || images.defaultProfile);
     const [showModal, setShowModal] = useState(false);
@@ -26,6 +28,12 @@ const Profile = () => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [errorpassword, setErrorPassword] = useState(false);
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
+    const [isOldPasswordVisible, setIsOldPasswordVisible] = useState(false);
+    const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
+    const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] = useState(false);
+
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -39,20 +47,26 @@ const Profile = () => {
         }
     };
 
-    const handlePasswordChange = async () => {
-        if (!oldPassword || !newPassword) {
-            Alert.alert("Error", "Both old and new passwords are required.");
+    const handlePasswordReset = async function updatePassword(newPassword: UpdateUserPasswordParams, confirmNewPassword: string) {
+        const user = client.user;
+        if (newPassword.newPassword !== confirmNewPassword) {
+            setErrorPassword(true);
+            Alert.alert("Error", "Passwords do not match.");
             return;
         }
-
-        try {
-            await updatePassword({ oldPassword, newPassword });
-            Alert.alert("Success", "Your password has been updated.");
-            setOldPassword("");
-            setNewPassword("");
-            setIsChangingPassword(false); // Hide inputs after successful update
-        } catch (error) {
-            Alert.alert("Error", (error as any).message || "Something went wrong.");
+        if (newPassword.newPassword.length < 8) {
+            Alert.alert("Error", "Password must be at least 8 characters long.");
+            return;
+        }
+        if (user && newPassword.newPassword === confirmNewPassword) {
+            setErrorPassword(false);
+            try {
+                await user.updatePassword(newPassword);
+                Alert.alert("Success", "Password updated successfully.");
+                setIsChangingPassword(!isChangingPassword); // possibly stopping user from logging in
+            } catch (error) {
+                Alert.alert("Error", (error as any).message || "Something went wrong.");
+            }
         }
     };
 
@@ -68,57 +82,106 @@ const Profile = () => {
             case "privacy":
                 return (
                     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-                    <ScrollView className="p-4">
-                        <Text className="text-lg font-Jakarta p-4">Privacy Settings: Manage data sharing, account visibility, etc.</Text>;
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Make Account Private</Text>
-                            <Switch value={isPrivate} onValueChange={setIsPrivate} />
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Location</Text>
-                            <Switch value={locationEnabled} onValueChange={setLocationEnabled} />
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Username: {user?.username}</Text>
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Email: {user?.primaryEmailAddress?.emailAddress}</Text>
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Password: {'****'}</Text>
-                        </View>
-                        <CustomButton
-                            title={isChangingPassword ? "Cancel" : "Change Password"}
-                            onPress={() => setIsChangingPassword(!isChangingPassword)}
-                            className="mt-6 space-y-4 mx-auto w-3/4"
-                        />
+                        <ScrollView className="p-4">
+                            <Text className="text-lg font-Jakarta p-4">Privacy Settings: Manage data sharing, account visibility, etc.</Text>;
+                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                                <Text className="text-black text-base">Make Account Private</Text>
+                                <Switch value={isPrivate} onValueChange={setIsPrivate} />
+                            </View>
+                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                                <Text className="text-black text-base">Location</Text>
+                                <Switch value={locationEnabled} onValueChange={setLocationEnabled} />
+                            </View>
+                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                                <Text className="text-black text-base">Username: {user?.username}</Text>
+                            </View>
+                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                                <Text className="text-black text-base">Email: {user?.primaryEmailAddress?.emailAddress}</Text>
+                            </View>
+                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
+                                <Text className="text-black text-base">Password: {'****'}</Text>
+                            </View>
+                            <CustomButton
+                                title={isChangingPassword ? "Cancel" : "Change Password"}
+                                onPress={() => setIsChangingPassword(!isChangingPassword)}
+                                className="mt-6 space-y-4 mx-auto w-3/4"
+                            />
 
-                        {isChangingPassword && (
-                            <>
-                                <TextInput
-                                    className="border border-gray-300 rounded p-2 mt-3"
-                                    placeholder="Enter old password"
-                                    secureTextEntry
-                                    value={oldPassword}
-                                    onChangeText={setOldPassword}
-                                />
-                                <TextInput
-                                    className="border border-gray-300 rounded p-2 mt-3"
-                                    placeholder="Enter new password"
-                                    secureTextEntry
-                                    value={newPassword}
-                                    onChangeText={setNewPassword}
-                                />
-                                <CustomButton
-                                    title="Submit New Password"
-                                    onPress={handlePasswordChange}
-                                    className="mt-6 space-y-4 mx-auto w-3/4"
-                                />
-                            </>
-                        )}
+                            {isChangingPassword && (
+                                <>
+                                    <ScrollView className="max-h-90">
+                                        <View className="relative">
+                                            <TextInput
+                                                className="border border-gray-300 rounded p-2 mt-3"
+                                                placeholder="Enter old password"
+                                                secureTextEntry={!isOldPasswordVisible}
+                                                value={oldPassword}
+                                                onChangeText={setOldPassword}
+                                            />
+                                            <TouchableOpacity
+                                                onPress={() => setIsOldPasswordVisible(!isOldPasswordVisible)}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1">
+                                                <Ionicons
+                                                    name={isOldPasswordVisible ? "eye" : "eye-off"}
+                                                    size={20}
+                                                    color="gray"
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View className="relative">
+                                            <TextInput
+                                                className={`border rounded p-2 mt-3 ${errorpassword ? 'border-red-500' : 'border-gray-300'}`}
+                                                placeholder="Enter new password"
+                                                secureTextEntry={!isNewPasswordVisible}
+                                                value={newPassword}
+                                                onChangeText={(text) => {
+                                                    setNewPassword(text)
+                                                    setErrorPassword(false);
+                                                }}
+                                            />
+                                            <TouchableOpacity
+                                                onPress={() => setIsNewPasswordVisible(!isNewPasswordVisible)}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1">
+                                                <Ionicons
+                                                    name={isNewPasswordVisible ? "eye" : "eye-off"}
+                                                    size={20}
+                                                    color="gray"
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View className="relative">
+                                            <TextInput
+                                                className={`border rounded p-2 mt-3 ${errorpassword ? 'border-red-500' : 'border-gray-300'}`}
+                                                placeholder="Re-enter new password"
+                                                secureTextEntry={!isConfirmNewPasswordVisible}
+                                                value={confirmNewPassword}
+                                                onChangeText={(text) => {
+                                                    setConfirmNewPassword(text);
+                                                    setErrorPassword(false);
+                                                }}
+                                            />
+                                            <TouchableOpacity
+                                                onPress={() => setIsConfirmNewPasswordVisible(!isConfirmNewPasswordVisible)}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1">
+                                                <Ionicons
+                                                    name={isConfirmNewPasswordVisible ? "eye" : "eye-off"}
+                                                    size={20}
+                                                    color="gray"
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                        {errorpassword && <Text className="text-red-500 text-sm">Passwords do not match.</Text>}
+                                        <CustomButton
+                                            title="Submit New Password"
+                                            onPress={() => handlePasswordReset({ newPassword, currentPassword: oldPassword }, confirmNewPassword)}
+                                            className="mt-6 space-y-4 mx-auto w-3/4"
+                                        />
+                                    </ScrollView>
+                                </>
+                            )}
 
-                    </ScrollView>
-                </KeyboardAvoidingView>
+                        </ScrollView>
+                    </KeyboardAvoidingView>
                 );
             case "notifications":
                 return (
@@ -166,7 +229,7 @@ const Profile = () => {
                         <Text className="text-lg font-JakartaBold p-4 mt-4">Socials</Text>
                         <View className="flex-row justify-around p-4">
                             {[
-                                { name: "Instagram", icon: icons.Instagram, link: "https://instagram.com/openplay1" },
+                                { name: "Instagram", icon: icons.Instagram, link: "https://instagram.com/royalpaisa_" },
                                 { name: "Snapchat", icon: icons.snapchat, link: "https://snapchat.com/add/openplay" },
                                 { name: "Facebook", icon: icons.facebook, link: "https://facebook.com/openplay" }
                             ].map((social, index) => (
@@ -220,7 +283,7 @@ const Profile = () => {
                     </TouchableOpacity>
                 )}
                 {/* Username */}
-                {activeSection === "profile" && <Text className="text-lg font-JakartaBold">ANKARA MESSI</Text>}
+                {activeSection === "profile" && <Text className="text-lg font-JakartaBold">OpenPlay</Text>}
             </View>
 
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
