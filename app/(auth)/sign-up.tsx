@@ -30,6 +30,7 @@ const SignUp = () => {
         error: '',
         code: '',
     });
+    
     // Handle submission of sign-up form
     const onSignUpPress = async () => {
         if (!isLoaded) return
@@ -238,8 +239,7 @@ const SignUp = () => {
 
                             <OAuth />
 
-
-                            <Link href="/sign-in" className='text-lg text-center text-general-200 mt-10'>
+                            <Link href="/sign-in" className='text-lg text-center text-general-200 m-10'>
                                 <Text>Already have an account? </Text>
                                 <Text className="text-primary-500">Log In</Text>
                             </Link>

@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 
 const formatDateToISO = (dob: string) => {
+    if (!dob) return null;
     const [month, day, year] = dob.split("-");
     return `${year}-${month}-${day}`; // Converts "MM-DD-YYYY" → "YYYY-MM-DD"
 };
@@ -10,11 +11,11 @@ export async function POST(request: Request) {
         const sql = neon(`${process.env.DATABASE_URL}`);
         const { username, email, dob, clerkId } = await request.json();
 
-        if(!username || !email || !dob || !clerkId) {
+        if(!username || !email || !clerkId) {
             return Response.json({error: "Missing required fields"}, {status: 400})
         }
         
-        const formattedDob = formatDateToISO(dob); // Convert before inserting
+        const formattedDob = dob ? formatDateToISO(dob) : null; // Convert if provided, else null
 
         const response = await sql `
             INSERT INTO users (
@@ -38,6 +39,34 @@ export async function POST(request: Request) {
         console.log(error);
         return Response.json({error: error}, {status: 500})
 
+    }
+}
+
+export async function PATCH(request: Request) {
+    try {
+        const sql = neon(`${process.env.DATABASE_URL}`);
+        const { clerkId, dob } = await request.json();
+
+        if (!clerkId) {
+            return Response.json({ error: "Missing Clerk ID" }, { status: 400 });
+        }
+
+        if (!dob) {
+            return Response.json({ error: "Missing Date of Birth" }, { status: 400 });
+        }
+
+        const formattedDob = formatDateToISO(dob);
+
+        const response = await sql`
+            UPDATE users 
+            SET dob = ${formattedDob}
+            WHERE clerk_id = ${clerkId};
+        `;
+
+        return new Response(JSON.stringify({ message: "DOB updated successfully" }), { status: 200 });
+    } catch (error) {
+        console.log(error);
+        return Response.json({ error: error }, { status: 500 });
     }
 }
 
