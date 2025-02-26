@@ -70,8 +70,12 @@ const SignIn = () => {
 
                             <OAuth />
 
+                            <Link href="/forgot-password" className='text-lg text-center text-general-200 m-5'>
+                                <Text>Forgot password? </Text>
+                                <Text className="text-primary-500">Reset Password</Text>
+                            </Link>
 
-                            <Link href="/(auth)/sign-up" className='text-lg text-center text-general-200 mt-10'>
+                            <Link href="/(auth)/sign-up" className='text-lg text-center text-general-200 mb-10'>
                                 <Text>Don't have an account? </Text>
                                 <Text className="text-primary-500">Sign Up</Text>
                             </Link>
