@@ -1,20 +1,21 @@
 import { ScrollView, Text, View, Image, Alert, TouchableOpacity, Switch, TextInput, Linking, KeyboardAvoidingView, Platform } from "react-native";
 import { images, icons } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser, useAuth, getClerkInstance } from "@clerk/clerk-expo";
 import CustomButton from "@/components/CustomButton";
 import { useRouter } from "expo-router";
 import { ReactNativeModal } from "react-native-modal";
 import * as ImagePicker from "expo-image-picker";
 import { UpdateUserPasswordParams } from "@clerk/types";
+import { supabase } from "@/app/(api)/(cloud)/config/initSupabase";
+import { fetchAPI } from "@/lib/fetch"
 
 const Profile = () => {
     const { user } = useUser();
     const { signOut } = useAuth();
     const router = useRouter();
     const client = getClerkInstance();
-
     const [profilePic, setProfilePic] = useState(user?.imageUrl || images.defaultProfile);
     const [showModal, setShowModal] = useState(false);
     const [activeSection, setActiveSection] = useState("profile"); //track which section is active
@@ -34,6 +35,23 @@ const Profile = () => {
     const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
     const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] = useState(false);
 
+    useEffect(() => {
+        const fetchProfilePic = async () => {
+            try {
+                const response = await fetchAPI(`/(api)/update_profile_pic?clerkId=${user?.id}`, {
+                    method: "GET",
+                });
+                if (response && response.profilePicUrl !== undefined) {
+                    setProfilePic(response.profilePicUrl);
+                }
+            } catch (error) {
+                console.error("Error fetching profile pic:", error);
+            }
+        };
+
+        fetchProfilePic();
+    }, [user?.id]);
+
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -42,8 +60,52 @@ const Profile = () => {
             quality: 1,
         });
 
-        if (!result.canceled) {
-            setProfilePic(result.assets[0].uri);
+        if (!result.canceled && result.assets && result.assets[0]?.uri) {
+            const uri = result.assets[0].uri;
+            uploadImage(uri);
+        } else {
+            console.log('No image selected or result.assets[0].uri is undefined');
+        }
+    };
+
+    const uploadImage = async (uri) => {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const arrayBuffer = await new Response(blob).arrayBuffer();
+        const fileName = `public/${Date.now()}.jpg`;
+        const { error } = await supabase
+            .storage
+            .from('profile-pics')
+            .upload(fileName, arrayBuffer, { contentType: 'image/jpeg', upsert: false });
+        if (error) {
+            console.error('Error uploading image: ', error);
+        } else {
+            const uploadedUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profile-pics/${fileName}`;
+            setProfilePic(uploadedUrl);
+        }
+    }
+
+    const saveProfilePicUrl = async (url: string) => {
+        try {
+            const response = await fetch("/(api)/(database)/update_profile_pic", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    clerkId: user?.id,
+                    profilePicUrl: url,
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to save profile picture URL");
+            }
+    
+            Alert.alert("Success", "Profile picture updated successfully.");
+        } catch (error) {
+            console.error("Error saving profile picture URL:", error);
+            Alert.alert("Error", "Failed to save profile picture URL.");
         }
     };
 
@@ -68,13 +130,6 @@ const Profile = () => {
                 Alert.alert("Error", (error as any).message || "Something went wrong.");
             }
         }
-    };
-
-
-    const handleSaveChanges = () => {
-        //Implement API call to update user profile!!!
-        setShowModal(true);
-        //Alert.alert("Success", "Your profile has been updated.");
     };
 
     const renderContent = () => {
@@ -304,7 +359,7 @@ const Profile = () => {
                 {/* Action Buttons */}
                 {activeSection === "profile" && (
                     <View className="mt-6 space-y-4 mx-auto w-3/4">
-                        <CustomButton title="Save Changes" onPress={handleSaveChanges} />
+                        <CustomButton title="Save Changes" onPress={() => saveProfilePicUrl(profilePic)} />
                         <CustomButton
                             title="Log Out"
                             onPress={async () => {
