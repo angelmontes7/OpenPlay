@@ -14,7 +14,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
 import { icons } from '@/constants';
@@ -22,14 +22,24 @@ import InputField from '@/components/InputField';
 import CustomButton from '@/components/CustomButton';
 
 const { height } = Dimensions.get('window');
-const SEARCH_BAR_HEIGHT = 60; 
+const SEARCH_BAR_HEIGHT = 60;
+const TAB_BAR_HEIGHT = 60; // adjust as needed
+const SHEET_TOP = 80; // sheet container starts below the search bar
 
-// Define the type for a court.
+// The height available for the sheet container
+const containerHeight = height - SHEET_TOP;
+
 interface Court {
   id: string;
   name: string;
   location: string;
   available: boolean;
+  sport: string;
+  distance: number; // in miles
+  popularity: number; // star rating (1-5)
+  type: string; // "Free" or "Paid"
+  capacity: number;
+  coordinate: { latitude: number; longitude: number }; // added coordinate field
 }
 
 export default function Home() {
@@ -42,96 +52,207 @@ export default function Home() {
   
 
   const [search, setSearch] = useState('');
-  // When the sheet is fully expanded (i.e. near 0), we allow inner list scrolling.
-  const [scrollEnabled, setScrollEnabled] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  // Filter states
+  const [selectedSport, setSelectedSport] = useState<string | null>(null);
+  const [selectedAvailability, setSelectedAvailability] = useState<string | null>(null);
+  const [selectedProximity, setSelectedProximity] = useState<string | null>(null);
+  const [selectedPopularity, setSelectedPopularity] = useState<number | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  // Track FlatList content height.
+  const [contentHeight, setContentHeight] = useState(0);
+  // Compute the available visible area for content (container height minus tab bar)
+  const visibleArea = containerHeight - TAB_BAR_HEIGHT;
+  const maxSheetPos = Math.max(0, visibleArea - contentHeight);
 
-  // The animated value controls the vertical position of the sheet.
-  const sheetPosition = useRef(new Animated.Value(height * 0.5)).current;
-  const sheetPositionValue = useRef(height * 0.5);
+  // Animated value for the sheet’s vertical position.
+  const sheetPosition = useRef(new Animated.Value(maxSheetPos)).current;
+  const sheetPositionValue = useRef(maxSheetPos);
   sheetPosition.addListener(({ value }) => {
     sheetPositionValue.current = value;
   });
   const lastSheetPosition = useRef(sheetPositionValue.current);
-
-  // Track the inner list’s scroll offset.
   const listScrollOffset = useRef(0);
+
+  useEffect(() => {
+    if (sheetPositionValue.current > maxSheetPos) {
+      Animated.timing(sheetPosition, {
+        toValue: maxSheetPos,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        lastSheetPosition.current = maxSheetPos;
+      });
+    }
+  }, [contentHeight, maxSheetPos, sheetPosition]);
+
+  const [scrollEnabled, setScrollEnabled] = useState(false);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState: PanResponderGestureState) => {
-        // If the sheet isn’t fully expanded, always capture the gesture.
-        // When expanded, only capture a downward gesture if the inner list is scrolled to the top.
-        if (!scrollEnabled) {
+        if (!scrollEnabled) return true;
+        if (scrollEnabled && gestureState.dy > 0 && listScrollOffset.current <= 0)
           return true;
-        } else if (scrollEnabled && gestureState.dy > 0 && listScrollOffset.current <= 0) {
-          return true;
-        }
         return false;
       },
       onPanResponderGrant: () => {
-        // Record the current sheet position when the gesture starts.
         lastSheetPosition.current = sheetPositionValue.current;
       },
       onPanResponderMove: (_, gestureState: PanResponderGestureState) => {
         let newPos = lastSheetPosition.current + gestureState.dy;
-        // Constrain the sheet's position between fully expanded (0) and its collapsed position.
-        newPos = Math.min(Math.max(newPos, 0), height * 0.5);
+        newPos = Math.min(Math.max(newPos, 0), maxSheetPos);
         sheetPosition.setValue(newPos);
       },
       onPanResponderRelease: () => {
-        // Instead of snapping to a fixed position, we leave the sheet at the current position.
-        // If it's nearly fully expanded (close to 0), enable inner list scrolling.
         if (sheetPositionValue.current < 20) {
           setScrollEnabled(true);
         } else {
           setScrollEnabled(false);
         }
-        // Flatten any offsets (optional here since we’re not using setOffset)
         sheetPosition.flattenOffset();
       },
     })
   ).current;
 
-  // Sample court data.
+  // Updated sample data with coordinates in Naperville, IL.
   const courtData: Court[] = [
-    { id: '1', name: 'Downtown Basketball Court', location: '5th Avenue', available: true },
-    { id: '2', name: 'Central Park Tennis Court', location: 'Main Street', available: false },
-    { id: '3', name: 'City Soccer Field', location: 'Broadway', available: true },
-    { id: '4', name: 'Westside Gym Court', location: '7th Street', available: true },
-    { id: '5', name: 'Lakeside Volleyball Court', location: 'Lake Avenue', available: false },
-    { id: '6', name: 'Highland Park Tennis Court', location: 'Highland Blvd', available: true },
+    {
+      id: '1',
+      name: 'Downtown Basketball Court',
+      location: '5th Avenue',
+      available: true,
+      sport: 'Basketball',
+      distance: 2,
+      popularity: 4,
+      type: 'Paid',
+      capacity: 15,
+      coordinate: { latitude: 41.7801, longitude: -88.1501 },
+    },
+    {
+      id: '2',
+      name: 'Central Park Tennis Court',
+      location: 'Main Street',
+      available: false,
+      sport: 'Tennis',
+      distance: 6,
+      popularity: 3,
+      type: 'Free',
+      capacity: 8,
+      coordinate: { latitude: 41.7750, longitude: -88.1600 },
+    },
+    {
+      id: '3',
+      name: 'City Soccer Field',
+      location: 'Broadway',
+      available: true,
+      sport: 'Soccer',
+      distance: 12,
+      popularity: 5,
+      type: 'Paid',
+      capacity: 60,
+      coordinate: { latitude: 41.7700, longitude: -88.1550 },
+    },
+    {
+      id: '4',
+      name: 'Westside Gym Court',
+      location: '7th Street',
+      available: true,
+      sport: 'Basketball',
+      distance: 3,
+      popularity: 4,
+      type: 'Free',
+      capacity: 20,
+      coordinate: { latitude: 41.7650, longitude: -88.1450 },
+    },
+    {
+      id: '5',
+      name: 'Lakeside Lacrosse Court',
+      location: 'Lake Avenue',
+      available: false,
+      sport: 'Lacrosse',
+      distance: 16,
+      popularity: 2,
+      type: 'Paid',
+      capacity: 25,
+      coordinate: { latitude: 41.7720, longitude: -88.1650 },
+    },
+    {
+      id: '6',
+      name: 'Highland Park Tennis Court',
+      location: 'Highland Blvd',
+      available: true,
+      sport: 'Tennis',
+      distance: 4,
+      popularity: 3,
+      type: 'Free',
+      capacity: 4,
+      coordinate: { latitude: 41.7780, longitude: -88.1400 },
+    },
   ];
 
-  // Use the first court as a sticky header.
-  const headerCourt = courtData[0];
-  const listData = courtData.slice(1);
+  // Filter option arrays.
+  const sportOptions = ["Soccer", "Basketball", "Football", "Baseball", "Tennis", "Pickle-ball", "Lacrosse"];
+  const availabilityOptions = ["Open", "Currently in Use"];
+  const proximityOptions = ["< 5 Miles", "5-15 Miles", "> 15 Miles"];
+  const popularityOptions = [1, 2, 3, 4, 5];
+  const typeOptions = ["Free", "Paid"];
+  const sizeOptions = ["< 10 People", "10-50 People", "> 50 People"];
 
-  // Render an individual court item.
+  // Compute filtered courts.
+  const filteredCourts = courtData.filter(court => {
+    let matches = true;
+    if (selectedSport) {
+      matches = matches && court.sport === selectedSport;
+    }
+    if (selectedAvailability) {
+      if (selectedAvailability === "Open") {
+        matches = matches && court.available === true;
+      } else if (selectedAvailability === "Currently in Use") {
+        matches = matches && court.available === false;
+      }
+    }
+    if (selectedProximity) {
+      if (selectedProximity === "< 5 Miles") {
+        matches = matches && court.distance < 5;
+      } else if (selectedProximity === "5-15 Miles") {
+        matches = matches && (court.distance >= 5 && court.distance <= 15);
+      } else if (selectedProximity === "> 15 Miles") {
+        matches = matches && court.distance > 15;
+      }
+    }
+    if (selectedPopularity) {
+      matches = matches && court.popularity === selectedPopularity;
+    }
+    if (selectedType) {
+      matches = matches && court.type === selectedType;
+    }
+    if (selectedSize) {
+      if (selectedSize === "< 10 People") {
+        matches = matches && court.capacity < 10;
+      } else if (selectedSize === "10-50 People") {
+        matches = matches && (court.capacity >= 10 && court.capacity <= 50);
+      } else if (selectedSize === "> 50 People") {
+        matches = matches && court.capacity > 50;
+      }
+    }
+    return matches;
+  });
+
   const renderCourtItem = ({ item }: { item: Court }) => (
     <View style={styles.listItem}>
       <Text style={styles.listItemText}>{item.name}</Text>
-      <Text style={styles.listItemSubText}>{item.location}</Text>
+      <Text style={styles.listItemSubText}>
+        {item.location} | {item.sport} | {item.distance} Miles | {item.popularity} Star{item.popularity > 1 ? 's' : ''} | {item.type} | Capacity: {item.capacity}
+      </Text>
       <TouchableOpacity
         style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
         disabled={!item.available}
       >
-        <Text style={styles.bookButtonText}>{item.available ? 'Book Now' : 'Unavailable'}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  // Render the sticky header using the first court.
-  const ListHeader = () => (
-    <View style={styles.headerItem}>
-      <Text style={styles.listItemText}>{headerCourt.name}</Text>
-      <Text style={styles.listItemSubText}>{headerCourt.location}</Text>
-      <TouchableOpacity
-        style={[styles.bookButton, { backgroundColor: headerCourt.available ? 'green' : 'gray' }]}
-        disabled={!headerCourt.available}
-      >
         <Text style={styles.bookButtonText}>
-          {headerCourt.available ? 'Book Now' : 'Unavailable'}
+          {item.available ? 'Book Now' : 'Unavailable'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -267,91 +388,269 @@ export default function Home() {
 
 
       {/* Fixed Search Bar */}
-      <View style={styles.searchBar}>
+      <View style={styles.searchContainer}>
         <TextInput
           placeholder="Search for courts..."
+          placeholderTextColor="grey"
           value={search}
           onChangeText={setSearch}
           style={styles.searchInput}
         />
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setShowFilters(!showFilters)}
+        >
+          <Text style={styles.filterButtonText}>Filters</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.searchFilters}>
-
-      </View>
+      {/* Filters Section */}
+      {showFilters && (
+        <View style={styles.filtersContainer}>
+          <Text style={styles.filtersHeader}>Filters</Text>
+          {/* Sport */}
+          <View style={styles.filterOption}>
+            <Text style={styles.filterLabel}>Sport</Text>
+            <View style={styles.filterOptionsRow}>
+              {sportOptions.map(option => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setSelectedSport(selectedSport === option ? null : option)}
+                  style={[
+                    styles.filterOptionButton,
+                    selectedSport === option && styles.filterOptionButtonSelected,
+                  ]}
+                >
+                  <Text style={selectedSport === option ? styles.filterOptionTextSelected : styles.filterOptionText}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {/* Availability */}
+          <View style={styles.filterOption}>
+            <Text style={styles.filterLabel}>Availability</Text>
+            <View style={styles.filterOptionsRow}>
+              {availabilityOptions.map(option => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setSelectedAvailability(selectedAvailability === option ? null : option)}
+                  style={[
+                    styles.filterOptionButton,
+                    selectedAvailability === option && styles.filterOptionButtonSelected,
+                  ]}
+                >
+                  <Text style={selectedAvailability === option ? styles.filterOptionTextSelected : styles.filterOptionText}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {/* Proximity */}
+          <View style={styles.filterOption}>
+            <Text style={styles.filterLabel}>Proximity</Text>
+            <View style={styles.filterOptionsRow}>
+              {proximityOptions.map(option => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setSelectedProximity(selectedProximity === option ? null : option)}
+                  style={[
+                    styles.filterOptionButton,
+                    selectedProximity === option && styles.filterOptionButtonSelected,
+                  ]}
+                >
+                  <Text style={selectedProximity === option ? styles.filterOptionTextSelected : styles.filterOptionText}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {/* Popularity */}
+          <View style={styles.filterOption}>
+            <Text style={styles.filterLabel}>Popularity</Text>
+            <View style={styles.filterOptionsRow}>
+              {popularityOptions.map(option => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setSelectedPopularity(selectedPopularity === option ? null : option)}
+                  style={[
+                    styles.filterOptionButton,
+                    selectedPopularity === option && styles.filterOptionButtonSelected,
+                  ]}
+                >
+                  <Text style={selectedPopularity === option ? styles.filterOptionTextSelected : styles.filterOptionText}>
+                    {option} Star{option > 1 ? 's' : ''}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {/* Type */}
+          <View style={styles.filterOption}>
+            <Text style={styles.filterLabel}>Type</Text>
+            <View style={styles.filterOptionsRow}>
+              {typeOptions.map(option => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setSelectedType(selectedType === option ? null : option)}
+                  style={[
+                    styles.filterOptionButton,
+                    selectedType === option && styles.filterOptionButtonSelected,
+                  ]}
+                >
+                  <Text style={selectedType === option ? styles.filterOptionTextSelected : styles.filterOptionText}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {/* Size */}
+          <View style={styles.filterOption}>
+            <Text style={styles.filterLabel}>Size</Text>
+            <View style={styles.filterOptionsRow}>
+              {sizeOptions.map(option => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => setSelectedSize(selectedSize === option ? null : option)}
+                  style={[
+                    styles.filterOptionButton,
+                    selectedSize === option && styles.filterOptionButtonSelected,
+                  ]}
+                >
+                  <Text style={selectedSize === option ? styles.filterOptionTextSelected : styles.filterOptionText}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Interactive Map Section */}
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
           initialRegion={{
-            latitude: 37.7749,
-            longitude: -122.4194,
+            latitude: 41.7725,
+            longitude: -88.1535,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
-        />
+        >
+          {/* Render markers for each filtered court */}
+          {filteredCourts.map(court => (
+            <Marker
+              key={court.id}
+              coordinate={court.coordinate}
+              title={court.name}
+              description={`${court.sport} - ${court.location}`}
+            />
+          ))}
+        </MapView>
       </View>
 
       {/* Draggable List Sheet */}
-      <Animated.View
-        style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
-        {...panResponder.panHandlers}
-      >
-        {/* Drag handle indicator */}
-        <View style={styles.dragIndicator} />
-        <FlatList
-          data={listData}
-          keyExtractor={(item) => item.id}
-          bounces={false}
-          scrollEnabled={scrollEnabled}
-          onScroll={(e) => {
-            listScrollOffset.current = e.nativeEvent.contentOffset.y;
-          }}
-          scrollEventThrottle={16}
-          keyboardShouldPersistTaps="handled"
-          renderItem={renderCourtItem}
-          // Render the first court as a sticky header.
-          ListHeaderComponent={ListHeader}
-          stickyHeaderIndices={[0]}
-          // Extra bottom padding so the last item isn’t hidden by the nav bar.
-          contentContainerStyle={styles.listContent}
-        />
-      </Animated.View>
+      {filteredCourts.length > 0 ? (
+        <Animated.View
+          style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
+          {...panResponder.panHandlers}
+        >
+          <View style={styles.dragIndicator} />
+          <FlatList
+            data={filteredCourts}
+            keyExtractor={(item) => item.id}
+            bounces={false}
+            scrollEnabled={scrollEnabled}
+            onScroll={(e) => { listScrollOffset.current = e.nativeEvent.contentOffset.y; }}
+            onContentSizeChange={(_, h) => setContentHeight(h)}
+            scrollEventThrottle={16}
+            keyboardShouldPersistTaps="handled"
+            renderItem={renderCourtItem}
+            contentContainerStyle={styles.listContent}
+          />
+        </Animated.View>
+      ) : (
+        <Animated.View
+          style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
+          {...panResponder.panHandlers}
+        >
+          <View style={styles.dragIndicator} />
+          <Text style={{ padding: 20 }}>No courts found.</Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  searchBar: {
+  container: { flex: 1, backgroundColor: '#fff' },
+  searchContainer: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: SEARCH_BAR_HEIGHT,
-    backgroundColor: 'transparent',
-    padding: 15,
-    justifyContent: 'center',
+    top: 15,
+    left: 15,
+    right: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
     zIndex: 10,
+    backgroundColor: 'transparent',
   },
   searchInput: {
+    flex: 1,
     padding: 10,
     borderRadius: 5,
     backgroundColor: '#eee',
   },
-  searchFilters: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: SEARCH_BAR_HEIGHT,
-    backgroundColor: 'Transparent',
-    padding: 15,
+  filterButton: {
+    marginLeft: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    backgroundColor: '#eee',
   },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  filtersContainer: {
+    position: 'absolute',
+    top: SHEET_TOP,
+    left: 15,
+    right: 15,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 10,
+    zIndex: 11,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  filtersHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  filterOption: { marginBottom: 10 },
+  filterLabel: { fontWeight: 'bold', marginBottom: 5 },
+  filterOptionsRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  filterOptionButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    backgroundColor: '#eee',
+    marginRight: 5,
+    marginBottom: 5,
+  },
+  filterOptionButtonSelected: { backgroundColor: '#007bff' },
+  filterOptionText: { color: 'black' },
+  filterOptionTextSelected: { color: 'white' },
   mapContainer: {
     position: 'absolute',
     top: 0,
@@ -360,12 +659,10 @@ const styles = StyleSheet.create({
     height: height * 0.5,
     zIndex: 0,
   },
-  map: {
-    flex: 1,
-  },
+  map: { flex: 1 },
   sheetContainer: {
     position: 'absolute',
-    top: 0,
+    top: SHEET_TOP,
     left: 0,
     right: 0,
     bottom: 0,
@@ -381,13 +678,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     backgroundColor: 'white',
-    paddingBottom: 100, // Ensure the last item isn't hidden under the nav bar.
-  },
-  headerItem: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ccc',
+    paddingBottom: TAB_BAR_HEIGHT + 20,
   },
   listItem: {
     padding: 15,
@@ -401,20 +692,55 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  listItemText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  listItemSubText: {
-    color: 'gray',
-  },
+  listItemText: { fontSize: 18, fontWeight: 'bold' },
+  listItemSubText: { color: 'gray', marginTop: 5 },
   bookButton: {
     marginTop: 10,
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
   },
-  bookButtonText: {
-    color: 'white',
-  },
+  bookButtonText: { color: 'white' },
 });
+
+/*MAP MARKERS PRACTICE CODE IS FROM GOOGLE
+
+interface Coordinate {
+    latitude: 41.78;
+    longitude: -88.1535;
+}
+
+interface MarkerData {
+  coordinate: Coordinate;
+  title: string;
+  description: string;
+}
+
+interface MapProps {
+  markers: MarkerData[];
+}
+
+const MapComponent: React.FC<MapProps> = ({ markers }) => {
+  const initialRegion = {
+    latitude: 41.78,
+    longitude: -88.1535,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView style={styles.map} initialRegion={initialRegion}>
+        {markers.map((marker, index) => (
+          <Marker
+            key={index}
+            coordinate={marker.coordinate}
+            title={marker.title}
+            description={marker.description}
+          />
+        ))}
+      </MapView>
+    </View>
+  );
+};
+*/
