@@ -30,6 +30,9 @@ import onboarding3 from "@/assets/images/onboarding3.png";
 import defaultProfile from "@/assets/images/defaultProfile.png";
 import wager from "@/assets/icons/wager.png";
 import calendar from "@/assets/icons/calendar.png";
+import facebook from "@/assets/icons/facebook.png";
+import Instagram from "@/assets/icons/Instagram.png";
+import snapchat from "@/assets/icons/snapchat.png";
 
 export const images = {
     onboarding1,
@@ -66,7 +69,10 @@ export const icons = {
     target,
     to,
     wager,
-    calendar
+    calendar,
+    facebook,
+    Instagram,
+    snapchat
 };
 
 export const onboarding = [
