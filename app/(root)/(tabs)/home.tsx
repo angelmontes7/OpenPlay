@@ -20,6 +20,7 @@ import { fetchAPI } from '@/lib/fetch';
 import { icons } from '@/constants';
 import InputField from '@/components/InputField';
 import CustomButton from '@/components/CustomButton';
+import * as Location from 'expo-location'
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60;
@@ -50,6 +51,16 @@ export default function Home() {
   const [showDOBModal, setShowDOBModal] = useState(false);
   const [data, setData] = useState<{ dob: string } | null>(null);
   
+  // Location
+  const [errorMsg, setErrorMsg] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [region, setRegion] = useState({
+    latitude: 41.7725,
+    longitude: -88.1535,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
 
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -87,8 +98,39 @@ export default function Home() {
     }
   }, [contentHeight, maxSheetPos, sheetPosition]);
 
+  useEffect(() => {
+    watchUserLocation();
+  }, []);
+  
   const [scrollEnabled, setScrollEnabled] = useState(false);
 
+  const watchUserLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+  
+    if (status !== "granted") {
+      setErrorMsg('Permission to location was not granted');
+      return;
+    }
+  
+    await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 10000, // Update every 10 seconds
+        distanceInterval: 10, // Update every 10 meters
+      },
+      (location) => {
+        const { latitude, longitude } = location.coords;
+        setLatitude(latitude);
+        setLongitude(longitude);
+        setRegion({
+          latitude,
+          longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        });
+      }
+    );
+  };
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -535,13 +577,16 @@ export default function Home() {
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
-          initialRegion={{
-            latitude: 41.7725,
-            longitude: -88.1535,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
+          region={region}
         >
+          {/* User Location Marker */}
+          {latitude && longitude && (
+            <Marker
+              coordinate={{ latitude, longitude }}
+              title="Your Location"
+              pinColor="blue"
+            />
+          )}
           {/* Render markers for each filtered court */}
           {filteredCourts.map(court => (
             <Marker
