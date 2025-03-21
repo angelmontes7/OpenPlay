@@ -33,7 +33,7 @@ const containerHeight = height - SHEET_TOP;
 interface Court {
   id: string;
   name: string;
-  location: string;
+  address: string;
   available: boolean;
   sport: string;
   distance: number; // in miles
@@ -45,6 +45,7 @@ interface Court {
 
 export default function Home() {
   const { user } = useUser();
+  const [courtData, setCourtData] = useState<Court[]>([]);
 
   // Consts for DOB check
   const [dob, setDob] = useState<string | null>(null);
@@ -98,8 +99,46 @@ export default function Home() {
     }
   }, [contentHeight, maxSheetPos, sheetPosition]);
 
+
   useEffect(() => {
     watchUserLocation();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchFacilities = async () => {
+      try {
+        const response = await fetch('/(api)/sports_facilities'); // Replace with your actual API endpoint
+        if (!response.ok) {
+          throw new Error('Failed to fetch facilities');
+        }
+        const data = await response.json();
+
+        // Map the API response to the `Court` interface
+        const mappedData: Court[] = data.map((facility: any) => ({
+          id: facility.id.toString(),
+          name: facility.name,
+          address: facility.address,
+          available: true, // Set this based on your logic
+          sport: facility.sports,
+          distance: 0, // Placeholder, calculate based on user location if needed
+          popularity: 0, // Placeholder, as it's not in your database
+          type: facility.free_vs_paid,
+          capacity: parseInt(facility.capacity, 10),
+          coordinate: {
+            latitude: parseFloat(facility.coordinates.x), // Assuming `coordinates` is a POINT type
+            longitude: parseFloat(facility.coordinates.y),
+          },
+        }));
+
+        setCourtData(mappedData);
+      } catch (error) {
+        console.error('Error fetching facilities:', error);
+        setErrorMsg('Failed to load facilities');
+      }
+    };
+
+    fetchFacilities();
   }, []);
   
   const [scrollEnabled, setScrollEnabled] = useState(false);
@@ -159,82 +198,6 @@ export default function Home() {
     })
   ).current;
 
-  // Updated sample data with coordinates in Naperville, IL.
-  const courtData: Court[] = [
-    {
-      id: '1',
-      name: 'Downtown Basketball Court',
-      location: '5th Avenue',
-      available: true,
-      sport: 'Basketball',
-      distance: 2,
-      popularity: 4,
-      type: 'Paid',
-      capacity: 15,
-      coordinate: { latitude: 41.7801, longitude: -88.1501 },
-    },
-    {
-      id: '2',
-      name: 'Central Park Tennis Court',
-      location: 'Main Street',
-      available: false,
-      sport: 'Tennis',
-      distance: 6,
-      popularity: 3,
-      type: 'Free',
-      capacity: 8,
-      coordinate: { latitude: 41.7750, longitude: -88.1600 },
-    },
-    {
-      id: '3',
-      name: 'City Soccer Field',
-      location: 'Broadway',
-      available: true,
-      sport: 'Soccer',
-      distance: 12,
-      popularity: 5,
-      type: 'Paid',
-      capacity: 60,
-      coordinate: { latitude: 41.7700, longitude: -88.1550 },
-    },
-    {
-      id: '4',
-      name: 'Westside Gym Court',
-      location: '7th Street',
-      available: true,
-      sport: 'Basketball',
-      distance: 3,
-      popularity: 4,
-      type: 'Free',
-      capacity: 20,
-      coordinate: { latitude: 41.7650, longitude: -88.1450 },
-    },
-    {
-      id: '5',
-      name: 'Lakeside Lacrosse Court',
-      location: 'Lake Avenue',
-      available: false,
-      sport: 'Lacrosse',
-      distance: 16,
-      popularity: 2,
-      type: 'Paid',
-      capacity: 25,
-      coordinate: { latitude: 41.7720, longitude: -88.1650 },
-    },
-    {
-      id: '6',
-      name: 'Highland Park Tennis Court',
-      location: 'Highland Blvd',
-      available: true,
-      sport: 'Tennis',
-      distance: 4,
-      popularity: 3,
-      type: 'Free',
-      capacity: 4,
-      coordinate: { latitude: 41.7780, longitude: -88.1400 },
-    },
-  ];
-
   // Filter option arrays.
   const sportOptions = ["Soccer", "Basketball", "Football", "Baseball", "Tennis", "Pickle-ball", "Lacrosse"];
   const availabilityOptions = ["Open", "Currently in Use"];
@@ -287,7 +250,7 @@ export default function Home() {
     <View style={styles.listItem}>
       <Text style={styles.listItemText}>{item.name}</Text>
       <Text style={styles.listItemSubText}>
-        {item.location} | {item.sport} | {item.distance} Miles | {item.popularity} Star{item.popularity > 1 ? 's' : ''} | {item.type} | Capacity: {item.capacity}
+        {item.address} | {item.sport} | {item.distance} Miles | {item.popularity} Star{item.popularity > 1 ? 's' : ''} | {item.type} | Capacity: {item.capacity}
       </Text>
       <TouchableOpacity
         style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
