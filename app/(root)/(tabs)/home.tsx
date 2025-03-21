@@ -37,11 +37,15 @@ interface Court {
   address: string;
   available: boolean;
   sport: string;
-  distance: number; // in miles
+  distance: number; // in miles BECAUSE THIS AMERICA RAHHHHHHHH
   popularity: number; // star rating (1-5)
   type: string; // "Free" or "Paid"
   capacity: number;
   coordinate: { latitude: number; longitude: number }; // added coordinate field
+  description: string;
+  amenities: string; 
+  website: string; 
+  stars: number; 
 }
 
 export default function Home() {
@@ -147,16 +151,20 @@ export default function Home() {
             id: facility.id.toString(),
             name: facility.name,
             address: facility.address,
-            available: true, // Set this based on your logic
+            available: true, // Need to create a function that calculates this
             sport: facility.sports,
             distance: calculateDistance(latitude, longitude, courtLatitude, courtLongitude), // Calculate distance
-            popularity: 0, // Placeholder, as it's not in your database
+            popularity: facility.stars, // Need to create a function that calculates this
             type: facility.free_vs_paid,
             capacity: parseInt(facility.capacity, 10),
             coordinate: {
               latitude: courtLatitude,
               longitude: courtLongitude,
             },
+            description: facility.description, 
+            amenities: facility.amenities, 
+            website: facility.website, 
+            stars: facility.stars, 
           };
         });
   
@@ -220,8 +228,8 @@ export default function Home() {
     );
   };
 
-  const handleViewDetails = (courtName: string, courtDetails: string) => {
-    setSelectedCourt({ name: courtName, details: courtDetails });
+  const handleViewDetails = (court: Court) => {
+    setSelectedCourt(court);
     setIsFacilityDetailsVisible(true);
   };
 
@@ -315,7 +323,7 @@ export default function Home() {
       <TouchableOpacity
         style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
         disabled={!item.available}
-        onPress={() => handleViewDetails(item.name, `Address: ${item.address}\nSport: ${item.sport}\nCapacity: ${item.capacity}`)} // Pass court details
+        onPress={() => handleViewDetails(item)} // Pass the entire court object
       >
         <Text style={styles.bookButtonText}>
           {item.available ? 'View Details' : 'Unavailable'}
@@ -607,8 +615,14 @@ export default function Home() {
         <FacilityDetails
           visible={isFacilityDetailsVisible}
           onClose={closeModal}
-          courtName={selectedCourt.name}
-          courtDetails={selectedCourt.details}
+          name={selectedCourt.name}
+          address={selectedCourt.address}
+          sports={selectedCourt.sport}
+          capacity={selectedCourt.capacity.toString()}
+          description={selectedCourt.description}
+          amenities={selectedCourt.amenities}
+          website={selectedCourt.website}
+          stars={selectedCourt.stars}
         />
       )}
 
