@@ -20,6 +20,7 @@ import { fetchAPI } from '@/lib/fetch';
 import { icons } from '@/constants';
 import InputField from '@/components/InputField';
 import CustomButton from '@/components/CustomButton';
+import FacilityDetails from '@/components/FacilityDetails';
 import * as Location from 'expo-location'
 
 const { height } = Dimensions.get('window');
@@ -47,6 +48,8 @@ export default function Home() {
   const { user } = useUser();
   const [courtData, setCourtData] = useState<Court[]>([]);
 
+  const [isFacilityDetailsVisible, setIsFacilityDetailsVisible] = useState(false);
+  const [selectedCourt, setSelectedCourt] = useState<{ name: string; details: string } | null>(null);
   // Consts for DOB check
   const [dob, setDob] = useState<string | null>(null);
   const [showDOBModal, setShowDOBModal] = useState(false);
@@ -72,6 +75,7 @@ export default function Home() {
   const [selectedPopularity, setSelectedPopularity] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [scrollEnabled, setScrollEnabled] = useState(false);
   // Track FlatList content height.
   const [contentHeight, setContentHeight] = useState(0);
   // Compute the available visible area for content (container height minus tab bar)
@@ -86,6 +90,26 @@ export default function Home() {
   });
   const lastSheetPosition = useRef(sheetPositionValue.current);
   const listScrollOffset = useRef(0);
+
+  // Check if user has DOB set.
+  useEffect(() => {
+    const checkUserDOB = async () => {
+        if (!user?.id) return;
+        try {
+            const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
+            console.log(response);  // Log the response data for debugging
+            setData(response);
+            console.log('Fetched user data:', response);
+      
+            if (response?.dob === null) {
+              setShowDOBModal(true);  // Show the modal if DOB is null
+            }
+        } catch (error) {
+          console.error("Error fetching DOB:", error);
+        }
+    };
+    checkUserDOB();
+  }, [user?.id]);
 
   useEffect(() => {
     if (sheetPositionValue.current > maxSheetPos) {
@@ -113,35 +137,60 @@ export default function Home() {
           throw new Error('Failed to fetch facilities');
         }
         const data = await response.json();
-
+  
         // Map the API response to the `Court` interface
-        const mappedData: Court[] = data.map((facility: any) => ({
-          id: facility.id.toString(),
-          name: facility.name,
-          address: facility.address,
-          available: true, // Set this based on your logic
-          sport: facility.sports,
-          distance: 0, // Placeholder, calculate based on user location if needed
-          popularity: 0, // Placeholder, as it's not in your database
-          type: facility.free_vs_paid,
-          capacity: parseInt(facility.capacity, 10),
-          coordinate: {
-            latitude: parseFloat(facility.coordinates.x), // Assuming `coordinates` is a POINT type
-            longitude: parseFloat(facility.coordinates.y),
-          },
-        }));
-
+        const mappedData: Court[] = data.map((facility: any) => {
+          const courtLatitude = parseFloat(facility.coordinates.x); // Assuming `coordinates` is a POINT type
+          const courtLongitude = parseFloat(facility.coordinates.y);
+  
+          return {
+            id: facility.id.toString(),
+            name: facility.name,
+            address: facility.address,
+            available: true, // Set this based on your logic
+            sport: facility.sports,
+            distance: calculateDistance(latitude, longitude, courtLatitude, courtLongitude), // Calculate distance
+            popularity: 0, // Placeholder, as it's not in your database
+            type: facility.free_vs_paid,
+            capacity: parseInt(facility.capacity, 10),
+            coordinate: {
+              latitude: courtLatitude,
+              longitude: courtLongitude,
+            },
+          };
+        });
+  
         setCourtData(mappedData);
       } catch (error) {
         console.error('Error fetching facilities:', error);
         setErrorMsg('Failed to load facilities');
       }
     };
-
-    fetchFacilities();
-  }, []);
   
-  const [scrollEnabled, setScrollEnabled] = useState(false);
+    if (latitude && longitude) {
+      fetchFacilities();
+    }
+  }, [latitude, longitude]); // Re-fetch facilities when the user's location changes
+
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+  
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in kilometers
+  
+    return parseFloat((distance * 0.621371).toFixed(1)); // Convert to miles and round to 1 decimal place
+  };
+  
 
   const watchUserLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -170,6 +219,17 @@ export default function Home() {
       }
     );
   };
+
+  const handleViewDetails = (courtName: string, courtDetails: string) => {
+    setSelectedCourt({ name: courtName, details: courtDetails });
+    setIsFacilityDetailsVisible(true);
+  };
+
+  const closeModal = () => {
+    setIsFacilityDetailsVisible(false);
+    setSelectedCourt(null);
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -255,34 +315,14 @@ export default function Home() {
       <TouchableOpacity
         style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
         disabled={!item.available}
+        onPress={() => handleViewDetails(item.name, `Address: ${item.address}\nSport: ${item.sport}\nCapacity: ${item.capacity}`)} // Pass court details
       >
         <Text style={styles.bookButtonText}>
-          {item.available ? 'Book Now' : 'Unavailable'}
+          {item.available ? 'View Details' : 'Unavailable'}
         </Text>
       </TouchableOpacity>
     </View>
   );
-
-
-  // Collecting DOB if not set
-  useEffect(() => {
-    const checkUserDOB = async () => {
-        if (!user?.id) return;
-        try {
-            const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
-            console.log(response);  // Log the response data for debugging
-            setData(response);
-            console.log('Fetched user data:', response);
-      
-            if (response?.dob === null) {
-              setShowDOBModal(true);  // Show the modal if DOB is null
-            }
-        } catch (error) {
-          console.error("Error fetching DOB:", error);
-        }
-    };
-    checkUserDOB();
-  }, [user?.id]);
 
   const handleSaveDOB = async () => {
     if (!dob) {
@@ -561,6 +601,16 @@ export default function Home() {
           ))}
         </MapView>
       </View>
+      
+      {/* Details Modal */}
+      {selectedCourt && (
+        <FacilityDetails
+          visible={isFacilityDetailsVisible}
+          onClose={closeModal}
+          courtName={selectedCourt.name}
+          courtDetails={selectedCourt.details}
+        />
+      )}
 
       {/* Draggable List Sheet */}
       {filteredCourts.length > 0 ? (
@@ -710,45 +760,3 @@ const styles = StyleSheet.create({
   },
   bookButtonText: { color: 'white' },
 });
-
-/*MAP MARKERS PRACTICE CODE IS FROM GOOGLE
-
-interface Coordinate {
-    latitude: 41.78;
-    longitude: -88.1535;
-}
-
-interface MarkerData {
-  coordinate: Coordinate;
-  title: string;
-  description: string;
-}
-
-interface MapProps {
-  markers: MarkerData[];
-}
-
-const MapComponent: React.FC<MapProps> = ({ markers }) => {
-  const initialRegion = {
-    latitude: 41.78,
-    longitude: -88.1535,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  };
-
-  return (
-    <View style={styles.container}>
-      <MapView style={styles.map} initialRegion={initialRegion}>
-        {markers.map((marker, index) => (
-          <Marker
-            key={index}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            description={marker.description}
-          />
-        ))}
-      </MapView>
-    </View>
-  );
-};
-*/
