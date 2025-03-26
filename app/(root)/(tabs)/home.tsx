@@ -20,6 +20,8 @@ import { fetchAPI } from '@/lib/fetch';
 import { icons } from '@/constants';
 import InputField from '@/components/InputField';
 import CustomButton from '@/components/CustomButton';
+import FacilityDetails from '@/components/FacilityDetails';
+import * as Location from 'expo-location'
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60;
@@ -32,43 +34,39 @@ const containerHeight = height - SHEET_TOP;
 interface Court {
   id: string;
   name: string;
-  location: string;
+  address: string;
   available: boolean;
-  sport: string;
-  distance: number; // in miles
-  popularity: number; // star rating (1-5)
-  type: string; // "Free" or "Paid"
-  capacity: number;
-  coordinate: { latitude: number; longitude: number }; // added coordinate field
 }
 
 export default function Home() {
   const { user } = useUser();
+  const [courtData, setCourtData] = useState<Court[]>([]);
 
+  const [isFacilityDetailsVisible, setIsFacilityDetailsVisible] = useState(false);
+  const [selectedCourt, setSelectedCourt] = useState<{ name: string; details: string } | null>(null);
   // Consts for DOB check
   const [dob, setDob] = useState<string | null>(null);
   const [showDOBModal, setShowDOBModal] = useState(false);
   const [data, setData] = useState<{ dob: string } | null>(null);
   
+  // Location
+  const [errorMsg, setErrorMsg] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [region, setRegion] = useState({
+    latitude: 41.7725,
+    longitude: -88.1535,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
 
   const [search, setSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  // Filter states
-  const [selectedSport, setSelectedSport] = useState<string | null>(null);
-  const [selectedAvailability, setSelectedAvailability] = useState<string | null>(null);
-  const [selectedProximity, setSelectedProximity] = useState<string | null>(null);
-  const [selectedPopularity, setSelectedPopularity] = useState<number | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  // Track FlatList content height.
-  const [contentHeight, setContentHeight] = useState(0);
-  // Compute the available visible area for content (container height minus tab bar)
-  const visibleArea = containerHeight - TAB_BAR_HEIGHT;
-  const maxSheetPos = Math.max(0, visibleArea - contentHeight);
+  // When the sheet is fully expanded (i.e. near 0), we allow inner list scrolling.
+  const [scrollEnabled, setScrollEnabled] = useState(false);
 
-  // Animated value for the sheet’s vertical position.
-  const sheetPosition = useRef(new Animated.Value(maxSheetPos)).current;
-  const sheetPositionValue = useRef(maxSheetPos);
+  // The animated value controls the vertical position of the sheet.
+  const sheetPosition = useRef(new Animated.Value(height * 0.5)).current;
+  const sheetPositionValue = useRef(height * 0.5);
   sheetPosition.addListener(({ value }) => {
     sheetPositionValue.current = value;
   });
@@ -88,6 +86,231 @@ export default function Home() {
   }, [contentHeight, maxSheetPos, sheetPosition]);
 
   const [scrollEnabled, setScrollEnabled] = useState(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState: PanResponderGestureState) => {
+        // If the sheet isn’t fully expanded, always capture the gesture.
+        // When expanded, only capture a downward gesture if the inner list is scrolled to the top.
+        if (!scrollEnabled) {
+          return true;
+        } else if (scrollEnabled && gestureState.dy > 0 && listScrollOffset.current <= 0) {
+          return true;
+        }
+        return false;
+      },
+      onPanResponderGrant: () => {
+        // Record the current sheet position when the gesture starts.
+        lastSheetPosition.current = sheetPositionValue.current;
+      },
+      onPanResponderMove: (_, gestureState: PanResponderGestureState) => {
+        let newPos = lastSheetPosition.current + gestureState.dy;
+        // Constrain the sheet's position between fully expanded (0) and its collapsed position.
+        newPos = Math.min(Math.max(newPos, 0), height * 0.5);
+        sheetPosition.setValue(newPos);
+      },
+      onPanResponderRelease: () => {
+        // Instead of snapping to a fixed position, we leave the sheet at the current position.
+        // If it's nearly fully expanded (close to 0), enable inner list scrolling.
+        if (sheetPositionValue.current < 20) {
+          setScrollEnabled(true);
+        } else {
+          setScrollEnabled(false);
+        }
+        // Flatten any offsets (optional here since we’re not using setOffset)
+        sheetPosition.flattenOffset();
+      },
+    })
+  ).current;
+
+  // Sample court data.
+  const courtData: Court[] = [
+    { id: '1', name: 'Downtown Basketball Court', location: '5th Avenue', available: true },
+    { id: '2', name: 'Central Park Tennis Court', location: 'Main Street', available: false },
+    { id: '3', name: 'City Soccer Field', location: 'Broadway', available: true },
+    { id: '4', name: 'Westside Gym Court', location: '7th Street', available: true },
+    { id: '5', name: 'Lakeside Volleyball Court', location: 'Lake Avenue', available: false },
+    { id: '6', name: 'Highland Park Tennis Court', location: 'Highland Blvd', available: true },
+  ];
+
+  // Use the first court as a sticky header.
+  const headerCourt = courtData[0];
+  const listData = courtData.slice(1);
+
+  // Render an individual court item.
+  const renderCourtItem = ({ item }: { item: Court }) => (
+    <View style={styles.listItem}>
+      <Text style={styles.listItemText}>{item.name}</Text>
+      <Text style={styles.listItemSubText}>{item.location}</Text>
+      <TouchableOpacity
+        style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
+        disabled={!item.available}
+      >
+        <Text style={styles.bookButtonText}>{item.available ? 'Book Now' : 'Unavailable'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Render the sticky header using the first court.
+  const ListHeader = () => (
+    <View style={styles.headerItem}>
+      <Text style={styles.listItemText}>{headerCourt.name}</Text>
+      <Text style={styles.listItemSubText}>{headerCourt.location}</Text>
+      <TouchableOpacity
+        style={[styles.bookButton, { backgroundColor: headerCourt.available ? 'green' : 'gray' }]}
+        disabled={!headerCourt.available}
+      >
+        <Text style={styles.bookButtonText}>
+          {headerCourt.available ? 'Book Now' : 'Unavailable'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+
+  // Collecting DOB if not set
+  useEffect(() => {
+    const checkUserDOB = async () => {
+        if (!user?.id) return;
+        try {
+            const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
+            console.log(response);  // Log the response data for debugging
+            setData(response);
+            console.log('Fetched user data:', response);
+      
+            if (response?.dob === null) {
+              setShowDOBModal(true);  // Show the modal if DOB is null
+            }
+        } catch (error) {
+          console.error("Error fetching DOB:", error);
+        }
+    };
+    checkUserDOB();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (sheetPositionValue.current > maxSheetPos) {
+      Animated.timing(sheetPosition, {
+        toValue: maxSheetPos,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        lastSheetPosition.current = maxSheetPos;
+      });
+    }
+  }, [contentHeight, maxSheetPos, sheetPosition]);
+
+
+  useEffect(() => {
+    watchUserLocation();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchFacilities = async () => {
+      try {
+        const response = await fetch('/(api)/sports_facilities'); // Replace with your actual API endpoint
+        if (!response.ok) {
+          throw new Error('Failed to fetch facilities');
+        }
+        const data = await response.json();
+  
+        // Map the API response to the `Court` interface
+        const mappedData: Court[] = data.map((facility: any) => {
+          const courtLatitude = parseFloat(facility.coordinates.x); // Assuming `coordinates` is a POINT type
+          const courtLongitude = parseFloat(facility.coordinates.y);
+  
+          return {
+            id: facility.id.toString(),
+            name: facility.name,
+            address: facility.address,
+            available: true, // Need to create a function that calculates this
+            sport: facility.sports,
+            distance: calculateDistance(latitude, longitude, courtLatitude, courtLongitude), // Calculate distance
+            popularity: facility.stars, // Need to create a function that calculates this
+            type: facility.free_vs_paid,
+            capacity: parseInt(facility.capacity, 10),
+            coordinate: {
+              latitude: courtLatitude,
+              longitude: courtLongitude,
+            },
+            description: facility.description, 
+            amenities: facility.amenities, 
+            website: facility.website, 
+            stars: facility.stars, 
+          };
+        });
+  
+        setCourtData(mappedData);
+      } catch (error) {
+        console.error('Error fetching facilities:', error);
+        setErrorMsg('Failed to load facilities');
+      }
+    };
+  
+    if (latitude && longitude) {
+      fetchFacilities();
+    }
+  }, [latitude, longitude]); // Re-fetch facilities when the user's location changes
+
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+  
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in kilometers
+  
+    return parseFloat((distance * 0.621371).toFixed(1)); // Convert to miles and round to 1 decimal place
+  };
+  
+
+  const watchUserLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+  
+    if (status !== "granted") {
+      setErrorMsg('Permission to location was not granted');
+      return;
+    }
+  
+    await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 10000, // Update every 10 seconds
+        distanceInterval: 10, // Update every 10 meters
+      },
+      (location) => {
+        const { latitude, longitude } = location.coords;
+        setLatitude(latitude);
+        setLongitude(longitude);
+        setRegion({
+          latitude,
+          longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        });
+      }
+    );
+  };
+
+  const handleViewDetails = (court: Court) => {
+    setSelectedCourt(court);
+    setIsFacilityDetailsVisible(true);
+  };
+
+  const closeModal = () => {
+    setIsFacilityDetailsVisible(false);
+    setSelectedCourt(null);
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -116,82 +339,6 @@ export default function Home() {
       },
     })
   ).current;
-
-  // Updated sample data with coordinates in Naperville, IL.
-  const courtData: Court[] = [
-    {
-      id: '1',
-      name: 'Downtown Basketball Court',
-      location: '5th Avenue',
-      available: true,
-      sport: 'Basketball',
-      distance: 2,
-      popularity: 4,
-      type: 'Paid',
-      capacity: 15,
-      coordinate: { latitude: 41.7801, longitude: -88.1501 },
-    },
-    {
-      id: '2',
-      name: 'Central Park Tennis Court',
-      location: 'Main Street',
-      available: false,
-      sport: 'Tennis',
-      distance: 6,
-      popularity: 3,
-      type: 'Free',
-      capacity: 8,
-      coordinate: { latitude: 41.7750, longitude: -88.1600 },
-    },
-    {
-      id: '3',
-      name: 'City Soccer Field',
-      location: 'Broadway',
-      available: true,
-      sport: 'Soccer',
-      distance: 12,
-      popularity: 5,
-      type: 'Paid',
-      capacity: 60,
-      coordinate: { latitude: 41.7700, longitude: -88.1550 },
-    },
-    {
-      id: '4',
-      name: 'Westside Gym Court',
-      location: '7th Street',
-      available: true,
-      sport: 'Basketball',
-      distance: 3,
-      popularity: 4,
-      type: 'Free',
-      capacity: 20,
-      coordinate: { latitude: 41.7650, longitude: -88.1450 },
-    },
-    {
-      id: '5',
-      name: 'Lakeside Lacrosse Court',
-      location: 'Lake Avenue',
-      available: false,
-      sport: 'Lacrosse',
-      distance: 16,
-      popularity: 2,
-      type: 'Paid',
-      capacity: 25,
-      coordinate: { latitude: 41.7720, longitude: -88.1650 },
-    },
-    {
-      id: '6',
-      name: 'Highland Park Tennis Court',
-      location: 'Highland Blvd',
-      available: true,
-      sport: 'Tennis',
-      distance: 4,
-      popularity: 3,
-      type: 'Free',
-      capacity: 4,
-      coordinate: { latitude: 41.7780, longitude: -88.1400 },
-    },
-  ];
 
   // Filter option arrays.
   const sportOptions = ["Soccer", "Basketball", "Football", "Baseball", "Tennis", "Pickle-ball", "Lacrosse"];
@@ -245,39 +392,19 @@ export default function Home() {
     <View style={styles.listItem}>
       <Text style={styles.listItemText}>{item.name}</Text>
       <Text style={styles.listItemSubText}>
-        {item.location} | {item.sport} | {item.distance} Miles | {item.popularity} Star{item.popularity > 1 ? 's' : ''} | {item.type} | Capacity: {item.capacity}
+        {item.address} | {item.sport} | {item.distance} Miles | {item.popularity} Star{item.popularity > 1 ? 's' : ''} | {item.type} | Capacity: {item.capacity}
       </Text>
       <TouchableOpacity
         style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
         disabled={!item.available}
+        onPress={() => handleViewDetails(item)} // Pass the entire court object
       >
         <Text style={styles.bookButtonText}>
-          {item.available ? 'Book Now' : 'Unavailable'}
+          {item.available ? 'View Details' : 'Unavailable'}
         </Text>
       </TouchableOpacity>
     </View>
   );
-
-
-  // Collecting DOB if not set
-  useEffect(() => {
-    const checkUserDOB = async () => {
-        if (!user?.id) return;
-        try {
-            const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
-            console.log(response);  // Log the response data for debugging
-            setData(response);
-            console.log('Fetched user data:', response);
-      
-            if (response?.dob === null) {
-              setShowDOBModal(true);  // Show the modal if DOB is null
-            }
-        } catch (error) {
-          console.error("Error fetching DOB:", error);
-        }
-    };
-    checkUserDOB();
-  }, [user?.id]);
 
   const handleSaveDOB = async () => {
     if (!dob) {
@@ -536,23 +663,29 @@ export default function Home() {
         <MapView
           style={styles.map}
           initialRegion={{
-            latitude: 41.7725,
-            longitude: -88.1535,
+            latitude: 37.7749,
+            longitude: -122.4194,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
-        >
-          {/* Render markers for each filtered court */}
-          {filteredCourts.map(court => (
-            <Marker
-              key={court.id}
-              coordinate={court.coordinate}
-              title={court.name}
-              description={`${court.sport} - ${court.location}`}
-            />
-          ))}
-        </MapView>
+        />
       </View>
+      
+      {/* Details Modal */}
+      {selectedCourt && (
+        <FacilityDetails
+          visible={isFacilityDetailsVisible}
+          onClose={closeModal}
+          name={selectedCourt.name}
+          address={selectedCourt.address}
+          sports={selectedCourt.sport}
+          capacity={selectedCourt.capacity.toString()}
+          description={selectedCourt.description}
+          amenities={selectedCourt.amenities}
+          website={selectedCourt.website}
+          stars={selectedCourt.stars}
+        />
+      )}
 
       {/* Draggable List Sheet */}
       {filteredCourts.length > 0 ? (
@@ -700,47 +833,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
   },
-  bookButtonText: { color: 'white' },
+  bookButtonText: {
+    color: 'white',
+  },
 });
-
-/*MAP MARKERS PRACTICE CODE IS FROM GOOGLE
-
-interface Coordinate {
-    latitude: 41.78;
-    longitude: -88.1535;
-}
-
-interface MarkerData {
-  coordinate: Coordinate;
-  title: string;
-  description: string;
-}
-
-interface MapProps {
-  markers: MarkerData[];
-}
-
-const MapComponent: React.FC<MapProps> = ({ markers }) => {
-  const initialRegion = {
-    latitude: 41.78,
-    longitude: -88.1535,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  };
-
-  return (
-    <View style={styles.container}>
-      <MapView style={styles.map} initialRegion={initialRegion}>
-        {markers.map((marker, index) => (
-          <Marker
-            key={index}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            description={marker.description}
-          />
-        ))}
-      </MapView>
-    </View>
-  );
-};
-*/

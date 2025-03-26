@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Image, Alert, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform, TextInput, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, Image, Alert, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform, TextInput, TouchableOpacity, ImageBackground } from "react-native";
 import { images, icons } from "@/constants";
 import InputField from "@/components/InputField";
 import { useState } from "react";
@@ -10,6 +10,8 @@ import { ReactNativeModal } from "react-native-modal";
 import { router } from "expo-router";
 import { fetchAPI } from "@/lib/fetch";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Animatable from "react-native-animatable";
 
 const SignUp = () => {
     const { isLoaded, signUp, setActive } = useSignUp();
@@ -157,131 +159,189 @@ const SignUp = () => {
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                    <View className="flex-1 bg-white">
-                        <View>
-                            <Image source={images.onboarding1} className="z-0 w-full h-[250px]" />
-                            <Text className="text-black text-2xl font-JakartaSemiBold left-5">Create Your Account</Text>
+                <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    {/* Hero Section with Sports Background */}
+                    <ImageBackground 
+                        source={require("@/assets/images/sports-stadium.jpg")} // Replace with your sports arena image
+                        className="w-full h-[300px]"
+                    >
+                        <LinearGradient
+                            colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']}
+                            className="w-full h-full flex justify-end p-6"
+                        >
+                            <Animatable.View animation="fadeIn" duration={1000}>
+                                <Text className="text-white text-4xl font-JakartaExtraBold mb-1">Game On!</Text>
+                                <Text className="text-white text-xl font-JakartaMedium">Join the sports betting community</Text>
+                            </Animatable.View>
+                        </LinearGradient>
+                    </ImageBackground>
+                    
+                    {/* Main Content */}
+                    <View className="p-5 bg-white rounded-t-3xl -mt-6">
+                        <View className="flex-row items-center justify-between mb-6">
+                            <Text className="text-black text-2xl font-JakartaBold">Create Account</Text>
+                            <View className="flex-row items-center px-3 py-1 bg-green-100 rounded-full">
+                                <Ionicons name="shield-checkmark" size={16} color="#10B981" />
+                                <Text className="text-green-600 text-xs ml-1 font-JakartaMedium">Secure & Verified</Text>
+                            </View>
                         </View>
-                        <View className="p-5">
+
+                        <InputField
+                            label="Username"
+                            placeholderTextColor="#A0A0A0"
+                            placeholder="Choose a unique username"
+                            icon={icons.person}
+                            value={form.username}
+                            onChangeText={(value) => setForm({ ...form, username: value })}
+                        />
+                        
+                        <InputField
+                            label="Email"
+                            placeholderTextColor="#A0A0A0"
+                            placeholder="Your email address"
+                            icon={icons.email}
+                            value={form.email}
+                            onChangeText={(value) => setForm({ ...form, email: value })}
+                        />
+                        
+                        <View className="relative">
                             <InputField
-                                label="Username"
+                                label="Password"
                                 placeholderTextColor="#A0A0A0"
-                                placeholder="Enter your username"
-                                icon={icons.person}
-                                value={form.username}
-                                onChangeText={(value) => setForm({ ...form, username: value })}
+                                placeholder="Create a strong password"
+                                icon={icons.lock}
+                                secureTextEntry={!showPassword}
+                                value={form.password}
+                                onChangeText={(value) => setForm({ ...form, password: value })}
                             />
+                            <TouchableOpacity
+                                onPress={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-2/3 transform -translate-y-1">
+                                <Ionicons
+                                    name={showPassword ? "eye" : "eye-off"}
+                                    size={20}
+                                    color="gray"
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <View className="relative">
                             <InputField
-                                label="Email"
+                                label="Confirm Password"
                                 placeholderTextColor="#A0A0A0"
-                                placeholder="Enter your email"
-                                icon={icons.email}
-                                value={form.email}
-                                onChangeText={(value) => setForm({ ...form, email: value })}
+                                placeholder="Confirm your password"
+                                icon={icons.lock}
+                                secureTextEntry={!showConfirmPassword}
+                                value={form.confirmPassword}
+                                onChangeText={(value) => setForm({ ...form, confirmPassword: value })}
                             />
-                            <View className="relative">
-                                <InputField
-                                    label="Password"
-                                    placeholderTextColor="#A0A0A0"
-                                    placeholder="Enter your password"
-                                    icon={icons.lock}
-                                    secureTextEntry={!showPassword}
-                                    value={form.password}
-                                    onChangeText={(value) => setForm({ ...form, password: value })}
+                            <TouchableOpacity
+                                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-4 top-2/3 transform -translate-y-1">
+                                <Ionicons
+                                    name={showConfirmPassword ? "eye" : "eye-off"}
+                                    size={20}
+                                    color="gray"
                                 />
-                                <TouchableOpacity
-                                    onPress={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-2/3 transform -translate-y-1">
-                                    <Ionicons
-                                        name={showPassword ? "eye" : "eye-off"}
-                                        size={20}
-                                        color="gray"
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                            <View className="relative">
-                                <InputField
-                                    label="Confirm Password"
-                                    placeholderTextColor="#A0A0A0"
-                                    placeholder="Confirm your password"
-                                    icon={icons.lock}
-                                    secureTextEntry={!showConfirmPassword}
-                                    value={form.confirmPassword}
-                                    onChangeText={(value) => setForm({ ...form, confirmPassword: value })}
-                                />
-                                <TouchableOpacity
-                                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-4 top-2/3 transform -translate-y-1">
-                                    <Ionicons
-                                        name={showConfirmPassword ? "eye" : "eye-off"}
-                                        size={20}
-                                        color="gray"
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                            <Text className={`text-sm mt-1 ${form.password !== form.confirmPassword ? 'text-red-500' : 'text-green-500'}`}>
-                                {form.password && form.confirmPassword ?
-                                    (form.password !== form.confirmPassword ? "Passwords do not match" : "Passwords match")
-                                    : ""}
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <Text className={`text-sm mt-1 ${form.password !== form.confirmPassword ? 'text-red-500' : 'text-green-500'}`}>
+                            {form.password && form.confirmPassword ?
+                                (form.password !== form.confirmPassword ? "Passwords do not match" : "Passwords match")
+                                : ""}
+                        </Text>
+                        
+                        <InputField
+                            label="Date of Birth"
+                            placeholder="MM-DD-YYYY"
+                            placeholderTextColor="#A0A0A0"
+                            icon={icons.calendar}
+                            value={form.dob}
+                            onChangeText={(value) => setForm({ ...form, dob: formatDOB(value) })}
+                            keyboardType="number-pad"
+                        />
+                        
+                        <Text className="text-xs text-gray-500 mt-1 mb-4">
+                            *Age verification required for betting features
+                        </Text>
+
+                        <View className="mt-2 p-4 bg-blue-50 rounded-lg mb-5">
+                            <Text className="text-blue-800 font-JakartaMedium text-sm">
+                                By creating an account, you'll be able to:
                             </Text>
-                            <InputField
-                                label="Date of Birth"
-                                placeholder="MM-DD-YYYY"
-                                placeholderTextColor="#A0A0A0"
-                                icon={icons.calendar}
-                                value={form.dob}
-                                onChangeText={(value) => setForm({ ...form, dob: formatDOB(value) })}
-                                keyboardType="number-pad"
-                            />
-
-                            <CustomButton title="Sign Up" onPress={onSignUpPress} className="mt-6" />
-
-                            <OAuth />
-
-                            <Link href="/sign-in" className='text-lg text-center text-general-200 m-10'>
-                                <Text>Already have an account? </Text>
-                                <Text className="text-primary-500">Log In</Text>
-                            </Link>
+                            <View className="mt-2">
+                                <View className="flex-row items-center mb-1">
+                                    <Ionicons name="location" size={16} color="#0286FF" />
+                                    <Text className="text-gray-700 ml-2">Find sports facilities near you</Text>
+                                </View>
+                                <View className="flex-row items-center mb-1">
+                                    <Ionicons name="cash-outline" size={16} color="#0286FF" />
+                                    <Text className="text-gray-700 ml-2">Place bets with other users</Text>
+                                </View>
+                                <View className="flex-row items-center">
+                                    <Ionicons name="people-outline" size={16} color="#0286FF" />
+                                    <Text className="text-gray-700 ml-2">Join local sports communities</Text>
+                                </View>
+                            </View>
                         </View>
 
-                        <ReactNativeModal
-                            isVisible={verification.state === 'pending'}
-                            onModalHide={() => {
-                                if (verification.state === 'success') setShowSuccessModal(true)
-                            }}>
-                            <View className='bg-white px-7 py-9 rounded-2xl min-h-[300px]'>
-                                <Text className='text-2xl font-JakartaExtraBold mb-2'>Verification</Text>
-                                <Text className='font-Jakarta mb-5'>We have sent a verification code to {form.email}</Text>
-                                <InputField
-                                    label="Code"
-                                    icon={icons.lock}
-                                    placeholder="12345"
-                                    value={verification.code}
-                                    keyboardType="numeric"
-                                    onChangeText={(code) => setVerification({ ...verification, code })}
-                                />
-                                {verification.error && (
-                                    <Text className="text-red-500 text-sm mt-1">
-                                        {verification.error}
-                                    </Text>
-                                )}
-                                <CustomButton title="Verify Email" onPress={onVerifyPress} className="mt-5 bg-success-500" />
-                            </View>
-                        </ReactNativeModal>
+                        <CustomButton 
+                            title="Create Account" 
+                            onPress={onSignUpPress} 
+                            className="mt-2 bg-[#0286FF]" 
+                        />
 
-                        <ReactNativeModal isVisible={showSuccessModal}>
-                            <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
-                                <Image source={images.check} className="w-[110px] mx-auto my-5" />
-                                <Text className='text-3xl font-JakartaBold text-center'> Verified</Text>
-                                <Text className='text-base text-gray-400 font-Jakarta text-center mt-2'>You have successfully verified your account.</Text>
-                                <CustomButton
-                                    title="Browse Home"
-                                    onPress={() => router.replace('/(root)/(tabs)/profile')}
-                                    className='mt-5' />
-                            </View>
-                        </ReactNativeModal>
+                        <OAuth />
+
+                        <Link href="/sign-in" className='mt-6 mb-8'>
+                            <Text className="text-center text-gray-600">
+                                Already have an account? <Text className="text-[#0286FF] font-JakartaBold">Sign In</Text>
+                            </Text>
+                        </Link>
                     </View>
+
+                    <ReactNativeModal
+                        isVisible={verification.state === 'pending'}
+                        onModalHide={() => {
+                            if (verification.state === 'success') setShowSuccessModal(true)
+                        }}>
+                        <View className='bg-white px-7 py-9 rounded-2xl min-h-[300px]'>
+                            <Text className='text-2xl font-JakartaExtraBold mb-2'>Verification</Text>
+                            <Text className='font-Jakarta mb-5'>We've sent a verification code to {form.email}</Text>
+                            <InputField
+                                label="Verification Code"
+                                icon={icons.lock}
+                                placeholder="Enter 6-digit code"
+                                value={verification.code}
+                                keyboardType="numeric"
+                                onChangeText={(code) => setVerification({ ...verification, code })}
+                            />
+                            {verification.error && (
+                                <Text className="text-red-500 text-sm mt-1">
+                                    {verification.error}
+                                </Text>
+                            )}
+                            <CustomButton title="Verify Email" onPress={onVerifyPress} className="mt-5 bg-success-500" />
+                        </View>
+                    </ReactNativeModal>
+
+                    <ReactNativeModal isVisible={showSuccessModal}>
+                        <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
+                            <Animatable.View animation="bounceIn" duration={1500}>
+                                <Image source={images.check} className="w-[110px] mx-auto my-5" />
+                            </Animatable.View>
+                            <Text className='text-3xl font-JakartaBold text-center'>You're In!</Text>
+                            <Text className='text-base text-gray-500 font-Jakarta text-center mt-2 mb-2'>
+                                Your account has been verified. Time to find games and place your bets!
+                            </Text>
+                            <CustomButton
+                                title="Explore Nearby Venues"
+                                onPress={() => router.replace('/(root)/(tabs)/home')}
+                                className='mt-5 bg-[#0286FF]' 
+                            />
+                        </View>
+                    </ReactNativeModal>
                 </ScrollView>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>

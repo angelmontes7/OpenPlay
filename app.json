@@ -28,7 +28,9 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      ["expo-router",{"origin": "https://openplay.com/"}],
+      ["expo-router",
+        {
+          "origin": "https://openplay.com/"}],
       [
         "expo-splash-screen",
         {
@@ -36,6 +38,12 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow OpenPlay to use your location."
         }
       ]
     ],

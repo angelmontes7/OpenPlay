@@ -80,21 +80,21 @@ export const onboarding = [
         id: 1,
         title: "Hit the Court: Find Your Next Pickup Game",
         description:
-            "Locate courts, see who's playing, and join games instantly",
+            "Locate courts, join games instantly, and challenge others to friendly wagers",
         image: images.onboarding1,
     },
     {
         id: 2,
         title: "Kickoff Anywhere: Join Local Matches",
         description:
-            "Find fields, connect with players, and jump into matches.",
+            "Find fields, connect with players, and bet on match outcomes.",
         image: images.onboarding2,
     },
     {
         id: 3,
         title: "Step Up to the Plate: Play Ball Anytime",
         description:
-            "Discover fields, organize games, and join local teams.",
+            "Discover fields, organize games, and join local teams. Place bets and win rewards",
         image: images.onboarding3,
     },
 ];

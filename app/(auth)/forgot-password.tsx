@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, useSignIn } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
-import { ScrollView, Text, View, TextInput, Alert, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
+import { ScrollView, Text, View, TextInput, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform, TouchableOpacity } from 'react-native';
 import CustomButton from '@/components/CustomButton';
 import { Link } from 'expo-router';
+import { Ionicons } from "@expo/vector-icons";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +13,8 @@ const ForgotPasswordPage = () => {
   const [successfulCreation, setSuccessfulCreation] = useState(false);
   const [secondFactor, setSecondFactor] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCode, setShowCode] = useState(false);
 
   const router = useRouter();
   const { isSignedIn } = useAuth();
@@ -85,55 +88,118 @@ const ForgotPasswordPage = () => {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <View className="flex-1 bg-white">
-            <View className="p-5">
-              <Text className="text-black text-2xl font-JakartaSemiBold">Forgot Password?</Text>
-              <Text className="text-gray-500 text-sm mb-5">Enter your email to receive a password reset code.</Text>
+        <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View className="flex-1 bg-gray-50">
+            {/* App Logo and Header */}
+            {/* #TODO: Create actual logo */}
+            {/* #TODO: Create actual logo */}
+            {/* #TODO: Create actual logo */}
+            {/* #TODO: Create actual logo */}
+            <View className="items-center mt-10 mb-4">
+              <View className="flex-row items-center justify-center">
+                <Ionicons name="location" size={30} color="#1E88E5" />
+                <Ionicons name="trophy" size={28} color="#FF6F00" style={{ marginLeft: 8 }} />
+              </View>
+              <Text className="text-2xl font-JakartaBold text-center mt-2">OpenPlay</Text>
+              <Text className="text-gray-600 text-sm text-center">Find, Play, Bet, Win</Text>
+            </View>
+            
+            {/* Card Container */}
+            <View className="mx-5 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <Text className="text-black text-xl font-JakartaSemiBold mb-1">Forgot Password?</Text>
+              <Text className="text-gray-500 text-sm mb-6">We'll help you get back to finding courts and placing bets!</Text>
 
-              {!successfulCreation && (
+              {!successfulCreation ? (
                 <>
-                  <TextInput
-                    placeholder="Enter your email"
-                    value={email}
-                    onChangeText={(value) => setEmail(value)}
-                    className="border border-gray-300 rounded-lg p-3 mb-4"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
+                  <View className="mb-5">
+                    <Text className="text-gray-700 mb-2 font-JakartaMedium">Email Address</Text>
+                    <TextInput
+                      placeholder="Enter your account email"
+                      value={email}
+                      onChangeText={(value) => setEmail(value)}
+                      className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <CustomButton 
+                    title="Send Reset Code" 
+                    onPress={create} 
+                    className="bg-blue-600" 
+                    textClassName="font-JakartaSemiBold"
                   />
-                  <CustomButton title="Send password reset code" onPress={create} className="mt-6" />
-                  {error && <Text className="text-red-500 mt-2">{error}</Text>}
+                  {error && <Text className="text-red-500 mt-3 text-center">{error}</Text>}
+                </>
+              ) : (
+                <>
+                  <View className="mb-4">
+                    <Text className="text-gray-700 mb-2 font-JakartaMedium">New Password</Text>
+                    <TextInput
+                      placeholder="Create a secure password"
+                      placeholderTextColor="#A0A0A0"
+                      value={password}
+                      onChangeText={(value) => setPassword(value)}
+                      className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-2/3 transform -translate-y-1">
+                      <Ionicons
+                          name={showPassword ? "eye" : "eye-off"}
+                          size={20}
+                          color="gray"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View className="mb-5">
+                    <Text className="text-gray-700 mb-2 font-JakartaMedium">Reset Code</Text>
+                    <TextInput
+                      placeholder="Enter the code from your email"
+                      placeholderTextColor="#A0A0A0"
+                      value={code}
+                      onChangeText={(value) => setCode(value)}
+                      className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                      secureTextEntry={!showCode}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowCode(!showCode)}
+                      className="absolute right-4 top-2/3 transform -translate-y-1">
+                      <Ionicons
+                          name={showCode ? "eye" : "eye-off"}
+                          size={20}
+                          color="gray"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <CustomButton 
+                    title="Reset Password" 
+                    onPress={reset} 
+                    className="bg-blue-600" 
+                    textClassName="font-JakartaSemiBold"
+                  />
+                  {error && <Text className="text-red-500 mt-3 text-center">{error}</Text>}
                 </>
               )}
 
-              {successfulCreation && (
-                <>
-                  <TextInput
-                    placeholder="Enter your new password"
-                    placeholderTextColor="#A0A0A0"
-                    value={password}
-                    onChangeText={(value) => setPassword(value)}
-                    className="border border-gray-300 rounded-lg p-3 mb-4"
-                    secureTextEntry
-                  />
-                  <TextInput
-                    placeholder="Enter the password reset code"
-                    placeholderTextColor="#A0A0A0"
-                    value={code}
-                    onChangeText={(value) => setCode(value)}
-                    className="border border-gray-300 rounded-lg p-3 mb-4"
-                  />
-                  <CustomButton title="Reset" onPress={reset} className="mt-6" />
-                  {error && <Text className="text-red-500 mt-2">{error}</Text>}
-                </>
+              {secondFactor && (
+                <View className="bg-amber-50 p-3 rounded-lg mt-4 border border-amber-200">
+                  <Text className="text-amber-700 text-center">Two-factor authentication is required to continue.</Text>
+                </View>
               )}
-
-              {secondFactor && <Text className="text-red-500 mt-2">2FA is required, but this UI does not handle that</Text>}
-
-              <Link href="/(auth)/sign-in" className='text-lg text-center text-general-200 mt-10'>
-                <Text>Remembered your password? </Text>
-                <Text className="text-primary-500">Log In</Text>
+            </View>
+            
+            <View className="my-8 items-center">
+              <Link href="/(auth)/sign-in" className="flex-row items-center">
+                <Text className="text-gray-600">Remembered your password? </Text>
+                <Text className="text-blue-600 font-JakartaMedium">Sign In</Text>
               </Link>
+            </View>
+            
+            {/* Support and Help */}
+            <View className="mb-10 mx-5 p-4 bg-gray-100 rounded-lg">
+              <Text className="text-center text-gray-600 text-sm">Need help? Contact our support team</Text>
+              <Text className="text-center text-blue-600 text-sm font-JakartaMedium mt-1">support@openplay.com</Text>
             </View>
           </View>
         </ScrollView>
