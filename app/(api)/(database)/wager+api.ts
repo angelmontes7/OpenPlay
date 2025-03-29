@@ -3,9 +3,9 @@ import { neon } from '@neondatabase/serverless';
 export async function POST(request: Request) {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);
-        const { clerkId, wagerAmount, wagerType } = await request.json();
+        const { clerkId, wagerAmount, wagerType, court_id } = await request.json();
 
-        if (!clerkId || !wagerAmount || !wagerType) {
+        if (!clerkId || !wagerAmount || !wagerType || !court_id) {
             return Response.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -15,9 +15,9 @@ export async function POST(request: Request) {
 
         // Insert the wager into the database
         const response = await sql`
-            INSERT INTO wagers (clerk_id, amount, type, status)
-            VALUES (${clerkId}, ${wagerAmount}, ${wagerType}, 'pending')
-            RETURNING id, amount, type, status;
+            INSERT INTO wagers (clerk_id, amount, type, status, court_id)
+            VALUES (${clerkId}, ${wagerAmount}, ${wagerType}, 'pending', ${court_id})
+            RETURNING id, amount, type, status, court_id, created_at;
         `;
 
         return new Response(JSON.stringify(response[0]), { status: 200 });
@@ -39,8 +39,10 @@ export async function GET(request: Request) {
 
         // Retrieve wagers for the given clerkId
         const response = await sql`
-            SELECT * FROM wagers WHERE clerk_id = ${clerkId} ORDER BY created_at DESC;
+            SELECT * FROM wagers WHERE status = 'pending' ORDER BY created_at DESC;
         `;
+
+        console.log("Fetched wagers:", response);
 
         return new Response(JSON.stringify(response), { status: 200 });
     } catch (error) {

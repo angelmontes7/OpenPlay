@@ -9,19 +9,22 @@ import {
   StyleSheet,
 } from 'react-native';
 import CustomButton from '@/components/CustomButton';
+import { useUser } from '@clerk/clerk-expo';
 
 interface CreateWagerModalProps {
   visible: boolean;
   onClose: () => void;
-  court: { id: string; name: string; distance: number }[];
+  courts: { id: string; name: string; distance: number }[];
   clerkId: string;
-  onCreate: (wager: { username: string; amount: string; court: { id: string; name: string; distance: number } }) => void;
+  onCreate: (wager: { username: string; amount: string; type: string; court: { id: string; name: string; distance: number } }) => void;
 }
 
 const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, courts, clerkId, onCreate }) => {
+  const { user } = useUser();
   const [username, setUsername] = useState('');
   const [amount, setAmount] = useState('');
-  const [selectedCourt, setSelectedCourt] = useState(null);
+  const [type, setWagerType] = useState('');
+  const [selectedCourt, setSelectedCourt] = useState<{ id: string; name: string; distance: number } | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
@@ -43,7 +46,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
   }, [visible, clerkId]);
 
   const handleCreateWager = async () => {
-    if (!username || !amount || !selectedCourt) {
+    if (!username || !amount || !type || !selectedCourt) {
       alert('Please fill out all fields.');
       return;
     }
@@ -53,7 +56,8 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
       return;
     }
 
-    onCreate({ username, amount, court: selectedCourt });
+    const wager = { clerkId: clerkId, wagerAmount: amount, wagerType: type, court_id: selectedCourt.id, username: username };
+    console.log('Creating wager:', { username, amount, court: selectedCourt });
 
     try {
       const response = await fetch('/(api)/balance', {
@@ -62,9 +66,9 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          clerkId,
+          clerkId: user?.id,
           type: 'subtract',
-          amount,
+          amount: parseFloat(amount),
         }),
       });
 
@@ -77,6 +81,22 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
       console.error('Error updating balance:', error);
     }
 
+    try {
+      const response = await fetch('/(api)/wager', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(wager),
+      });
+
+      const data = await response.json();
+      console.log('Created wager:', data);
+    } catch (error) {
+      console.error('Error creating wager:', error);
+    }
+
+    //fetchWagers();
     handleClose();
   };
 
@@ -94,7 +114,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
           <Text style={styles.header}>Create Wager</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter Username/ID"
+            placeholder="Enter Username"
             value={username}
             onChangeText={setUsername}
           />
@@ -104,6 +124,12 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Choose Wager Type"
+            value={type}
+            onChangeText={setWagerType}
           />
           <Text style={styles.subHeader}>Select Court:</Text>
           <FlatList
@@ -177,3 +203,4 @@ const styles = StyleSheet.create({
 });
 
 export default CreateWagerModal;
+

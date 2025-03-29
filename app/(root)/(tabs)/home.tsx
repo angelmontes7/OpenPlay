@@ -53,8 +53,8 @@ export default function Home() {
   
   // Location
   const [errorMsg, setErrorMsg] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState(); //-88.1535
+  const [latitude, setLatitude] = useState(); //41.7725
   const [region, setRegion] = useState({
     latitude: 41.7725,
     longitude: -88.1535,
@@ -112,7 +112,7 @@ export default function Home() {
       return;
     }
   
-    await Location.watchPositionAsync(
+    /*await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.High,
         timeInterval: 10000, // Update every 10 seconds
@@ -129,7 +129,18 @@ export default function Home() {
           longitudeDelta: 0.05,
         });
       }
-    );
+    );*/
+    const defaultLatitude = 41.7742; // Replace with your desired latitude
+  const defaultLongitude = -88.1440; // Replace with your desired longitude
+
+  setLatitude(defaultLatitude);
+  setLongitude(defaultLongitude);
+  setRegion({
+    latitude: defaultLatitude,
+    longitude: defaultLongitude,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
   };
   const panResponder = useRef(
     PanResponder.create({
