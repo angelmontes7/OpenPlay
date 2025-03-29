@@ -45,10 +45,9 @@ const Wagers = () => {
                 const response = await fetchAPI(`/(api)/wager`, {
                     method: "GET",
                 });
-
-                if (response.wagers) {
-                    setWagers(wagers);
-                }
+                
+                setWagers(response);
+                
             } catch (error) {
                 console.error("Error fetching wagers:", error);
                 setError("Error fetching wagers");
@@ -160,51 +159,30 @@ const Wagers = () => {
                         <View className="mt-6 space-y-4 mx-auto w-3/4">
                             <CustomButton title="Create a Wager" onPress={() => setCurrentView("create")} className="bg-green-500" />
                             <Text className="text-lg font-bold mt-4">Available Wagers:</Text>
-                            {wagers.length === 0 ? (
-                                <Text className="text-gray-500">No wagers available.</Text>
-                            ) : (
-                                <FlatList
-                                    data={wagers}
-                                    keyExtractor={(item) => item.id}
-                                    renderItem={({ item }) => (
-                                        <View className="bg-gray-100 p-4 rounded-lg mb-2">
-                                            <Text className="text-black font-bold">💰 Wager: ${item.amount}</Text>
-                                            <Text className="text-gray-600">Participants: {item.participants?.length ?? 0}</Text>
-                                            <CustomButton title="Join Wager" onPress={() => handleJoinWager(item)} className="bg-yellow-500 mt-2" />
-                                        </View>
-                                    )}
-                                />
-                            )}
                             <View className="p-4">
-                                {transactions.length === 0 ? (
-                                    <Text className="text-center text-gray-400">No Transactions</Text>
+                                {wagers.length === 0 ? (
+                                    <Text className="text-center text-gray-400">No Wagers Available</Text>
                                 ) : (
-                                    transactions.map((transaction) => (
-                                        <View
-                                            key={transaction.id}
-                                            className="flex-row items-center justify-between bg-gray-100 p-3 rounded-lg mb-2"
-                                        >
-                                            <View className="flex-row items-center">
-                                                <Ionicons
-                                                    name={transaction.type === "add" ? "add-circle" : "remove-circle"}
-                                                    size={24}
-                                                    color={transaction.type === "add" ? "green" : "red"}
-                                                />
-                                                <View className="ml-3">
-                                                    <Text className="font-semibold">
-                                                        {transaction.type === "add" ? "Added Money" : "Withdrew Money"}
-                                                    </Text>
-                                                    <Text className="text-gray-500 text-xs">{transaction.date}</Text>
-                                                </View>
-                                            </View>
-                                            <Text
-                                                className={`font-semibold ${
-                                                    transaction.type === "add" ? "text-green-600" : "text-red-600"
-                                                }`}
-                                            >
-                                                {transaction.type === "add" ? `+ $${transaction.amount}` : `- $${transaction.amount}`}
+                                    wagers.map((wager) => (
+                                    <View
+                                        key={wager.id}
+                                        className="flex-row items-center justify-between bg-gray-100 p-3 rounded-lg mb-2"
+                                    >
+                                        <View className="flex-row items-center">
+                                        <Ionicons name="cash-outline" size={24} color="green" />
+                                        <View className="ml-3">
+                                            <Text className="font-semibold">Wager Amount: ${wager.amount}</Text>
+                                            <Text className="text-gray-500 text-xs">
+                                            Participants: {wager.participants?.length ?? 0}
                                             </Text>
                                         </View>
+                                        </View>
+                                        <CustomButton
+                                        title="Join"
+                                        onPress={() => handleJoinWager(wager)}
+                                        className="bg-blue-500 px-4 py-2 rounded-lg"
+                                        />
+                                    </View>
                                     ))
                                 )}
                             </View>

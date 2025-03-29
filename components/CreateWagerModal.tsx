@@ -115,12 +115,14 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
           <TextInput
             style={styles.input}
             placeholder="Enter Username"
+            placeholderTextColor="#A0A0A0" 
             value={username}
             onChangeText={setUsername}
           />
           <TextInput
             style={styles.input}
             placeholder={`Enter Amount (Max: $${walletBalance})`}
+            placeholderTextColor="#A0A0A0" 
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
@@ -128,6 +130,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
           <TextInput
             style={styles.input}
             placeholder="Choose Wager Type"
+            placeholderTextColor="#A0A0A0" 
             value={type}
             onChangeText={setWagerType}
           />

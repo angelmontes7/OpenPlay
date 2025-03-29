@@ -33,16 +33,23 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const clerkId = searchParams.get("clerkId");
 
-        if (!clerkId) {
-            return Response.json({ error: "Missing Clerk ID" }, { status: 400 });
+        let response;
+
+        if (clerkId) {
+            // Retrieve wagers for the given clerkId
+            response = await sql`
+                SELECT * FROM wagers
+                WHERE clerk_id = ${clerkId}
+                ORDER BY created_at DESC;
+            `;
+        } else {
+            // Retrieve all wagers
+            response = await sql`
+                SELECT * FROM wagers
+                WHERE status = 'pending'
+                ORDER BY created_at DESC;
+            `;
         }
-
-        // Retrieve wagers for the given clerkId
-        const response = await sql`
-            SELECT * FROM wagers WHERE status = 'pending' ORDER BY created_at DESC;
-        `;
-
-        console.log("Fetched wagers:", response);
 
         return new Response(JSON.stringify(response), { status: 200 });
     } catch (error) {
