@@ -6,12 +6,8 @@ import { useUser } from "@clerk/clerk-expo";
 import { fetchAPI } from "@/lib/fetch";
 import CreateWagerModal from "@/components/CreateWagerModal";
 import { Ionicons } from "@expo/vector-icons";
-
-const courtData = [
-    { id: '1', name: 'Downtown Basketball Court', distance: 2 },
-    { id: '2', name: 'Central Park Tennis Court', distance: 6 },
-    { id: '3', name: 'City Soccer Field', distance: 12 },
-];
+import { fetchFacilities } from "@/lib/fetchFacilities";
+import { getUserLocation, watchUserLocation } from "@/lib/location";
 
 const Wagers = () => {
     const { user } = useUser();
@@ -23,8 +19,10 @@ const Wagers = () => {
     const [selectedWager, setSelectedWager] = useState<any>(null);
     const [transactions, setTransactions] = useState<{ id: string; type: string; amount: number; date: string }[]>([]);
     const [data, setData] = useState<{ dob: string } | null>(null);
-    const [nearbyCourts, setNearbyCourts] = useState<{ id: string; name: string; distance: number }[]>([]);
-
+    const [latitude, setLatitude] = useState<number | null>(null);
+    const [longitude, setLongitude] = useState<number | null>(null);
+    const [courtData, setCourtData] = useState<{ id: string; name: string; distance: number }[]>([]);
+    
     useEffect(() => {
         const checkUserDOB = async () => {
             if (!user?.id) return;
@@ -57,31 +55,47 @@ const Wagers = () => {
             }
         }; 
 
-        /*const fetchWagers = async () => {
-            try {
-                const response = await fetch(`/(api)/wager`);
-                const data = await response.json();
-                console.log("Fetched Wagers:", data);
-                setWagers(data);
-            } catch (error) {
-                console.error("Error fetching wagers:", error);
-            }
-        };*/
-        
-        /*// Pass `fetchWagers` to `CreateWagerModal`
-        <CreateWagerModal fetchWagers={fetchWagers} visible={false} onClose={function (): void {
-            throw new Error("Function not implemented.");
-        } } courts={[]} clerkId={""} onCreate={function (wager: { username: string; amount: string; type: string; court: { id: string; name: string; distance: number; }; }): void {
-            throw new Error("Function not implemented.");
-        } } />*/
-
-
-        const filteredCourts = courtData.filter((court) => court.distance <= 7);
-        setNearbyCourts(filteredCourts);
-
         checkUserDOB();
         fetchWagers();
     }, [user?.id]);
+
+    useEffect(() => {
+        const fetchLocation = async () => {
+          const location = await getUserLocation();
+          if (location) {
+            setLatitude(location.latitude);
+            setLongitude(location.longitude);
+          }
+        };
+    
+        fetchLocation();
+      }, []);
+    
+      useEffect(() => {
+        const subscription = watchUserLocation((location) => {
+          setLatitude(location.latitude);
+          setLongitude(location.longitude);
+        });
+    
+        return () => {
+          subscription?.then((sub) => sub?.remove());
+        };
+      }, []);
+    
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            const facilities = await fetchFacilities(latitude, longitude);
+            setCourtData(facilities);
+          } catch (error) {
+            setError("Failed to load facilities");
+          }
+        };
+      
+        if (latitude && longitude) {
+          fetchData();
+        }
+      }, [latitude, longitude]);
 
     const isUnder21 = dob ? new Date().getTime() - new Date(dob).getTime() < 21 * 365.25 * 24 * 60 * 60 * 1000: true;
 
