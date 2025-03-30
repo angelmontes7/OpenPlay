@@ -22,7 +22,25 @@ const Wagers = () => {
     const [latitude, setLatitude] = useState<number | null>(null);
     const [longitude, setLongitude] = useState<number | null>(null);
     const [courtData, setCourtData] = useState<{ id: string; name: string; distance: number }[]>([]);
-    
+    const [balance, setBalance] = useState(0); // Initial balance set to 0
+
+    useEffect(() => {
+      const fetchBalance = async () => {
+          try {
+              const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
+                  method: "GET",
+              });
+
+              if (response.balance !== undefined) {
+                  setBalance(response.balance);
+              }
+          } catch (error) {
+              console.error("Error fetching balance:", error);
+          }
+      };
+
+      fetchBalance();
+    },[user?.id]);
     useEffect(() => {
         const checkUserDOB = async () => {
             if (!user?.id) return;
@@ -148,6 +166,12 @@ const Wagers = () => {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-100">
+          <View className="mt-5 items-center">
+              <View className="flex-row items-center">
+                  <Text className="text-5xl">$</Text>
+                  <Text className="font-bold text-6xl">{balance}</Text>
+              </View>
+          </View>
           {currentView === "list" && (
             <>
               <View className="flex-1 p-4">
