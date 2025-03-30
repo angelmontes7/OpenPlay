@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import CustomButton from '@/components/CustomButton';
 import { useUser } from '@clerk/clerk-expo';
+import { fetchAPI } from '@/lib/fetch';
 
 interface CreateWagerModalProps {
   visible: boolean;
@@ -28,23 +29,23 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
   const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
-    if (visible) {
-      const fetchBalance = async () => {
+    const fetchBalance = async () => {
         try {
-          const response = await fetch(`/(api)/balance?clerkId=${clerkId}`);
-          const data = await response.json();
-          console.warn('Fetched balance:', data);
-          if (data.balance !== undefined) {
-            setWalletBalance(data.balance);
-          }
-        } catch (error) {
-          console.error('Error fetching balance:', error);
-        }
-      };
-      fetchBalance();
-    }
-  }, [visible, clerkId]);
+            const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
+                method: "GET",
+            });
 
+            if (response.balance !== undefined) {
+                setWalletBalance(response.balance);
+            }
+        } catch (error) {
+            console.error("Error fetching balance:", error);
+        }
+    };
+
+    fetchBalance();
+  },[user?.id]);
+  
   const handleCreateWager = async () => {
     if (!username || !amount || !type || !selectedCourt) {
       alert('Please fill out all fields.');
@@ -59,26 +60,38 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
     const wager = { clerkId: clerkId, wagerAmount: amount, wagerType: type, court_id: selectedCourt.id, username: username };
     console.log('Creating wager:', { username, amount, court: selectedCourt });
 
+    
     try {
-      const response = await fetch('/(api)/balance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clerkId: user?.id,
-          type: 'subtract',
-          amount: parseFloat(amount),
-        }),
-      });
+        const response = await fetchAPI("/(api)/balance", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                clerkId: user?.id,
+                type: "subtract",
+                amount: parseFloat(amount),
+            }),
+        });
 
-      const data = await response.json();
-      console.log('Updated balance:', data);
-      if (data.balance !== undefined) {
-        setWalletBalance(data.balance);
-      }
+        if (response.balance) {
+            setWalletBalance(response.balance);
+
+            // Store the transaction
+            await fetchAPI("/(api)/transactions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    clerkId: user?.id,
+                    type: "wager",
+                    amount: parseFloat(amount),
+                }),
+            });
+        }
     } catch (error) {
-      console.error('Error updating balance:', error);
+        console.error("Error updating balance:", error);
     }
 
     try {

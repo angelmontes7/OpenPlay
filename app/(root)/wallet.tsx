@@ -291,31 +291,62 @@ const Wallet = () => {
                             >
                                 <View className="flex-row items-center">
                                     <Ionicons
-                                        name={transaction.type === "add" ? "add-circle" : "remove-circle"}
+                                        name={
+                                        transaction.type === "add"
+                                            ? "add-circle"
+                                            : transaction.type === "subtract"
+                                            ? "remove-circle"
+                                            : transaction.type === "wager"
+                                            ? "cash-outline"
+                                            : "trophy-outline"
+                                        }
                                         size={24}
-                                        color={transaction.type === "add" ? "green" : "red"}
+                                        color={
+                                        transaction.type === "add"
+                                            ? "green"
+                                            : transaction.type === "subtract"
+                                            ? "red"
+                                            : transaction.type === "wager"
+                                            ? "orange"
+                                            : "gold"
+                                        }
                                     />
                                     <View className="ml-3">
                                         <Text className="font-semibold">
-                                            {transaction.type === "add" ? "Added Money" : "Withdrew Money"}
+                                        {transaction.type === "add"
+                                            ? "Added Money"
+                                            : transaction.type === "subtract"
+                                            ? "Withdrew Money"
+                                            : transaction.type === "wager"
+                                            ? "Wagered Money"
+                                            : "Won Wager"}
                                         </Text>
                                         <Text className="text-gray-500 text-xs">{transaction.date}</Text>
                                     </View>
-                                </View>
-                                <Text
+                                    </View>
+                                    <Text
                                     className={`font-semibold ${
-                                        transaction.type === "add" ? "text-green-600" : "text-red-600"
+                                        transaction.type === "add"
+                                        ? "text-green-600"
+                                        : transaction.type === "subtract"
+                                        ? "text-red-600"
+                                        : transaction.type === "wager"
+                                        ? "text-orange-600"
+                                        : "text-yellow-600"
                                     }`}
-                                >
-                                    {transaction.type === "add" ? `+ $${transaction.amount}` : `- $${transaction.amount}`}
-                                </Text>
-                            </View>
+                                    >
+                                    {transaction.type === "add"
+                                        ? `+ $${transaction.amount}`
+                                        : transaction.type === "subtract"
+                                        ? `- $${transaction.amount}`
+                                        : transaction.type === "wager"
+                                        ? `- $${transaction.amount}`
+                                        : `+ $${transaction.amount}`}
+                                    </Text>
+                                </View>
                         ))
                     )}
                 </View>
-
-                
-                
 
                 {/* MODALS FOR BUTTONS */}
 
