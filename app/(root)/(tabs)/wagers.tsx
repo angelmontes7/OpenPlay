@@ -10,23 +10,25 @@ import { Ionicons } from "@expo/vector-icons";
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
 
+type TabType = "Available" | "Active" | "History" | "Disputes";
 
 const Wagers = () => {
     const { user } = useUser();
     const [dob, setDob] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [wagers, setWagers] = useState([]);
+    const [activeTab, setActiveTab] = useState<TabType>("Available");
+    const [availableWagers, setAvailableWagers] = useState([]);
+    const [userWagers, setUserWagers] = useState([])
     const [currentView, setCurrentView] = useState<"list" | "create" | "join">("list");
     const [selectedWager, setSelectedWager] = useState<any>(null);
-    const [transactions, setTransactions] = useState<{ id: string; type: string; amount: number; date: string }[]>([]);
-    const [data, setData] = useState<{ dob: string } | null>(null);
     const [latitude, setLatitude] = useState<number | null>(null);
     const [longitude, setLongitude] = useState<number | null>(null);
     const [courtData, setCourtData] = useState<{ id: string; name: string; distance: number }[]>([]);
     const [balance, setBalance] = useState(0); // Initial balance set to 0
     const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
 
+    // Fetch Balance
     useEffect(() => {
       const fetchBalance = async () => {
           try {
@@ -44,13 +46,13 @@ const Wagers = () => {
 
       fetchBalance();
     },[user?.id]);
+
+    // Fetch user DOB to determine if they could use wagers tab
     useEffect(() => {
         const checkUserDOB = async () => {
             if (!user?.id) return;
             try {
                 const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
-                console.log(response);  // Log the response data for debugging
-                setData(response);
                 setDob(response.dob);
                 console.log('Fetched user data:', response);
             } catch (error) {
@@ -61,79 +63,130 @@ const Wagers = () => {
             }
         };
 
-        const fetchWagers = async () => {
-            try {
-                const response = await fetchAPI(`/(api)/wager`, {
-                    method: "GET",
-                });
-                
-                setWagers(response);
-                
-            } catch (error) {
-                console.error("Error fetching wagers:", error);
-                setError("Error fetching wagers");
-            }
-        }; 
-
         checkUserDOB();
-        fetchWagers();
     }, [user?.id]);
 
+    // Fetch available wagers (wagers with status "pending" – no clerkId filter)
     useEffect(() => {
-        const fetchLocation = async () => {
-          const location = await getUserLocation();
-          if (location) {
-            setLatitude(location.latitude);
-            setLongitude(location.longitude);
-          }
-        };
-    
-        fetchLocation();
-      }, []);
-    
-      useEffect(() => {
-        const subscription = watchUserLocation((location) => {
-          setLatitude(location.latitude);
-          setLongitude(location.longitude);
-        });
-    
-        return () => {
-          subscription?.then((sub) => sub?.remove());
-        };
-      }, []);
-    
-      useEffect(() => {
-        const fetchData = async () => {
-          try {
-            const facilities = await fetchFacilities(latitude, longitude);
-            setCourtData(facilities);
-          } catch (error) {
-            setError("Failed to load facilities");
-          }
-        };
-      
-        if (latitude && longitude) {
-          fetchData();
+      const fetchAvailableWagers = async () => {
+        try {
+            const response = await fetchAPI(`/(api)/wager`, {
+                method: "GET",
+            });
+            
+            setAvailableWagers(response);
+            
+        } catch (error) {
+            console.error("Error fetching wagers:", error);
+            setError("Error fetching wagers");
         }
-      }, [latitude, longitude]);
+      };
+      fetchAvailableWagers(); 
+    }, []);
 
-    const isUnder21 = dob ? new Date().getTime() - new Date(dob).getTime() < 21 * 365.25 * 24 * 60 * 60 * 1000: true;
-
-    const fetchUserData = async () => {
+    // Fetch user wagers (using clerkId) – these include wagers the user created or participated in
+    useEffect(() => {
+      const fetchUserWagers = async () => {
         if (!user?.id) return;
         try {
-            const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
-            setData(response);
-            setDob(response.dob);
+          const response = await fetchAPI(`/(api)/wager?clerkId=${user.id}`, { method: "GET" });
+          setUserWagers(response);
         } catch (error) {
-            setError("Error fetching DOB");
+          console.error("Error fetching user wagers:", error);
+          setError("Error fetching user wagers");
         }
-    };    
+      };
+      fetchUserWagers();
+    }, [user?.id]);
+
+    // Fetch facilities (sports facilities)
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const facilities = await fetchFacilities(latitude, longitude);
+          setCourtData(facilities);
+        } catch (error) {
+          setError("Failed to load facilities");
+        }
+      };
+    
+      if (latitude && longitude) {
+        fetchData();
+      }
+    }, [latitude, longitude]);
+    
+    // Get user location (to be used to get wagers near them)
+    useEffect(() => {
+      const fetchLocation = async () => {
+        const location = await getUserLocation();
+        if (location) {
+          setLatitude(location.latitude);
+          setLongitude(location.longitude);
+        }
+      };
+  
+      fetchLocation();
+    }, []);
+  
+    useEffect(() => {
+      const subscription = watchUserLocation((location) => {
+        setLatitude(location.latitude);
+        setLongitude(location.longitude);
+      });
+  
+      return () => {
+        subscription?.then((sub) => sub?.remove());
+      };
+    }, []);
+
+    // Check if user is under 21 (legal gambling age)
+    const isUnder21 = dob ? new Date().getTime() - new Date(dob).getTime() < 21 * 365.25 * 24 * 60 * 60 * 1000: true;
+ 
     
     const handleJoinWager = (wager: { id: string; team_name: string; base_bet_amount: number }) => {
         setSelectedWager(wager);
         setIsJoinModalVisible(true);
     };
+
+    // Navigation bar
+    const renderNavBar = () => {
+      const tabs: TabType[] = ["Available", "Active", "History", "Disputes"];
+      return (
+        <View style={{ flexDirection: "row", justifyContent: "space-around", padding: 16, backgroundColor: "#fff", elevation: 2 }}>
+          {tabs.map((tab) => (
+            <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
+              <Text style={{ fontSize: 16, fontWeight: activeTab === tab ? "bold" : "normal", color: activeTab === tab ? "#1d2236" : "#666" }}>
+                {tab === "Available"
+                  ? "Available Wagers"
+                  : tab === "Active"
+                  ? "Your Active Wagers"
+                  : tab === "History"
+                  ? "History"
+                  : "Disputes"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      );
+    };
+
+    // Determine wagers to display based on activeTab
+    let displayedWagers: any[] = [];
+    if (activeTab === "Available") {
+      // Available wagers are those with status pending
+      displayedWagers = availableWagers;
+    } else {
+      // For user wagers, filter by status
+      if (activeTab === "Active") {
+        displayedWagers = userWagers.filter(
+          (wager) => wager.status === "active" || wager.status === "pending"
+        );
+      } else if (activeTab === "History") {
+        displayedWagers = userWagers.filter((wager) => wager.status === "closed");
+      } else if (activeTab === "Disputes") {
+        displayedWagers = userWagers.filter((wager) => wager.status === "disputed");
+      }
+    }
 
     if (loading) {
         return (
@@ -147,7 +200,6 @@ const Wagers = () => {
         return (
             <SafeAreaView className="flex-1 justify-center items-center">
                 <Text className="text-red-500 font-bold">Error: {error}</Text>
-                <CustomButton title="Retry" onPress={fetchUserData} className="bg-blue-500 mt-4" />
             </SafeAreaView>
         );
     }
@@ -160,6 +212,10 @@ const Wagers = () => {
                   <Text className="font-bold text-6xl">{balance}</Text>
               </View>
           </View>
+
+          {/* Navigation Bar */}
+          {renderNavBar()}
+
           {currentView === "list" && (
             <>
               <View className="flex-1 p-4">
@@ -171,15 +227,23 @@ const Wagers = () => {
                       onPress={() => setCurrentView("create")}
                       className="bg-green-500"
                     />
-                    <Text className="text-lg font-bold mt-4 text-gray-800">Available Wagers:</Text>
-                    {wagers.length === 0 ? (
+                    <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
+                      {activeTab === "Available"
+                        ? "Available Wagers"
+                        : activeTab === "Active"
+                        ? "Your Active Wagers"
+                        : activeTab === "History"
+                        ? "History"
+                        : "Wager Disputes"}
+                    </Text>
+                    {displayedWagers.length === 0 ? (
                       <View className="flex items-center justify-center mt-6">
                         <Ionicons name="sad-outline" size={48} color="gray" />
                         <Text className="text-gray-500 mt-2">No Wagers Available</Text>
                       </View>
                     ) : (
                       <FlatList
-                        data={wagers}
+                        data={displayedWagers}
                         keyExtractor={(item) => item.id.toString()}
                         contentContainerStyle={{ paddingBottom: 200 }} // Add padding to the bottom
                         renderItem={({ item }) => {
