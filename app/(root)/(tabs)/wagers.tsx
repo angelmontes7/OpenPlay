@@ -6,9 +6,10 @@ import { useUser } from "@clerk/clerk-expo";
 import { fetchAPI } from "@/lib/fetch";
 import CreateWagerModal from "@/components/CreateWagerModal";
 import JoinWagerModal from "@/components/JoinWagerModal";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
+import { LinearGradient } from "expo-linear-gradient";
 
 type TabType = "Available" | "Active" | "History" | "Disputes";
 
@@ -150,21 +151,33 @@ const Wagers = () => {
         setIsJoinModalVisible(true);
     };
 
-    // Navigation bar
-    const renderNavBar = () => {
-      const tabs: TabType[] = ["Available", "Active", "History", "Disputes"];
+    
+    // Navigation Tabs
+    const renderTabs = () => {
+      const tabs: { key: TabType; label: string; icon: string }[] = [
+        { key: "Available", label: "Available", icon: "search-dollar" },
+        { key: "Active", label: "Active", icon: "play-circle" },
+        { key: "History", label: "History", icon: "history" },
+        { key: "Disputes", label: "Disputes", icon: "exclamation-circle" }
+      ];
+      
       return (
-        <View style={{ flexDirection: "row", justifyContent: "space-around", padding: 16, backgroundColor: "#fff", elevation: 2 }}>
+        <View className="flex-row bg-white mx-4 mt-[-20px] rounded-xl shadow-sm">
           {tabs.map((tab) => (
-            <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
-              <Text style={{ fontSize: 16, fontWeight: activeTab === tab ? "bold" : "normal", color: activeTab === tab ? "#1d2236" : "#666" }}>
-                {tab === "Available"
-                  ? "Available Wagers"
-                  : tab === "Active"
-                  ? "Your Active Wagers"
-                  : tab === "History"
-                  ? "History"
-                  : "Disputes"}
+            <TouchableOpacity 
+              key={tab.key} 
+              className={`flex-1 items-center py-3 px-2 ${activeTab === tab.key ? 'bg-blue-600 rounded-lg mx-1' : ''}`}
+              onPress={() => setActiveTab(tab.key)}
+            >
+              <FontAwesome5 
+                name={tab.icon} 
+                size={16} 
+                color={activeTab === tab.key ? "#FFFFFF" : "#7B8794"} 
+              />
+              <Text 
+                className={`text-xs mt-1 ${activeTab === tab.key ? 'text-white font-medium' : 'text-gray-500'}`}
+              >
+                {tab.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -190,6 +203,17 @@ const Wagers = () => {
       }
     }
 
+    // Get badge color based on status
+    const getBadgeColor = (status: string) => {
+      switch(status) {
+        case 'pending': return 'bg-yellow-100 text-yellow-800';
+        case 'active': return 'bg-blue-100 text-blue-800';
+        case 'closed': return 'bg-green-100 text-green-800';
+        case 'disputed': return 'bg-red-100 text-red-800';
+        default: return 'bg-gray-100 text-gray-800';
+      }
+    };
+
     if (loading) {
         return (
             <SafeAreaView className="flex-1 justify-center items-center">
@@ -206,87 +230,117 @@ const Wagers = () => {
         );
     }
 
+    // Age restricted view
+    if (isUnder21) {
+      return (
+        <SafeAreaView className="flex-1 bg-gray-50">
+          <View className="flex-1 items-center justify-center p-6">
+            <Ionicons name="shield" size={64} color="#EF4444" />
+            <Text className="text-2xl font-bold text-gray-900 mt-4 mb-2">Age Restricted</Text>
+            <Text className="text-base text-gray-600 text-center">
+              You must be 21 or older to access wagers.
+            </Text>
+          </View>
+        </SafeAreaView>
+      );
+    }
+
     return (
         <SafeAreaView className="flex-1 bg-gray-100">
-          <View className="mt-5 items-center">
-              <View className="flex-row items-center">
-                  <Text className="text-5xl">$</Text>
-                  <Text className="font-bold text-6xl">{balance}</Text>
+          
+          {/* Header with Balance */}
+          <LinearGradient
+            colors={['#3B82F6', '#60A5FA']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            className="px-5 py-6"
+          >
+            <View className="flex-row justify-between items-center">
+              <View>
+                <Text className="text-white opacity-80 text-sm mb-1">Welcome, {user?.username}</Text>
+                <Text className="text-white text-sm font-medium">Available Balance</Text>
               </View>
-          </View>
+              <View className="flex-row items-center">
+                <Text className="text-white text-2xl font-medium mr-1">$</Text>
+                <Text className="text-white text-3xl font-bold">{balance}</Text>
+              </View>
+            </View>
+          </LinearGradient>
 
           {/* Navigation Bar */}
-          {renderNavBar()}
+          {renderTabs()}
 
           {currentView === "list" && (
             <>
               <View className="flex-1 p-4">
-                <Text className="text-2xl font-bold text-gray-800">Hello, {user?.username}</Text>
-                {!isUnder21 ? (
-                  <View className="mt-6 space-y-4">
-                    <CustomButton
-                      title="Create a Wager"
-                      onPress={() => setCurrentView("create")}
-                      className="bg-green-500"
-                    />
-                    <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
-                      {activeTab === "Available"
-                        ? "Available Wagers"
-                        : activeTab === "Active"
-                        ? "Your Active Wagers"
-                        : activeTab === "History"
-                        ? "History"
-                        : "Wager Disputes"}
-                    </Text>
-                    {displayedWagers.length === 0 ? (
-                      <View className="flex items-center justify-center mt-6">
-                        <Ionicons name="sad-outline" size={48} color="gray" />
-                        <Text className="text-gray-500 mt-2">No Wagers Available</Text>
+                
+                  {/* Create Wager Button */}
+                  <TouchableOpacity
+                    className="bg-green-500 flex-row items-center justify-center py-3 rounded-lg mb-4 shadow-sm"
+                    onPress={() => setCurrentView("create")}
+                  >
+                    <Ionicons name="add-circle" size={20} color="#FFFFFF" />
+                    <Text className="text-white font-semibold text-base ml-2">Create a New Wager</Text>
+                  </TouchableOpacity>
+
+                  {/* Description Header */}
+                  <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
+                    {activeTab === "Available"
+                      ? "Available Wagers"
+                      : activeTab === "Active"
+                      ? "Your Active Wagers"
+                      : activeTab === "History"
+                      ? "History"
+                      : "Wager Disputes"}
+                  </Text>
+
+                  {/* Wagers List */}
+                  <FlatList
+                    data={displayedWagers}
+                    keyExtractor={(item) => item.id.toString()}
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                    ListEmptyComponent={() => (
+                      <View className="items-center justify-center py-10">
+                        <Ionicons name="search" size={48} color="#A0AEC0" />
+                        <Text className="text-base font-medium text-gray-500 mt-3">No {activeTab} Wagers Found</Text>
+                        <Text className="text-sm text-gray-400 mt-1">Pull down to refresh</Text>
                       </View>
-                    ) : (
-                      <FlatList
-                        data={displayedWagers}
-                        keyExtractor={(item) => item.id.toString()}
-                        contentContainerStyle={{ paddingBottom: 200 }} // Add padding to the bottom
-                        renderItem={({ item }) => {
-                          const facility = courtData.find((court) => Number(court.id) === Number(item.sports_facility_id));
-                          return (
-                            <View className="bg-white shadow-md rounded-lg p-4 mb-4">
-                              <View className="flex-row justify-between items-center">
-                                <View>
-                                  <Text className="text-lg font-bold text-gray-800">
-                                    ${item.base_bet_amount} Wager
-                                  </Text>
-                                  {facility ? (
-                                    <Text className="text-sm text-gray-500">
-                                      Facility: {facility.name}
-                                    </Text>
-                                  ) : (
-                                    <Text className="text-sm text-gray-500 text-red-500">
-                                      Facility: Unknown
-                                    </Text>
-                                  )}
-                                </View>
-                                <TouchableOpacity
-                                    onPress={() => handleJoinWager(item)}
-                                    className="bg-blue-500 px-10 py-3 rounded-md"
-                                    >
-                                    <Text className="text-white font-bold text-center">Join</Text>
-                                </TouchableOpacity>
+                    )}
+                    renderItem={({ item }) => {
+                      const facility = courtData.find((court) => Number(court.id) === Number(item.sports_facility_id));
+                      return (
+                        <View className="bg-white rounded-xl p-4 mb-3 shadow-sm">
+                          <View className="flex-row justify-between items-start mb-3">
+                            <View>
+                              <Text className="text-xs text-gray-500 mb-1">Bet Amount</Text>
+                              <Text className="text-2xl font-bold text-gray-900">${item.base_bet_amount}</Text>
+                            </View>
+                            <View>
+                              <View className={`px-2 py-1 rounded ${getBadgeColor(item.status)}`}>
+                                <Text className="text-xs font-medium capitalize">{item.status}</Text>
                               </View>
                             </View>
-                          );
-                        }}
-                      />
-                    )}
-                  </View>
-                ) : (
-                  <View className="absolute inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center">
-                    <Text className="text-white text-lg font-bold text-center px-4">
-                      🚫 You must be 21 or older to access the Wagers tab.
-                    </Text>
-                  </View>
-                )}
+                          </View>
+                          
+                          <View className="flex-row items-center mb-4">
+                            <Ionicons name="location" size={16} color="#718096" />
+                            <Text className="text-sm text-gray-600 ml-1">
+                              {facility ? facility.name : "Unknown Location"}
+                            </Text>
+                          </View>
+                          
+                          {activeTab === "Available" && (
+                            <TouchableOpacity
+                              className="bg-blue-600 py-3 rounded-lg items-center"
+                              onPress={() => handleJoinWager(item)}
+                            >
+                              <Text className="text-white font-semibold text-sm">Join Wager</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      );
+                    }}
+                  />
               </View>
             </>
           )}
