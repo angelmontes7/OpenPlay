@@ -28,75 +28,77 @@ const Wagers = () => {
     const [balance, setBalance] = useState(0); // Initial balance set to 0
     const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
 
-    // Fetch Balance
-    useEffect(() => {
-      const fetchBalance = async () => {
-          try {
-              const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
-                  method: "GET",
-              });
-
-              if (response.balance !== undefined) {
-                  setBalance(response.balance);
-              }
-          } catch (error) {
-              console.error("Error fetching balance:", error);
-          }
-      };
-
-      fetchBalance();
-    },[user?.id]);
-
     // Fetch user DOB to determine if they could use wagers tab
     useEffect(() => {
-        const checkUserDOB = async () => {
-            if (!user?.id) return;
-            try {
-                const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
-                setDob(response.dob);
-                console.log('Fetched user data:', response);
-            } catch (error) {
-                console.error("Error fetching DOB:", error);
-                setError("Error fetching DOB");
-            } finally {
-                setLoading(false);
-            }
-        };
+      const checkUserDOB = async () => {
+          if (!user?.id) return;
+          try {
+              const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
+              setDob(response.dob);
+              console.log('Fetched user data:', response);
+          } catch (error) {
+              console.error("Error fetching DOB:", error);
+              setError("Error fetching DOB");
+          } finally {
+              setLoading(false);
+          }
+      };
+      checkUserDOB();
+    },[user?.id]);
 
-        checkUserDOB();
-    }, [user?.id]);
-
-    // Fetch available wagers (wagers with status "pending" – no clerkId filter)
-    useEffect(() => {
-      const fetchAvailableWagers = async () => {
+    // Fetch Balance
+    const fetchBalance = async () => {
         try {
-            const response = await fetchAPI(`/(api)/wager`, {
+            const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
                 method: "GET",
             });
-            
-            setAvailableWagers(response);
-            
+
+            if (response.balance !== undefined) {
+                setBalance(response.balance);
+            }
         } catch (error) {
-            console.error("Error fetching wagers:", error);
-            setError("Error fetching wagers");
+            console.error("Error fetching balance:", error);
         }
-      };
-      fetchAvailableWagers(); 
-    }, []);
+    };
+
+    // Fetch available wagers (wagers with status "pending" – no clerkId filter)
+    const fetchAvailableWagers = async () => {
+      try {
+          const response = await fetchAPI(`/(api)/wager`, {
+              method: "GET",
+          });
+          
+          setAvailableWagers(response);
+          
+      } catch (error) {
+          console.error("Error fetching wagers:", error);
+          setError("Error fetching wagers");
+      } 
+    };
 
     // Fetch user wagers (using clerkId) – these include wagers the user created or participated in
+    const fetchUserWagers = async () => {
+      if (!user?.id) return;
+      try {
+        const response = await fetchAPI(`/(api)/wager?clerkId=${user.id}`, { method: "GET" });
+        setUserWagers(response);
+      } catch (error) {
+        console.error("Error fetching user wagers:", error);
+        setError("Error fetching user wagers");
+      }
+    };
+    
+    // Initial data fetching
     useEffect(() => {
-      const fetchUserWagers = async () => {
-        if (!user?.id) return;
-        try {
-          const response = await fetchAPI(`/(api)/wager?clerkId=${user.id}`, { method: "GET" });
-          setUserWagers(response);
-        } catch (error) {
-          console.error("Error fetching user wagers:", error);
-          setError("Error fetching user wagers");
-        }
-      };
+      fetchAvailableWagers();
+    }, []);
+
+    useEffect(() => {
       fetchUserWagers();
+    }, [user?.id]);
+
+    useEffect(() => {
+      fetchBalance();
     }, [user?.id]);
 
     // Fetch facilities (sports facilities)
@@ -295,7 +297,12 @@ const Wagers = () => {
               clerkId={user?.id || ""}
               courts={courtData}
               onClose={() => setCurrentView("list")}
-              onCreate={() => {}}
+              onCreate={() => {
+                setCurrentView("list");
+                fetchUserWagers();
+                fetchAvailableWagers();
+                fetchBalance();
+              }}
             />
           )}
             <JoinWagerModal
@@ -303,7 +310,12 @@ const Wagers = () => {
                 selectedWager={selectedWager}
                 onClose={() => setIsJoinModalVisible(false)}
                 clerkId={user?.id}
-                onJoin={handleJoinWager}
+                onJoin={() => {
+                  setIsJoinModalVisible(false);
+                  fetchUserWagers();
+                  fetchAvailableWagers();
+                  fetchBalance();
+                }}
             />
         </SafeAreaView>
       );
