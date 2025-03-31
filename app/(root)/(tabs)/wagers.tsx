@@ -5,9 +5,11 @@ import CustomButton from "@/components/CustomButton";
 import { useUser } from "@clerk/clerk-expo";
 import { fetchAPI } from "@/lib/fetch";
 import CreateWagerModal from "@/components/CreateWagerModal";
+import JoinWagerModal from "@/components/JoinWagerModal";
 import { Ionicons } from "@expo/vector-icons";
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
+
 
 const Wagers = () => {
     const { user } = useUser();
@@ -23,6 +25,7 @@ const Wagers = () => {
     const [longitude, setLongitude] = useState<number | null>(null);
     const [courtData, setCourtData] = useState<{ id: string; name: string; distance: number }[]>([]);
     const [balance, setBalance] = useState(0); // Initial balance set to 0
+    const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
 
     useEffect(() => {
       const fetchBalance = async () => {
@@ -127,24 +130,9 @@ const Wagers = () => {
         }
     };    
     
-    const handleJoinWager = async (wager: any) => {
+    const handleJoinWager = (wager: { id: string; team_name: string; base_bet_amount: number }) => {
         setSelectedWager(wager);
-        setCurrentView("join");
-    };
-
-    const handleConfirmJoin = async () => {
-        if (!selectedWager) return;
-        try {
-            await fetchAPI(`/(api)/wager`, {
-                method: "POST",
-                body: JSON.stringify({ userId: user?.id, wagerId: selectedWager.id }),
-            });
-            Alert.alert("Success", "You have joined the wager!");
-            setWagers([]);
-            setCurrentView("list");
-        } catch (err) {
-            Alert.alert("Error", "Could not join wager.");
-        }
+        setIsJoinModalVisible(true);
     };
 
     if (loading) {
@@ -195,16 +183,13 @@ const Wagers = () => {
                         keyExtractor={(item) => item.id.toString()}
                         contentContainerStyle={{ paddingBottom: 200 }} // Add padding to the bottom
                         renderItem={({ item }) => {
-                          const facility = courtData.find((court) => court.id === item.court_id);
+                          const facility = courtData.find((court) => Number(court.id) === Number(item.sports_facility_id));
                           return (
                             <View className="bg-white shadow-md rounded-lg p-4 mb-4">
                               <View className="flex-row justify-between items-center">
                                 <View>
                                   <Text className="text-lg font-bold text-gray-800">
-                                    ${item.amount} Wager
-                                  </Text>
-                                  <Text className="text-sm text-gray-500">
-                                    Participants: {item.participants?.length ?? 0}
+                                    ${item.base_bet_amount} Wager
                                   </Text>
                                   {facility ? (
                                     <Text className="text-sm text-gray-500">
@@ -249,23 +234,13 @@ const Wagers = () => {
               onCreate={() => {}}
             />
           )}
-    
-          {currentView === "join" && selectedWager && (
-            <View className="flex-1 justify-center items-center bg-white">
-              <Text className="text-2xl font-bold text-gray-800">Join Wager</Text>
-              <Text className="text-gray-600 mt-2">Amount: ${selectedWager.amount}</Text>
-              <CustomButton
-                title="Confirm Join"
-                onPress={handleConfirmJoin}
-                className="bg-blue-500 mt-4"
-              />
-              <CustomButton
-                title="Back"
-                onPress={() => setCurrentView("list")}
-                className="bg-red-500 mt-4"
-              />
-            </View>
-          )}
+            <JoinWagerModal
+                visible={isJoinModalVisible}
+                selectedWager={selectedWager}
+                onClose={() => setIsJoinModalVisible(false)}
+                clerkId={user?.id}
+                onJoin={handleJoinWager}
+            />
         </SafeAreaView>
       );
 };
