@@ -29,6 +29,26 @@ const Wagers = () => {
     const [balance, setBalance] = useState(0); // Initial balance set to 0
     const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
 
+    const [userData, setUserData] = useState<{ clerk_id: string; username: string }[]>([]);
+
+    const fetchUserData = async () => {
+      try {
+        const response = await fetchAPI("/(api)/user", {
+          method: "GET",
+        });
+
+        if (response) {
+          setUserData(response);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    useEffect(() => {
+      fetchUserData();
+    }, []);
+
     // Fetch user DOB to determine if they could use wagers tab
     useEffect(() => {
       const checkUserDOB = async () => {
@@ -36,7 +56,7 @@ const Wagers = () => {
           try {
               const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
               setDob(response.dob);
-              console.log('Fetched user data:', response);
+              console.log('Fetched user DOB:', response);
           } catch (error) {
               console.error("Error fetching DOB:", error);
               setError("Error fetching DOB");
@@ -244,7 +264,7 @@ const Wagers = () => {
         </SafeAreaView>
       );
     }
-
+    
     return (
         <SafeAreaView className="flex-1 bg-gray-100">
           
@@ -308,6 +328,8 @@ const Wagers = () => {
                     )}
                     renderItem={({ item }) => {
                       const facility = courtData.find((court) => Number(court.id) === Number(item.sports_facility_id));
+                      const creator = userData.find((user) => user.clerk_id === item.creator_id); // Find the creator's username
+          
                       return (
                         <View className="bg-white rounded-xl p-4 mb-3 shadow-sm">
                           <View className="flex-row justify-between items-start mb-3">
@@ -320,6 +342,13 @@ const Wagers = () => {
                                 <Text className="text-xs font-medium capitalize">{item.status}</Text>
                               </View>
                             </View>
+                          </View>
+
+                          <View className="flex-row items-center mb-4">
+                            <Ionicons name="person" size={16} color="#718096" />
+                            <Text className="text-sm text-gray-600 ml-1">
+                              {creator ? creator.username : "Unknown User"}
+                            </Text>
                           </View>
                           
                           <View className="flex-row items-center mb-4">
