@@ -1,0 +1,1 @@
+// TODO CREATE MODAL THAT SETS wager status to closed or disputed

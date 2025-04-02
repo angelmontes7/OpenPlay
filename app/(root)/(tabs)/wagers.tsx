@@ -380,6 +380,24 @@ const Wagers = () => {
                               <Text className="text-white font-semibold text-sm">Join Wager</Text>
                             </TouchableOpacity>
                           )}
+
+                          {activeTab === "Active" && (
+                            <TouchableOpacity
+                              className="bg-blue-600 py-3 rounded-lg items-center"
+                              onPress={() => handleJoinWager(item)}
+                            >
+                              <Text className="text-white font-semibold text-sm">Finished?</Text>
+                            </TouchableOpacity>
+                          )}
+
+                          {activeTab === "Disputes" && (
+                            <TouchableOpacity
+                              className="bg-blue-600 py-3 rounded-lg items-center"
+                              onPress={() => handleJoinWager(item)}
+                            >
+                              <Text className="text-white font-semibold text-sm">Came to an Agreement?</Text>
+                            </TouchableOpacity>
+                          )}
                         </View>
                       );
                     }}
