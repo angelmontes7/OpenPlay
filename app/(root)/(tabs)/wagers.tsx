@@ -347,14 +347,24 @@ const Wagers = () => {
                               </View>
                             </View>
                           </View>
-
+                          
+                          <Text className="text-xs text-gray-500 mb-1">Creator</Text>
+                            <View className="flex-row items-center mb-4">
+                              <Ionicons name="person" size={16} color="#718096" />
+                              <Text className="text-sm text-gray-600 ml-1">
+                                {creator ? creator.username : "Unknown User"}
+                              </Text>
+                            </View>
+                      
+                          <Text className="text-xs text-gray-500 mb-1">Amount of Participants</Text>
                           <View className="flex-row items-center mb-4">
-                            <Ionicons name="person" size={16} color="#718096" />
+                            <Ionicons name="people-outline" size={16} color="#718096" />
                             <Text className="text-sm text-gray-600 ml-1">
-                              {creator ? creator.username : "Unknown User"}
+                              {item.amount_of_participants}
                             </Text>
                           </View>
                           
+                          <Text className="text-xs text-gray-500 mb-1">Location</Text>
                           <View className="flex-row items-center mb-4">
                             <Ionicons name="location" size={16} color="#718096" />
                             <Text className="text-sm text-gray-600 ml-1">

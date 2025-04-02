@@ -15,9 +15,9 @@ export async function POST(request: Request) {
 
         // Insert the wager into the database
         const response = await sql`
-            INSERT INTO wagers (creator_id, base_bet_amount, sports_facility_id, status)
-            VALUES (${clerkId}, ${wagerAmount}, ${court_id}, 'pending')
-            RETURNING id, base_bet_amount AS wagerAmount, sports_facility_id AS court_id, status, created_at;
+            INSERT INTO wagers (creator_id, base_bet_amount, sports_facility_id, status, amount_of_participants)
+            VALUES (${clerkId}, ${wagerAmount}, ${court_id}, 'pending', 0)
+            RETURNING id, base_bet_amount AS wagerAmount, sports_facility_id AS court_id, status, amount_of_participants, created_at;
         `;
 
         return new Response(JSON.stringify(response[0]), { status: 200 });
