@@ -127,7 +127,8 @@ const Wagers = () => {
       const fetchData = async () => {
         try {
           const facilities = await fetchFacilities(latitude, longitude);
-          setCourtData(facilities);
+          const nearbyFacilities = facilities.filter((facility) => Number(facility.distance) <= 5);
+          setCourtData(nearbyFacilities);
         } catch (error) {
           setError("Failed to load facilities");
         }
