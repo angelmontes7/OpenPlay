@@ -338,6 +338,10 @@ const Wagers = () => {
                               <Text className="text-2xl font-bold text-gray-900">${item.base_bet_amount}</Text>
                             </View>
                             <View>
+                              <Text className="text-xs text-gray-500 mb-1">Total Amount</Text>
+                              <Text className="text-2xl font-bold text-gray-900">${item.total_amount}</Text>
+                            </View>
+                            <View>
                               <View className={`px-2 py-1 rounded ${getBadgeColor(item.status)}`}>
                                 <Text className="text-xs font-medium capitalize">{item.status}</Text>
                               </View>
