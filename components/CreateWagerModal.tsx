@@ -10,98 +10,139 @@ import {
 } from 'react-native';
 import CustomButton from '@/components/CustomButton';
 import { useUser } from '@clerk/clerk-expo';
+import { fetchAPI } from '@/lib/fetch';
 
 interface CreateWagerModalProps {
   visible: boolean;
   onClose: () => void;
   courts: { id: string; name: string; distance: number }[];
   clerkId: string;
-  onCreate: (wager: { username: string; amount: string; type: string; court: { id: string; name: string; distance: number } }) => void;
+  onCreate: (wager: { teamName: string; amount: string; court: { id: string; name: string; distance: number } }) => void;
 }
 
 const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, courts, clerkId, onCreate }) => {
   const { user } = useUser();
   const [username, setUsername] = useState('');
   const [amount, setAmount] = useState('');
-  const [type, setWagerType] = useState('');
   const [selectedCourt, setSelectedCourt] = useState<{ id: string; name: string; distance: number } | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [teamName, setTeamName] = useState('');
 
   useEffect(() => {
-    if (visible) {
-      const fetchBalance = async () => {
+    const fetchBalance = async () => {
         try {
-          const response = await fetch(`/(api)/balance?clerkId=${clerkId}`);
-          const data = await response.json();
-          console.warn('Fetched balance:', data);
-          if (data.balance !== undefined) {
-            setWalletBalance(data.balance);
-          }
+            const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
+                method: "GET",
+            });
+
+            if (response.balance !== undefined) {
+                setWalletBalance(response.balance);
+            }
         } catch (error) {
-          console.error('Error fetching balance:', error);
+            console.error("Error fetching balance:", error);
         }
-      };
-      fetchBalance();
-    }
-  }, [visible, clerkId]);
+    };
+
+    fetchBalance();
+  },[user?.id]);
 
   const handleCreateWager = async () => {
-    if (!username || !amount || !type || !selectedCourt) {
+    if (!teamName || !amount || !selectedCourt) {
       alert('Please fill out all fields.');
       return;
     }
 
-    if (parseFloat(amount) > walletBalance) {
-      alert('Insufficient balance.');
+    const wagerAmount = parseFloat(amount);
+    if (wagerAmount <= 0 || wagerAmount > walletBalance) {
+      alert('Invalid wager amount or insufficient balance.');
       return;
     }
 
-    const wager = { clerkId: clerkId, wagerAmount: amount, wagerType: type, court_id: selectedCourt.id, username: username };
-    console.log('Creating wager:', { username, amount, court: selectedCourt });
+    const wagerData = {
+      clerkId,
+      wagerAmount,
+      court_id: selectedCourt.id,
+    };
 
-    try {
-      const response = await fetch('/(api)/balance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clerkId: user?.id,
-          type: 'subtract',
-          amount: parseFloat(amount),
-        }),
-      });
+    
+    try {    
+        // Step 1: Deduct balance
+        const balanceResponse = await fetchAPI("/(api)/balance", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                clerkId: user?.id,
+                type: "subtract",
+                amount: wagerAmount,
+            }),
+        });
 
-      const data = await response.json();
-      console.log('Updated balance:', data);
-      if (data.balance !== undefined) {
-        setWalletBalance(data.balance);
-      }
+        if (balanceResponse.balance) {
+            setWalletBalance(balanceResponse.balance);
+
+            // Store the transaction
+            await fetchAPI("/(api)/transactions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    clerkId: user?.id,
+                    type: "wager",
+                    amount: wagerAmount,
+                }),
+            });
+        }
+
+        // Step 2: Create wager
+        const wagerResponse = await fetchAPI('/(api)/wager', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(wagerData),
+        });
+
+        if (wagerResponse.error) {
+          alert(`Error is right here: ${wagerResponse.error}`);
+          return;
+        }
+
+        const wagerId = wagerResponse.id; // Assuming response includes the new wager's ID
+
+        console.log("Wager Reponse: ", wagerResponse)
+        // Step 3: Insert creator as first participant
+        const participantResponse = await fetchAPI('/(api)/wager_participants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wagerId: wagerId,
+            clerkId: user?.id,
+            teamName: teamName, // User's chosen team name
+            betAmount: wagerAmount,
+          }),
+        });
+
+        if (participantResponse.error) {
+          alert(`Error adding participant: ${participantResponse.error}`);
+          return;
+        }
+
+        console.log('Created wager and added participant:', wagerResponse);
+        onCreate({
+          teamName,
+          amount,
+          court: selectedCourt,
+        });
+
+        handleClose();
     } catch (error) {
-      console.error('Error updating balance:', error);
+        console.error("Error updating balance:", error);
     }
-
-    try {
-      const response = await fetch('/(api)/wager', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(wager),
-      });
-
-      const data = await response.json();
-      console.log('Created wager:', data);
-    } catch (error) {
-      console.error('Error creating wager:', error);
-    }
-
-    //fetchWagers();
-    handleClose();
   };
 
   const handleClose = () => {
-    setUsername('');
+    setTeamName('');
     setAmount('');
     setSelectedCourt(null);
     onClose();
@@ -114,22 +155,18 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
           <Text style={styles.header}>Create Wager</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter Username"
-            value={username}
-            onChangeText={setUsername}
+            placeholder={`Enter Team Name`}
+            placeholderTextColor="#A0A0A0" 
+            value={teamName}
+            onChangeText={setTeamName}
           />
           <TextInput
             style={styles.input}
             placeholder={`Enter Amount (Max: $${walletBalance})`}
+            placeholderTextColor="#A0A0A0" 
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Choose Wager Type"
-            value={type}
-            onChangeText={setWagerType}
           />
           <Text style={styles.subHeader}>Select Court:</Text>
           <FlatList

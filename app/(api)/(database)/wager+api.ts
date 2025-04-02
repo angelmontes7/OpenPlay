@@ -3,9 +3,9 @@ import { neon } from '@neondatabase/serverless';
 export async function POST(request: Request) {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);
-        const { clerkId, wagerAmount, wagerType, court_id } = await request.json();
+        const { clerkId, wagerAmount, court_id } = await request.json();
 
-        if (!clerkId || !wagerAmount || !wagerType || !court_id) {
+        if (!clerkId || !wagerAmount || !court_id) {
             return Response.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -15,9 +15,9 @@ export async function POST(request: Request) {
 
         // Insert the wager into the database
         const response = await sql`
-            INSERT INTO wagers (clerk_id, amount, type, status, court_id)
-            VALUES (${clerkId}, ${wagerAmount}, ${wagerType}, 'pending', ${court_id})
-            RETURNING id, amount, type, status, court_id, created_at;
+            INSERT INTO wagers (creator_id, base_bet_amount, sports_facility_id, status, amount_of_participants)
+            VALUES (${clerkId}, ${wagerAmount}, ${court_id}, 'pending', 0)
+            RETURNING id, base_bet_amount AS wagerAmount, sports_facility_id AS court_id, status, amount_of_participants, created_at;
         `;
 
         return new Response(JSON.stringify(response[0]), { status: 200 });
@@ -33,16 +33,23 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const clerkId = searchParams.get("clerkId");
 
-        if (!clerkId) {
-            return Response.json({ error: "Missing Clerk ID" }, { status: 400 });
+        let response;
+
+        if (clerkId) {
+            // Retrieve wagers for the given clerkId
+            response = await sql`
+                SELECT * FROM wagers
+                WHERE creator_id = ${clerkId}
+                ORDER BY created_at DESC;
+            `;
+        } else {
+            // Retrieve all wagers
+            response = await sql`
+                SELECT * FROM wagers
+                WHERE status = 'pending'
+                ORDER BY created_at DESC;
+            `;
         }
-
-        // Retrieve wagers for the given clerkId
-        const response = await sql`
-            SELECT * FROM wagers WHERE status = 'pending' ORDER BY created_at DESC;
-        `;
-
-        console.log("Fetched wagers:", response);
 
         return new Response(JSON.stringify(response), { status: 200 });
     } catch (error) {

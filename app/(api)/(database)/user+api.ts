@@ -76,21 +76,29 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const clerkId = searchParams.get("clerkId");
 
-        if (!clerkId) {
-            return Response.json({ error: "Missing Clerk ID" }, { status: 400 });
+        if (clerkId) {
+            // Fetch specific user by clerkId
+            const response = await sql`
+                SELECT dob FROM users WHERE clerk_id = ${clerkId} LIMIT 1;
+            `;
+
+            if (response.length === 0) {
+                return Response.json({ error: "User not found" }, { status: 404 });
+            }
+
+            return Response.json({
+                dob: response[0].dob,
+            }, { status: 200 });
+        } else {
+            // Fetch all users
+            const response = await sql`
+                SELECT id, username, email, dob, clerk_id FROM users;
+            `;
+
+            return Response.json(response, { status: 200 });
         }
-
-        const response = await sql`
-            SELECT dob FROM users WHERE clerk_id = ${clerkId} LIMIT 1;
-        `;
-
-        if (response.length === 0) {
-            return Response.json({ error: "User not found" }, { status: 404 });
-        }
-
-        return Response.json({ dob: response[0].dob }, { status: 200 });
     } catch (error) {
         console.log(error);
-        return Response.json({ error: error }, { status: 500 });
+        return Response.json({ error: error || "Internal Server Error" }, { status: 500 });
     }
 }
