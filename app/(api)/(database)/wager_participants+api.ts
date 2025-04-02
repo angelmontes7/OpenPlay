@@ -36,8 +36,8 @@ export async function POST(request: Request) {
 
     // Insert the new participant into the wager_participants table.
     const participantResult = await sql`
-      INSERT INTO wager_participants (wager_id, user_id, team_name, bet_amount)
-      VALUES (${wagerId}, ${clerkId}, ${teamName}, ${betAmount})
+      INSERT INTO wager_participants (wager_id, user_id, team_name, bet_amount, status)
+      VALUES (${wagerId}, ${clerkId}, ${teamName}, ${betAmount}, 'pending')
       RETURNING id, wager_id, user_id, team_name, bet_amount, joined_at;
     `;
     
@@ -50,9 +50,18 @@ export async function POST(request: Request) {
       RETURNING id, total_amount;
     `;
     
+    // Update the wagers table amount_of_participants by adding the new person.
+    const updatedParticipantsResult = await sql`
+      UPDATE wagers
+      SET amount_of_participants = amount_of_participants + 1
+      WHERE id = ${wagerId}
+      RETURNING id, amount_of_participants;
+    `;
+
     return new Response(JSON.stringify({
       participant: participantResult[0],
-      updatedWager: updatedWagerResult[0]
+      updatedWager: updatedWagerResult[0],
+      updatedParticipant: updatedParticipantsResult[0]
     }), { status: 200 });
   } catch (error) {
     console.error("Error in POST /api/wager_participants:", error);
