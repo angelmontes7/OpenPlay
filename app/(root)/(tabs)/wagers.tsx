@@ -166,7 +166,11 @@ const Wagers = () => {
     const isUnder21 = dob ? new Date().getTime() - new Date(dob).getTime() < 21 * 365.25 * 24 * 60 * 60 * 1000: true;
  
     
-    const handleJoinWager = (wager: { id: string; team_name: string; base_bet_amount: number }) => {
+    const handleJoinWager = (wager: { id: string; team_name: string; base_bet_amount: number; creator_id: string }) => {
+      if (wager.creator_id === user?.id) {
+        Alert.alert("Error", "You cannot wager on your own wager.");
+        return;
+      }
         setSelectedWager(wager);
         setIsJoinModalVisible(true);
     };
