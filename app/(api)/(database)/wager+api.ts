@@ -19,6 +19,7 @@ export async function POST(request: Request) {
             VALUES (${clerkId}, ${wagerAmount}, ${court_id}, 'pending', 0)
             RETURNING id, base_bet_amount AS wagerAmount, sports_facility_id AS court_id, status, amount_of_participants, created_at;
         `;
+        
 
         return new Response(JSON.stringify(response[0]), { status: 200 });
     } catch (error) {
@@ -26,6 +27,39 @@ export async function POST(request: Request) {
         return Response.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
     }
 }
+
+export async function PATCH(request: Request) {
+    try {
+        const sql = neon(`${process.env.DATABASE_URL}`);
+        const { wagerId, status } = await request.json();
+
+        if (!wagerId || !status) {
+            return Response.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        if (status !== "disputed" && status !== "closed") {
+            return Response.json({ error: "Invalid status value" }, { status: 400 });
+        }
+
+        // Update wager status
+        const response = await sql`
+            UPDATE wagers
+            SET status = ${status}, updated_at = NOW()
+            WHERE id = ${wagerId}
+            RETURNING id, status, updated_at;
+        `;
+
+        if (response.length === 0) {
+            return Response.json({ error: "Wager not found" }, { status: 404 });
+        }
+
+        return new Response(JSON.stringify(response[0]), { status: 200 });
+    } catch (error) {
+        console.error("Error in PATCH /api/wager:", error);
+        return Response.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
+    }
+}
+
 
 export async function GET(request: Request) {
     try {
