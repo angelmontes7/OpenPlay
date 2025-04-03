@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, Text, View, FlatList, Alert, TouchableOpacity } from "react-native";
-import CustomButton from "@/components/CustomButton";
 import { useUser } from "@clerk/clerk-expo";
 import { fetchAPI } from "@/lib/fetch";
 import CreateWagerModal from "@/components/CreateWagerModal";
@@ -10,6 +9,8 @@ import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
 import { LinearGradient } from "expo-linear-gradient";
+import CloseWagerModal from "@/components/CloseWagerModal";
+
 
 type TabType = "Available" | "Active" | "History" | "Disputes";
 
@@ -28,6 +29,8 @@ const Wagers = () => {
     const [courtData, setCourtData] = useState<{ id: string; name: string; distance: number }[]>([]);
     const [balance, setBalance] = useState(0); // Initial balance set to 0
     const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
+    const [isCloseModalVisible, setCloseModalVisible] = useState(false);
+
 
     const [userData, setUserData] = useState<{ clerk_id: string; username: string }[]>([]);
 
@@ -242,6 +245,11 @@ const Wagers = () => {
         setSelectedWager(wager);
         setIsJoinModalVisible(true);
     };
+
+    const handleCloseWager = (wager: { id: string;}) => {
+      setSelectedWager(wager);
+      setCloseModalVisible(true)
+    }
 
     
     // Navigation Tabs
@@ -458,7 +466,7 @@ const Wagers = () => {
                           {activeTab === "Active" && (
                             <TouchableOpacity
                               className="bg-blue-600 py-3 rounded-lg items-center"
-                              onPress={() => handleJoinWager(item)}
+                              onPress={() => handleCloseWager(item)}
                             >
                               <Text className="text-white font-semibold text-sm">Finished?</Text>
                             </TouchableOpacity>
@@ -505,6 +513,15 @@ const Wagers = () => {
                   fetchAvailableWagers();
                   fetchBalance();
                 }}
+            />
+            <CloseWagerModal
+              isVisible={isCloseModalVisible}
+              onClose={() => setCloseModalVisible(false)}
+              selectedWager={selectedWager}
+              onWager={() => {
+                fetchUserWagers();
+                fetchAvailableWagers();
+              }}
             />
         </SafeAreaView>
       );
