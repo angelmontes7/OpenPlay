@@ -98,17 +98,68 @@ const Wagers = () => {
     };
 
     // Fetch user wagers (using clerkId) – these include wagers the user created or participated in
-    const fetchUserWagers = async () => {
+    // Fetch wagers the user has created
+    const fetchUserCreatedWagers = async () => {
       if (!user?.id) return;
       try {
         const response = await fetchAPI(`/(api)/wager?clerkId=${user.id}`, { method: "GET" });
-        setUserWagers(response);
+        return response;
+      } catch (error) {
+        console.error("Error fetching created wagers:", error);
+        setError("Error fetching created wagers");
+        return [];
+      }
+    };
+
+    // Fetch wagers the user has joined (from wager_participants)
+    const fetchUserJoinedWagers = async () => {
+      if (!user?.id) return;
+      try {
+        const response = await fetchAPI(`/(api)/wager_participants?clerkId=${user.id}`, { method: "GET" });
+        // Normalize the joined wager result so that fields match those from created wagers.
+        return response.map((item: any) => ({
+          id: item.wager_id, // use wager_id as the wager identifier
+          creator_id: item.creator_id,
+          sports_facility_id: item.sports_facility_id,
+          base_bet_amount: item.base_bet_amount,
+          total_amount: item.total_amount,
+          status: item.wager_status,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          amount_of_participants: item.amount_of_participants,
+          // Joined flag
+          joined: true,
+          // Include Participant details
+          participant_details: {
+            participant_id: item.user_id,
+            team_name: item.team_name,
+            bet_amount: item.bet_amount,
+            joined_at: item.joined_at,
+          }
+        }));
+      } catch (error) {
+        console.error("Error fetching joined wagers:", error);
+        setError("Error fetching joined wagers");
+        return [];
+      }
+    };
+
+    // Combine both created and joined wagers into a single userWagers list
+    const fetchUserWagers = async () => {
+      if (!user?.id) return;
+      try {
+        const [created, joined] = await Promise.all([
+          fetchUserCreatedWagers(),
+          fetchUserJoinedWagers()
+        ]);
+        // Merge the results. You might also want to remove duplicates if necessary.
+        setUserWagers([...(created || []), ...(joined || [])]);
       } catch (error) {
         console.error("Error fetching user wagers:", error);
         setError("Error fetching user wagers");
       }
     };
-    
+
     // Initial data fetching
     useEffect(() => {
       fetchAvailableWagers();
@@ -127,7 +178,8 @@ const Wagers = () => {
       const fetchData = async () => {
         try {
           const facilities = await fetchFacilities(latitude, longitude);
-          setCourtData(facilities);
+          const nearbyFacilities = facilities.filter((facility) => Number(facility.distance) <= 5);
+          setCourtData(nearbyFacilities)
         } catch (error) {
           setError("Failed to load facilities");
         }
@@ -167,8 +219,16 @@ const Wagers = () => {
  
     
     const handleJoinWager = (wager: { id: string; team_name: string; base_bet_amount: number; creator_id: string }) => {
+      // Find the wager in userWagers that matches the current wager ID
+      const existingWager = userWagers.find((w) => Number(w.id) === Number(wager.id));
+
+      // Extract participant_id if the wager exists
       if (wager.creator_id === user?.id) {
-        Alert.alert("Error", "You cannot wager on your own wager.");
+        Alert.alert("Error", "Cannot join your own created wager.");
+        return;
+      }
+      else if (existingWager?.participant_details.participant_id === user?.id){
+        Alert.alert("Error", "You have already joined this wager.");
         return;
       }
         setSelectedWager(wager);
@@ -210,12 +270,13 @@ const Wagers = () => {
     };
 
     // Determine wagers to display based on activeTab
+    // Determine wagers to display based on activeTab
     let displayedWagers: any[] = [];
     if (activeTab === "Available") {
-      // Available wagers are those with status pending
+      // Available wagers are those with status pending (from availableWagers state)
       displayedWagers = availableWagers;
     } else {
-      // For user wagers, filter by status
+      // For user wagers (created or joined), filter by status
       if (activeTab === "Active") {
         displayedWagers = userWagers.filter(
           (wager) => wager.status === "active" || wager.status === "pending"
@@ -226,6 +287,7 @@ const Wagers = () => {
         displayedWagers = userWagers.filter((wager) => wager.status === "disputed");
       }
     }
+
 
     // Get badge color based on status
     const getBadgeColor = (status: string) => {

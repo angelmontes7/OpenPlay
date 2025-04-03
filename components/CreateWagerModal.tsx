@@ -108,27 +108,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
           return;
         }
 
-        const wagerId = wagerResponse.id; // Assuming response includes the new wager's ID
-
-        console.log("Wager Reponse: ", wagerResponse)
-        // Step 3: Insert creator as first participant
-        const participantResponse = await fetchAPI('/(api)/wager_participants', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            wagerId: wagerId,
-            clerkId: user?.id,
-            teamName: teamName, // User's chosen team name
-            betAmount: wagerAmount,
-          }),
-        });
-
-        if (participantResponse.error) {
-          alert(`Error adding participant: ${participantResponse.error}`);
-          return;
-        }
-
-        console.log('Created wager and added participant:', wagerResponse);
+        console.log('Created wager:', wagerResponse);
         onCreate({
           teamName,
           amount,
