@@ -20,7 +20,7 @@ const Wagers = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabType>("Available");
     const [availableWagers, setAvailableWagers] = useState([]);
-    const [userWagers, setUserWagers] = useState([])
+    const [userWagers, setUserWagers] = useState<any[]>([])
     const [currentView, setCurrentView] = useState<"list" | "create" | "join">("list");
     const [selectedWager, setSelectedWager] = useState<any>(null);
     const [latitude, setLatitude] = useState<number | null>(null);
@@ -152,8 +152,16 @@ const Wagers = () => {
           fetchUserCreatedWagers(),
           fetchUserJoinedWagers()
         ]);
-        // Merge the results. You might also want to remove duplicates if necessary.
-        setUserWagers([...(created || []), ...(joined || [])]);
+        // Combine the created and joined wagers
+        const combinedWagers = [...(created || []), ...(joined || [])];
+
+        // Filter out duplicate wagers based on the wager ID
+        const uniqueWagers = combinedWagers.filter(
+          (wager, index, self) =>
+            index === self.findIndex((w) => w.id === wager.id)
+        );
+
+        setUserWagers(uniqueWagers);
       } catch (error) {
         console.error("Error fetching user wagers:", error);
         setError("Error fetching user wagers");
