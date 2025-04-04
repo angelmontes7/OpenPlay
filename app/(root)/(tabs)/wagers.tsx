@@ -171,6 +171,38 @@ const Wagers = () => {
       }
     };
 
+    // Fetch wager details based on wagerId
+    const fetchWagerDetails = async (wagerId: string) => {
+      try {
+        const response = await fetchAPI(`/(api)/wager_info?wagerId=${wagerId}`, { method: "GET" });
+        
+        // Normalize the wager details and participant information
+        return response.map((item: any) => ({
+          id: item.wager_id, // use wager_id as the wager identifier
+          creator_id: item.creator_id,
+          sports_facility_id: item.sports_facility_id,
+          base_bet_amount: item.base_bet_amount,
+          total_amount: item.total_amount,
+          status: item.wager_status,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          amount_of_participants: item.amount_of_participants,
+          // Include Participant details
+          participant_details: {
+            participant_id: item.user_id,
+            team_name: item.team_name,
+            bet_amount: item.bet_amount,
+            joined_at: item.joined_at,
+          }
+        }));
+      } catch (error) {
+        console.error("Error fetching wager details:", error);
+        setError("Error fetching wager details");
+        return [];
+      }
+    };
+
+
     // Initial data fetching
     useEffect(() => {
       fetchAvailableWagers();
@@ -246,8 +278,8 @@ const Wagers = () => {
         setIsJoinModalVisible(true);
     };
 
-    const handleCloseWager = (wager: { id: string;}) => {
-      setSelectedWager(wager);
+    const handleCloseWager = (wagerDetails: any) => {
+      setSelectedWager(wagerDetails);
       setCloseModalVisible(true)
     }
 
@@ -466,7 +498,10 @@ const Wagers = () => {
                           {activeTab === "Active" && (
                             <TouchableOpacity
                               className="bg-blue-600 py-3 rounded-lg items-center"
-                              onPress={() => handleCloseWager(item)}
+                              onPress={async() =>{
+                                const wagerDetails = await fetchWagerDetails(item.id);
+                                handleCloseWager(wagerDetails)
+                              }}
                             >
                               <Text className="text-white font-semibold text-sm">Finished?</Text>
                             </TouchableOpacity>
