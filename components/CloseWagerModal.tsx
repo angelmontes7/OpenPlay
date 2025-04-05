@@ -4,7 +4,7 @@ import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Alert } from "r
 interface CloseWagerModalProps {
   isVisible: boolean;
   onClose: () => void;
-  selectedWager: { id: number; participant_details: { team_name: string } }[] | null;
+  selectedWager: { id: number; participant_details: { team_name: string; winning_vote: string } }[] | null;
   userId: string;
   onConfirmed: () => void;
 }
@@ -12,6 +12,7 @@ interface CloseWagerModalProps {
 const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, selectedWager, onConfirmed, userId }) => {
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("");
+  const [currentVotes, setCurrentVotes] = useState<string[]>([]);
 
   const wagerId = selectedWager?.[0]?.id;
   
@@ -20,11 +21,17 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
       if (Array.isArray(selectedWager)) {
         // If selectedWager is an array, extract team_name from each object
         const names = selectedWager.map((wager) => wager.participant_details.team_name);
+        // Current votes (or "Not voted")
+        const votes = selectedWager.map((wager) => wager.participant_details.winning_vote ?? "Not voted");
+
+        setCurrentVotes(votes);
         setTeamNames(names);
       } else if (selectedWager.participant_details) {
         // If it's a single object, wrap its team_name in an array
+        setCurrentVotes([selectedWager.participant_details.winning_vote ?? "Not voted"]);
         setTeamNames([selectedWager.participant_details.team_name]);
       } else {
+        setCurrentVotes(["Not voted"]);
         setTeamNames([]);
       }
     }
@@ -106,6 +113,18 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
                 >
                   <Text className="text-gray-700 font-medium">{team}</Text>
                 </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Current Votes */}
+          {currentVotes.length > 0 && (
+            <View className="w-full bg-gray-50 p-4 rounded-xl mb-6">
+              <Text className="font-semibold text-gray-800 mb-2">Current Votes:</Text>
+              {currentVotes.map((vote, i) => (
+                <Text key={i} className="text-gray-700">
+                  {vote}
+                </Text>
               ))}
             </View>
           )}
