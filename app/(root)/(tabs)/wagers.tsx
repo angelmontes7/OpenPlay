@@ -322,7 +322,7 @@ const Wagers = () => {
       ];
       
       return (
-        <View className="flex-row bg-white mx-4 mt-[-20px] rounded-xl shadow-sm">
+        <View className="flex-row bg-gray-900 mx-4 mt-[-20px] rounded-xl shadow-sm">
           {tabs.map((tab) => (
             <TouchableOpacity 
               key={tab.key} 
@@ -407,16 +407,16 @@ const Wagers = () => {
     }
     
     return (
-      <View className="flex-1 bg-gray-100">
+      <View className="flex-1 bg-gray-900">
         
         {/* Header with Balance */}
         <LinearGradient
-          colors={['#3B82F6', '#60A5FA']}
+          colors={['#4338ca', '#3b82f6', '#0ea5e9']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          end={{ x: 1, y: 1 }}
           className="px-5 py-6"
         >
-          <View className="flex-row justify-between items-center">
+          <View className="flex-row justify-between items-center mb-5 mt-5">
             <View>
               <Text className="text-white opacity-80 text-sm mb-1">Welcome, {user?.username}</Text>
               <Text className="text-white text-sm font-medium">Available Balance</Text>
@@ -437,15 +437,22 @@ const Wagers = () => {
               
                 {/* Create Wager Button */}
                 <TouchableOpacity
-                  className="bg-green-500 flex-row items-center justify-center py-3 rounded-lg mb-4 shadow-sm"
+                  className="h-14 rounded-xl overflow-hidden m-1"
                   onPress={() => setCurrentView("create")}
                 >
-                  <Ionicons name="add-circle" size={20} color="#FFFFFF" />
-                  <Text className="text-white font-semibold text-base ml-2">Create a New Wager</Text>
+                  <LinearGradient
+                    colors={['#3b82f6', '#2563eb']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="w-full h-full justify-center items-center"
+                  >
+                    <Ionicons name="add-circle" size={20} color="#FFFFFF" />
+                    <Text className="text-white font-bold text-lg mb-1">Create a New Wager</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
 
                 {/* Description Header */}
-                <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
+                <Text className="text-lg font-bold text-white mt-2 mb-2">
                   {activeTab === "Available"
                     ? "Available Wagers"
                     : activeTab === "Active"
@@ -454,97 +461,131 @@ const Wagers = () => {
                     ? "History"
                     : "Wager Disputes"}
                 </Text>
-
+                
                 {/* Wagers List */}
                 <FlatList
                   data={displayedWagers}
                   keyExtractor={(item) => item.id.toString()}
                   contentContainerStyle={{ paddingBottom: 120 }}
+                  showsVerticalScrollIndicator={false}
                   ListEmptyComponent={() => (
-                    <View className="items-center justify-center py-10">
-                      <Ionicons name="search" size={48} color="#A0AEC0" />
-                      <Text className="text-base font-medium text-gray-500 mt-3">No {activeTab} Wagers Found</Text>
-                      <Text className="text-sm text-gray-400 mt-1">Pull down to refresh</Text>
+                    <View className="items-center justify-center py-12 bg-gray-800/50 rounded-2xl backdrop-blur-sm">
+                      <View className="bg-blue-500/20 p-4 rounded-full mb-3">
+                        <Ionicons name="search" size={40} color="#60A5FA" />
+                      </View>
+                      <Text className="text-lg font-bold text-white mb-1">No {activeTab} Wagers Found</Text>
+                      <Text className="text-sm text-blue-300/70">Pull down to refresh</Text>
                     </View>
                   )}
                   renderItem={({ item }) => {
                     const facility = courtData.find((court) => Number(court.id) === Number(item.sports_facility_id));
-                    const creator = userData.find((user) => user.clerk_id === item.creator_id); // Find the creator's username
-        
+                    const creator = userData.find((user) => user.clerk_id === item.creator_id);
+
                     return (
-                      <View className="bg-white rounded-xl p-4 mb-3 shadow-sm">
-                        <View className="flex-row justify-between items-start mb-3">
-                          <View>
-                            <Text className="text-xs text-gray-500 mb-1">Bet Amount</Text>
-                            <Text className="text-2xl font-bold text-gray-900">${item.base_bet_amount}</Text>
-                          </View>
-                          <View>
-                            <Text className="text-xs text-gray-500 mb-1">Total Amount</Text>
-                            <Text className="text-2xl font-bold text-gray-900">${item.total_amount}</Text>
-                          </View>
-                          <View>
-                            <View className={`px-2 py-1 rounded ${getBadgeColor(item.status)}`}>
-                              <Text className="text-xs font-medium capitalize">{item.status}</Text>
+                      <View className="overflow-hidden relative mb-5">
+                        {/* Background Glow Effect */}
+                        <View className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-2xl blur-xl -z-10" />
+                        
+                        <View className="bg-gray-800/90 backdrop-blur-md rounded-2xl border border-gray-700/50 shadow-lg shadow-blue-900/20">
+                          {/* Status Badge - Positioned in top-right corner */}
+                          <View className="absolute top-3 right-3 z-10">
+                            <View className={`px-3 py-1 rounded-full shadow-md ${getBadgeColor(item.status)}`}>
+                              <Text className="text-xs font-bold capitalize">{item.status}</Text>
                             </View>
                           </View>
-                        </View>
-                        
-                        <Text className="text-xs text-gray-500 mb-1">Creator</Text>
-                          <View className="flex-row items-center mb-4">
-                            <Ionicons name="person" size={16} color="#718096" />
-                            <Text className="text-sm text-gray-600 ml-1">
-                              {creator ? creator.username : "Unknown User"}
-                            </Text>
+                          
+                          {/* Card Header with Amounts */}
+                          <View className="p-4 border-b border-gray-700/50">
+                            <View className="flex-row justify-between items-start">
+                              <View className="bg-gray-700/50 rounded-xl p-3 flex-1 mr-3">
+                                <Text className="text-blue-400 text-xs font-medium mb-1">Bet Amount</Text>
+                                <Text className="text-white text-2xl font-bold">${item.base_bet_amount}</Text>
+                              </View>
+                              <View className="bg-gray-700/50 rounded-xl p-3 flex-1">
+                                <Text className="text-blue-400 text-xs font-medium mb-1">Total Pool</Text>
+                                <Text className="text-white text-2xl font-bold">${item.total_amount}</Text>
+                              </View>
+                            </View>
                           </View>
-                    
-                        <Text className="text-xs text-gray-500 mb-1">Amount of Participants</Text>
-                        <View className="flex-row items-center mb-4">
-                          <Ionicons name="people-outline" size={16} color="#718096" />
-                          <Text className="text-sm text-gray-600 ml-1">
-                            {item.amount_of_participants}
-                          </Text>
-                        </View>
-                        
-                        <Text className="text-xs text-gray-500 mb-1">Location</Text>
-                        <View className="flex-row items-center mb-4">
-                          <Ionicons name="location" size={16} color="#718096" />
-                          <Text className="text-sm text-gray-600 ml-1">
-                            {facility ? facility.name : "Unknown Location"}
-                          </Text>
-                        </View>
-                        
-                        {activeTab === "Available" && (
-                          <TouchableOpacity
-                            className="bg-blue-600 py-3 rounded-lg items-center"
-                            onPress={() => handleJoinWager(item)}
-                          >
-                            <Text className="text-white font-semibold text-sm">Join Wager</Text>
-                          </TouchableOpacity>
-                        )}
+                          
+                          {/* Card Body with Details */}
+                          <View className="p-4">
+                            <View className="space-y-4">
+                              {/* Creator Info */}
+                              <View className="flex-row items-center">
+                                <View className="w-9 h-9 bg-blue-500/20 rounded-full items-center justify-center mr-3">
+                                  <Ionicons name="person" size={18} color="#60A5FA" />
+                                </View>
+                                <View>
+                                  <Text className="text-blue-400 text-xs font-medium mb-1">Creator</Text>
+                                  <Text className="text-white text-sm font-semibold">
+                                    {creator ? creator.username : "Unknown User"}
+                                  </Text>
+                                </View>
+                              </View>
+                              
+                              {/* Participants Info */}
+                              <View className="flex-row items-center">
+                                <View className="w-9 h-9 bg-purple-500/20 rounded-full items-center justify-center mr-3">
+                                  <Ionicons name="people-outline" size={18} color="#A78BFA" />
+                                </View>
+                                <View>
+                                  <Text className="text-blue-400 text-xs font-medium mb-1">Participants</Text>
+                                  <Text className="text-white text-sm font-semibold">
+                                    {item.amount_of_participants}
+                                  </Text>
+                                </View>
+                              </View>
+                              
+                              {/* Location Info */}
+                              <View className="flex-row items-center">
+                                <View className="w-9 h-9 bg-cyan-500/20 rounded-full items-center justify-center mr-3">
+                                  <Ionicons name="location" size={18} color="#22D3EE" />
+                                </View>
+                                <View>
+                                  <Text className="text-blue-400 text-xs font-medium mb-1">Location</Text>
+                                  <Text className="text-white text-sm font-semibold">
+                                    {facility ? facility.name : "Unknown Location"}
+                                  </Text>
+                                </View>
+                              </View>
+                            </View>
+                            
+                            {/* Action Buttons */}
+                            {activeTab === "Available" && (
+                              <TouchableOpacity
+                                className="mt-5 bg-gray-700 py-3.5 rounded-xl items-center shadow-md shadow-gray-900/30"
+                                onPress={() => handleJoinWager(item)}
+                              >
+                                <Text className="text-white font-bold text-sm">Join Wager</Text>
+                              </TouchableOpacity>
+                            )}
 
-                        {activeTab === "Active" && (
-                          <TouchableOpacity
-                            className="bg-blue-600 py-3 rounded-lg items-center"
-                            onPress={async() =>{
-                              const wagerDetails = await fetchWagerDetails(item.id);
-                              handleCloseWager(wagerDetails)
-                            }}
-                          >
-                            <Text className="text-white font-semibold text-sm">Finished?</Text>
-                          </TouchableOpacity>
-                        )}
+                            {activeTab === "Active" && (
+                              <TouchableOpacity
+                                className="mt-5 bg-gray-700 py-3.5 rounded-xl items-center shadow-md shadow-gray-900/30"
+                                onPress={async() => {
+                                  const wagerDetails = await fetchWagerDetails(item.id);
+                                  handleCloseWager(wagerDetails);
+                                }}
+                              >
+                                <Text className="text-white font-bold text-sm">Mark as Finished</Text>
+                              </TouchableOpacity>
+                            )}
 
-                        {activeTab === "Disputes" && (
-                          <TouchableOpacity
-                            className="bg-blue-600 py-3 rounded-lg items-center"
-                            onPress={async() =>{
-                              const wagerDetails = await fetchWagerDetails(item.id);
-                              handleDisputeWager(wagerDetails)
-                            }}
-                          >
-                            <Text className="text-white font-semibold text-sm">Came to an Agreement?</Text>
-                          </TouchableOpacity>
-                        )}
+                            {activeTab === "Disputes" && (
+                              <TouchableOpacity
+                                className="mt-5 bg-gray-700 py-3.5 rounded-xl items-center shadow-md shadow-gray-900/30"
+                                onPress={async() => {
+                                  const wagerDetails = await fetchWagerDetails(item.id);
+                                  handleDisputeWager(wagerDetails);
+                                }}
+                              >
+                                <Text className="text-white font-bold text-sm">Resolve Dispute</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </View>
                       </View>
                     );
                   }}
