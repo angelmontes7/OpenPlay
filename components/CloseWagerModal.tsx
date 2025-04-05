@@ -62,7 +62,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to update wager status");
 
-      Alert.alert("Success", "Wager has been closed.");
+      Alert.alert("Success", "You have voted.");
       onConfirmed()
       onClose(); 
     } catch (error) {
