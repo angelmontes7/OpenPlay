@@ -1,39 +1,54 @@
 import React, { useEffect, useState } from "react";
 import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 
 interface CloseWagerModalProps {
   isVisible: boolean;
   onClose: () => void;
   selectedWager: { id: number; participant_details: { team_name: string } }[] | null;
-  onWager: () => void;
+  userId: string;
+  onConfirmed: () => void;
 }
 
-const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, selectedWager, onWager }) => {
-  const [loading, setLoading] = useState(false);
+const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, selectedWager, onConfirmed, userId }) => {
   const [teamNames, setTeamNames] = useState<string[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<string>("");
 
   const wagerId = selectedWager?.[0]?.id;
-
+  
   useEffect(() => {
     if (selectedWager) {
-      const names = selectedWager.map((wager) => wager.participant_details.team_name);
-      setTeamNames(names);
-    } else {
-      setTeamNames([]);
+      if (Array.isArray(selectedWager)) {
+        // If selectedWager is an array, extract team_name from each object
+        const names = selectedWager.map((wager) => wager.participant_details.team_name);
+        setTeamNames(names);
+      } else if (selectedWager.participant_details) {
+        // If it's a single object, wrap its team_name in an array
+        setTeamNames([selectedWager.participant_details.team_name]);
+      } else {
+        setTeamNames([]);
+      }
     }
   }, [selectedWager]);
+  
 
   const handleCloseSubmit = async () => {
-    setLoading(true);
-    
+    if (!selectedTeam) {
+      Alert.alert("Error", "Please select a team");
+      return;
+    }
+    console.log("Request Body:", {
+      wagerId: wagerId,
+      userId: userId,
+      winning_vote: selectedTeam,
+    });
     try {
-      const response = await fetch("/(api)/wager", {
+      const response = await fetch("/(api)/wager_confirm", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             wagerId: wagerId ,
-            status: "closed" 
+            userId: userId,
+            winning_vote: selectedTeam,
         }),
       });
 
@@ -41,17 +56,14 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
       if (!response.ok) throw new Error(data.error || "Failed to update wager status");
 
       Alert.alert("Success", "Wager has been closed.");
-      onWager()
+      onConfirmed()
       onClose(); 
     } catch (error) {
       Alert.alert("Error", error instanceof Error ? error.message : "Something went wrong");
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleDisputeSubmit = async () => {
-    setLoading(true);
     
     try {
       const response = await fetch("/(api)/wager", {
@@ -67,41 +79,31 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
       if (!response.ok) throw new Error(data.error || "Failed to update wager status");
 
       Alert.alert("Success", "Wager has been disputed.");
-      onWager()
+      onConfirmed()
       onClose(); 
     } catch (error) {
       Alert.alert("Error", error instanceof Error ? error.message : "Something went wrong");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <Modal visible={isVisible} transparent animationType="slide">
       <View className="flex-1 justify-center items-center bg-black/70">
-        {/* Card container with subtle shadow */}
         <View className="w-4/5 bg-white p-6 rounded-2xl items-center shadow-lg">
-          {/* Header with gradient underline */}
-          <View className="w-full items-center mb-4">
-            <Text className="text-xl font-bold mb-2 text-gray-800">Close Wager</Text>
-            <LinearGradient
-              colors={['#f97316', '#ef4444']}
-              className="h-1 w-14 rounded-full mb-4"
-            />
-            <Text className="text-center text-gray-600 mb-2">Are you sure you want to close this wager?</Text>
-          </View>
+        <Text className="text-lg font-bold mb-2">Confirm Winner</Text>
+          <Text className="text-center text-gray-700 mb-4">
+            Please select the winning team:
+          </Text>
 
-          {/* Teams section with improved styling */}
           {teamNames.length > 0 && (
             <View className="w-full bg-gray-50 p-4 rounded-xl mb-6">
-              <Text className="font-semibold text-gray-800 mb-3">Participants</Text>
+              <Text className="font-semibold text-gray-800 mb-3">Participating Teams:</Text>
               {teamNames.map((team, index) => (
                 <TouchableOpacity 
                   key={index} 
-                  onPress={() => onTeamPress && onTeamPress(team, index)}
-                  className="flex-row items-center py-2 border-b border-gray-200"
+                  className={`w-full p-2 rounded-lg my-1 ${selectedTeam === team ? "bg-blue-300" : "bg-gray-300"}`}
+                  onPress={() => setSelectedTeam(team)}
                 >
-                  <View className="w-2 h-2 rounded-full bg-orange-500 mr-2" />
                   <Text className="text-gray-700 font-medium">{team}</Text>
                 </TouchableOpacity>
               ))}

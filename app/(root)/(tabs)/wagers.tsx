@@ -100,7 +100,6 @@ const Wagers = () => {
       } 
     };
 
-    // Fetch user wagers (using clerkId) – these include wagers the user created or participated in
     // Fetch wagers the user has created
     const fetchUserCreatedWagers = async () => {
       if (!user?.id) return;
@@ -193,6 +192,7 @@ const Wagers = () => {
             team_name: item.team_name,
             bet_amount: item.bet_amount,
             joined_at: item.joined_at,
+            winning_vote: item.winning_vote,
           }
         }));
       } catch (error) {
@@ -221,7 +221,7 @@ const Wagers = () => {
       const fetchData = async () => {
         try {
           const facilities = await fetchFacilities(latitude, longitude);
-          const nearbyFacilities = facilities.filter((facility) => Number(facility.distance) <= 5);
+          const nearbyFacilities = facilities.filter((facility) => Number(facility.distance) <= 10);
           setCourtData(nearbyFacilities)
         } catch (error) {
           setError("Failed to load facilities");
@@ -279,6 +279,16 @@ const Wagers = () => {
     };
 
     const handleCloseWager = (wagerDetails: any) => {
+      // Find the current user's participant record
+      const myRecord = wagerDetails.find(
+        (w: any) => w.participant_details.participant_id === user?.id
+      );
+
+      // If we found their record and they've already voted...
+      if (myRecord && myRecord.participant_details.winning_vote !== null) {
+        Alert.alert("You have already voted");
+        return;
+      }
       setSelectedWager(wagerDetails);
       setCloseModalVisible(true)
     }
@@ -317,7 +327,6 @@ const Wagers = () => {
       );
     };
 
-    // Determine wagers to display based on activeTab
     // Determine wagers to display based on activeTab
     let displayedWagers: any[] = [];
     if (activeTab === "Available") {
@@ -553,7 +562,8 @@ const Wagers = () => {
               isVisible={isCloseModalVisible}
               onClose={() => setCloseModalVisible(false)}
               selectedWager={selectedWager}
-              onWager={() => {
+              userId={user?.id || ""}
+              onConfirmed={() => {
                 fetchUserWagers();
                 fetchAvailableWagers();
               }}
