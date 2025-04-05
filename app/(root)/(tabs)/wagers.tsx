@@ -11,6 +11,7 @@ import { getUserLocation, watchUserLocation } from "@/lib/location";
 import { LinearGradient } from "expo-linear-gradient";
 import CloseWagerModal from "@/components/CloseWagerModal";
 import DisputesModal from "@/components/DisputesModal";
+import { set } from "react-hook-form";
 
 
 type TabType = "Available" | "Active" | "History" | "Disputes";
@@ -570,7 +571,7 @@ const Wagers = () => {
                 visible={isJoinModalVisible}
                 selectedWager={selectedWager}
                 onClose={() => setIsJoinModalVisible(false)}
-                clerkId={user?.id}
+                clerkId={user?.id || ""}
                 onJoin={() => {
                   setIsJoinModalVisible(false);
                   fetchUserWagers();
@@ -584,8 +585,10 @@ const Wagers = () => {
               selectedWager={selectedWager}
               userId={user?.id || ""}
               onConfirmed={() => {
+                setCloseModalVisible(false);
                 fetchUserWagers();
                 fetchAvailableWagers();
+                fetchBalance();
               }}
             />
 
@@ -595,8 +598,10 @@ const Wagers = () => {
               selectedWager={selectedWager}
               userId={user?.id || ""}
               onConfirmed={() => {
+                setDisputeModalVisible(false);
                 fetchUserWagers();
                 fetchAvailableWagers();
+                fetchBalance();
               }}
             />
         </SafeAreaView>
