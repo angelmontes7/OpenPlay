@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
-
+import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Alert, Animated, Dimensions } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { Ionicons } from "@expo/vector-icons";
 interface CloseWagerModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -9,13 +11,31 @@ interface CloseWagerModalProps {
   onConfirmed: () => void;
 }
 
+const { height } = Dimensions.get("window");
+
 const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, selectedWager, onConfirmed, userId }) => {
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [currentVotes, setCurrentVotes] = useState<string[]>([]);
-
+  const [animatedValue] = useState(new Animated.Value(0));
   const wagerId = selectedWager?.[0]?.id;
   
+  useEffect(() => {
+    if (isVisible) {
+      Animated.timing(animatedValue, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(animatedValue, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isVisible]);
+
   useEffect(() => {
     if (selectedWager) {
       if (Array.isArray(selectedWager)) {
@@ -113,68 +133,120 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
   };
   
   return (
-    <Modal visible={isVisible} transparent animationType="slide">
-      <View className="flex-1 justify-center items-center bg-black/70">
-        <View className="w-4/5 bg-white p-6 rounded-2xl items-center shadow-lg">
-        <Text className="text-lg font-bold mb-2">Confirm Winner</Text>
-          <Text className="text-center text-gray-700 mb-4">
-            Please select the winning team:
-          </Text>
+    <Modal visible={isVisible} transparent animationType="none">
+      <BlurView intensity={90} className="flex-1 justify-center items-center bg-black/50">
+        <Animated.View 
+          className="w-5/6 max-w-md rounded-3xl overflow-hidden bg-gray-900"
+          style={{
+            transform: [
+              { translateY: animatedValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [height, 0]
+              })}
+            ]
+          }}
+        >
+          <LinearGradient
+            colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            className="w-full h-16 px-6 flex-row justify-between items-center"
+          >
+            <Text className="text-2xl font-bold text-white">Confirm Winner</Text>
+            <TouchableOpacity onPress={onClose} className="p-2">
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </LinearGradient>
 
-          {teamNames.length > 0 && (
-            <View className="w-full bg-gray-50 p-4 rounded-xl mb-6">
-              <Text className="font-semibold text-gray-800 mb-3">Participating Teams:</Text>
-              {teamNames.map((team, index) => (
+          <View className="p-6">
+            <Text className="text-center text-blue-300 text-base mb-6">
+              Please select the winning team:
+            </Text>
+
+            {teamNames.length > 0 && (
+              <View className="w-full bg-gray-800/50 p-4 rounded-xl mb-6 border border-gray-700">
+                <Text className="text-sm text-blue-400 mb-3 font-medium">PARTICIPATING TEAMS</Text>
+                {teamNames.map((team, index) => (
+                  <TouchableOpacity 
+                    key={index} 
+                    className={`w-full p-3 my-1 rounded-lg border flex-row justify-between items-center ${
+                      selectedTeam === team 
+                        ? "bg-blue-900/70 border-blue-500" 
+                        : "bg-gray-800 border-gray-700"
+                    }`}
+                    onPress={() => setSelectedTeam(team)}
+                  >
+                    <Text className={`font-medium ${selectedTeam === team ? "text-white" : "text-gray-300"}`}>
+                      {team}
+                    </Text>
+                    {selectedTeam === team && (
+                      <Ionicons name="checkmark-circle" size={20} color="#60a5fa" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Current Votes */}
+            {currentVotes.length > 0 && (
+              <View className="w-full bg-gray-800/50 p-4 rounded-xl mb-6 border border-gray-700">
+                <Text className="text-sm text-blue-400 mb-3 font-medium">CURRENT VOTES</Text>
+                {teamNames.map((team, i) => (
+                  <View key={i} className="flex-row justify-between py-2 border-b border-gray-700 last:border-b-0">
+                    <Text className="text-gray-300">{team}</Text>
+                    <Text className={`
+                      ${currentVotes[i] === "Not voted" ? "text-yellow-400" : "text-green-400"} font-medium
+                    `}>
+                      {currentVotes[i]}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Button layout */}
+            <View className="w-full space-y-3">
+              <View className="flex-row w-full justify-between space-x-3">
                 <TouchableOpacity 
-                  key={index} 
-                  className={`w-full p-2 rounded-lg my-1 ${selectedTeam === team ? "bg-blue-300" : "bg-gray-300"}`}
-                  onPress={() => setSelectedTeam(team)}
+                  className="flex-1 h-12 rounded-xl overflow-hidden" 
+                  onPress={handleCloseSubmit}
+                  disabled={!selectedTeam}
                 >
-                  <Text className="text-gray-700 font-medium">{team}</Text>
+                  <LinearGradient
+                    colors={selectedTeam ? ['#3b82f6', '#2563eb'] : ['#64748b', '#475569']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="w-full h-full justify-center items-center"
+                  >
+                    <Text className="text-white font-bold text-base">SUBMIT</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* Current Votes */}
-          {currentVotes.length > 0 && (
-            <View className="w-full bg-gray-50 p-4 rounded-xl mb-6">
-              <Text className="font-semibold text-gray-800 mb-2">Current Votes:</Text>
-              {currentVotes.map((vote, i) => (
-                <Text key={i} className="text-gray-700">
-                  {vote}
-                </Text>
-              ))}
-            </View>
-          )}
-
-          {/* Button layout */}
-          <View className="w-full space-y-2">
-            <View className="flex-row w-full justify-between space-x-2">
-              <TouchableOpacity 
-                className="flex-1 py-3 rounded-xl bg-gray-200" 
-                onPress={handleCloseSubmit} 
-              >
-                <Text className="text-black text-center font-semibold">Submit</Text>
-              </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  className="flex-1 h-12 rounded-xl overflow-hidden" 
+                  onPress={handleDisputeSubmit}
+                >
+                  <LinearGradient
+                    colors={['#ef4444', '#dc2626']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="w-full h-full justify-center items-center"
+                  >
+                    <Text className="text-white font-bold text-base">DISPUTE</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
               
               <TouchableOpacity 
-                className="flex-1 py-3 rounded-xl bg-gray-200" 
-                onPress={handleDisputeSubmit} 
+                className="w-full h-12 bg-gray-800 rounded-xl border border-gray-700 justify-center items-center" 
+                onPress={onClose} 
               >
-                <Text className="text-black text-center font-semibold">Dispute</Text>
+                <Text className="text-gray-300 font-bold text-base">CANCEL</Text>
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity 
-              className="w-full py-3 rounded-xl bg-gray-200" 
-              onPress={onClose} 
-            >
-              <Text className="text-gray-700 text-center font-semibold">Cancel</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </BlurView>
     </Modal>
   );
 };
