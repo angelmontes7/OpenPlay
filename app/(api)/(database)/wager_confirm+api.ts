@@ -10,29 +10,38 @@ export async function PATCH(request: Request) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Update the participant's record with their vote
-    const updateResponse = await sql`
+    // Record this users vote
+    await sql`
       UPDATE wager_participants
       SET winning_vote = ${winning_vote}
       WHERE wager_id = ${wagerId} AND user_id = ${userId}
-      RETURNING *;
     `;
 
-    // Check if every participant has voted for this wager
+    // Fetch all votes
     const votes = await sql`
-      SELECT winning_vote FROM wager_participants
+      SELECT user_id, bet_amount, winning_vote 
+      FROM wager_participants
       WHERE wager_id = ${wagerId};
     `;
 
+    // Fetch wager status
+    const [{ status: currentStatus }] = await sql`
+      SELECT status FROM wagers WHERE id = ${wagerId};
+    `;
+
+    // Fetch if all have voted
     const allVoted = votes.every((record: any) => record.winning_vote !== null);
     console.log("All voted:", allVoted);
 
+    // Check if all have voted
     if (allVoted) {
-      // Create a set of winning votes
+
+      // Determine if votes are unanimous
       const winningVotesSet = new Set(votes.map((record: any) => record.winning_vote));
-      console.log("Winning votes set:", winningVotesSet);
 
       if (winningVotesSet.size === 1) {
+        // Case A: Unanimous decision
+
         // All votes are identical; determine the winning team.
         const winningTeam = votes[0].winning_vote;
         
@@ -44,7 +53,7 @@ export async function PATCH(request: Request) {
         // Find one participant record with the winning team vote.
         const [winningParticipant] = await sql`
           SELECT * FROM wager_participants
-          WHERE wager_id = ${wagerId} AND winning_vote = ${winningTeam}
+          WHERE wager_id = ${wagerId} AND team_name = ${winningTeam}
           LIMIT 1;
         `;
         
@@ -73,15 +82,45 @@ export async function PATCH(request: Request) {
           `;
         }
       } else {
-        // Not all votes match; mark the wager as disputed.
-        await sql`
-          UPDATE wagers SET status = 'disputed', updated_at = NOW()
-          WHERE id = ${wagerId};
-        `;
+        // Case B or C: disagreement
+        if (currentStatus !== "disputed") {
+          // Case B: first time disagreement -> mark disputed
+          await sql`
+            UPDATE wagers SET status = 'disputed', updated_at = NOW()
+            WHERE id = ${wagerId};
+          `;
+          // Set votes to null to re-allow users to vote again
+          await sql`
+            UPDATE wager_participants
+            SET winning_vote = null
+            WHERE wager_id = ${wagerId};
+          `;
+        } else {
+          // Case C: already disputed & still in disagreement -> refund 90% to everyone and close wager
+
+          // Refund each participant individually
+          for (const r of votes) {
+            const refund = parseFloat(r.bet_amount) * 0.90;
+            await sql`
+              UPDATE user_balances
+              SET balance = balance + ${refund}
+              WHERE clerk_id = ${r.user_id};
+            `;
+            await sql`
+              INSERT INTO transactions (clerk_id, type, amount)
+              VALUES (${r.user_id}, 'wager_refund', ${refund});
+            `;
+          }
+          // Close wager
+          await sql`
+            UPDATE wagers SET status = 'closed', updated_at = NOW()
+            WHERE id = ${wagerId};
+          `;
+        }
       }
     }
 
-    return new Response(JSON.stringify(updateResponse[0]), { status: 200 });
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (error) {
     console.error("Error in PATCH /api/wager/confirm:", error);
     return Response.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });

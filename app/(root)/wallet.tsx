@@ -300,6 +300,8 @@ const Wallet = () => {
                                             ? "cash-outline"
                                             : transaction.type === "wager_win"
                                             ? "trophy-outline"
+                                            : transaction.type === "wager_refund"
+                                            ? "arrow-redo-outline"
                                             : "help-circle-outline"
                                         }
                                         size={24}
@@ -312,6 +314,8 @@ const Wallet = () => {
                                             ? "orange"
                                             : transaction.type === "wager_win"
                                             ? "gold"
+                                            : transaction.type === "wager_refund"
+                                            ? "blue"
                                             : "gray"
                                         }
                                     />
@@ -325,6 +329,8 @@ const Wallet = () => {
                                             ? "Wagered Money"
                                             : transaction.type === "wager_win"
                                             ? "Won Wager"
+                                            : transaction.type === "wager_refund"
+                                            ? "Wager Refunded"
                                             : "Unknown Transaction"}
                                         </Text>
                                         <Text className="text-gray-500 text-xs">{transaction.date}</Text>
@@ -340,6 +346,8 @@ const Wallet = () => {
                                         ? "text-orange-600"
                                         : transaction.type === "wager_win"
                                         ? "text-yellow-600"
+                                        : transaction.type === "wager_refund"
+                                        ? "text-blue-600"
                                         : "text-gray-600"
                                     }`}
                                     >
@@ -350,6 +358,8 @@ const Wallet = () => {
                                         : transaction.type === "wager"
                                         ? `- $${transaction.amount}`
                                         : transaction.type === "wager_win"
+                                        ? `+ $${transaction.amount}`
+                                        : transaction.type === "wager_refund"
                                         ? `+ $${transaction.amount}`
                                         : `$${transaction.amount}`}
                                     </Text>
