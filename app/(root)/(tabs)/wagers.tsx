@@ -10,6 +10,7 @@ import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
 import { LinearGradient } from "expo-linear-gradient";
 import CloseWagerModal from "@/components/CloseWagerModal";
+import DisputesModal from "@/components/DisputesModal";
 
 
 type TabType = "Available" | "Active" | "History" | "Disputes";
@@ -30,7 +31,8 @@ const Wagers = () => {
     const [balance, setBalance] = useState(0); // Initial balance set to 0
     const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
     const [isCloseModalVisible, setCloseModalVisible] = useState(false);
-
+    const [isDisputeModalVisible, setDisputeModalVisible] = useState(false);
+    
 
     const [userData, setUserData] = useState<{ clerk_id: string; username: string }[]>([]);
 
@@ -293,6 +295,21 @@ const Wagers = () => {
       setCloseModalVisible(true)
     }
 
+    const handleDisputeWager = (wagerDetails: any) => {
+      // Find the current user's participant record
+      const myRecord = wagerDetails.find(
+        (w: any) => w.participant_details.participant_id === user?.id
+      );
+
+      // If we found their record and they've already voted...
+      if (myRecord && myRecord.participant_details.winning_vote !== null) {
+        Alert.alert("You have already voted");
+        return;
+      }
+      setSelectedWager(wagerDetails);
+      setDisputeModalVisible(true)
+    }
+
     
     // Navigation Tabs
     const renderTabs = () => {
@@ -519,7 +536,10 @@ const Wagers = () => {
                           {activeTab === "Disputes" && (
                             <TouchableOpacity
                               className="bg-blue-600 py-3 rounded-lg items-center"
-                              onPress={() => handleJoinWager(item)}
+                              onPress={async() =>{
+                                const wagerDetails = await fetchWagerDetails(item.id);
+                                handleDisputeWager(wagerDetails)
+                              }}
                             >
                               <Text className="text-white font-semibold text-sm">Came to an Agreement?</Text>
                             </TouchableOpacity>
@@ -561,6 +581,17 @@ const Wagers = () => {
             <CloseWagerModal
               isVisible={isCloseModalVisible}
               onClose={() => setCloseModalVisible(false)}
+              selectedWager={selectedWager}
+              userId={user?.id || ""}
+              onConfirmed={() => {
+                fetchUserWagers();
+                fetchAvailableWagers();
+              }}
+            />
+
+            <DisputesModal
+              isVisible={isDisputeModalVisible}
+              onClose={() => setDisputeModalVisible(false)}
               selectedWager={selectedWager}
               userId={user?.id || ""}
               onConfirmed={() => {

@@ -85,7 +85,8 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to update wager status");
 
-      Alert.alert("Success", "Wager has been disputed.");
+      handleResetVotes();
+      Alert.alert("Success", "Wager has been disputed. Each user must vote again in the disputes section.");
       onConfirmed()
       onClose(); 
     } catch (error) {
@@ -93,6 +94,24 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
     }
   };
 
+  const handleResetVotes = async () => {
+    try {
+      const response = await fetch("/(api)/wager_reset_votes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            wagerId: wagerId 
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to reset votes");
+  
+    } catch (err) {
+      Alert.alert("Error", err instanceof Error ? err.message : "Unknown error");
+    }
+  };
+  
   return (
     <Modal visible={isVisible} transparent animationType="slide">
       <View className="flex-1 justify-center items-center bg-black/70">
