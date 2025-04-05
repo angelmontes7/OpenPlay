@@ -298,7 +298,9 @@ const Wallet = () => {
                                             ? "remove-circle"
                                             : transaction.type === "wager"
                                             ? "cash-outline"
-                                            : "trophy-outline"
+                                            : transaction.type === "wager_win"
+                                            ? "trophy-outline"
+                                            : "help-circle-outline"
                                         }
                                         size={24}
                                         color={
@@ -308,7 +310,9 @@ const Wallet = () => {
                                             ? "red"
                                             : transaction.type === "wager"
                                             ? "orange"
-                                            : "gold"
+                                            : transaction.type === "wager_win"
+                                            ? "gold"
+                                            : "gray"
                                         }
                                     />
                                     <View className="ml-3">
@@ -319,7 +323,9 @@ const Wallet = () => {
                                             ? "Withdrew Money"
                                             : transaction.type === "wager"
                                             ? "Wagered Money"
-                                            : "Won Wager"}
+                                            : transaction.type === "wager_win"
+                                            ? "Won Wager"
+                                            : "Unknown Transaction"}
                                         </Text>
                                         <Text className="text-gray-500 text-xs">{transaction.date}</Text>
                                     </View>
@@ -332,7 +338,9 @@ const Wallet = () => {
                                         ? "text-red-600"
                                         : transaction.type === "wager"
                                         ? "text-orange-600"
-                                        : "text-yellow-600"
+                                        : transaction.type === "wager_win"
+                                        ? "text-yellow-600"
+                                        : "text-gray-600"
                                     }`}
                                     >
                                     {transaction.type === "add"
@@ -341,7 +349,9 @@ const Wallet = () => {
                                         ? `- $${transaction.amount}`
                                         : transaction.type === "wager"
                                         ? `- $${transaction.amount}`
-                                        : `+ $${transaction.amount}`}
+                                        : transaction.type === "wager_win"
+                                        ? `+ $${transaction.amount}`
+                                        : `$${transaction.amount}`}
                                     </Text>
                                 </View>
                         ))

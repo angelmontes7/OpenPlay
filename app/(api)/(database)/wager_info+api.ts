@@ -19,6 +19,7 @@ export async function GET(request: Request) {
         wp.team_name,
         wp.bet_amount,
         wp.joined_at,
+        wp.winning_vote,
         w.creator_id,
         w.sports_facility_id,
         w.base_bet_amount,
