@@ -11,6 +11,24 @@ import { UpdateUserPasswordParams } from "@clerk/types";
 import { supabase } from "@/app/(api)/(cloud)/config/initSupabase";
 import { fetchAPI } from "@/lib/fetch"
 
+const getUserPreferences = async (clerkId) => {
+    const res = await fetch(`/(api)/preferences?clerkId=${clerkId}`);
+    if (!res.ok) throw new Error("Failed to fetch preferences");
+    return res.json();
+  };
+  
+  const updateUserPreferences = async (clerkId, prefs) => {
+    const res = await fetch("/(api)/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ clerkId, ...prefs }),
+    });
+    if (!res.ok) throw new Error("Failed to update preferences");
+    return res.json();
+  };
+
 const Profile = () => {
     const { user } = useUser();
     const { signOut } = useAuth();
@@ -35,6 +53,7 @@ const Profile = () => {
     const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
     const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] = useState(false);
 
+    
     useEffect(() => {
         const fetchProfilePic = async () => {
             try {
@@ -109,6 +128,66 @@ const Profile = () => {
         }
     };
 
+    useEffect(() => {
+        const fetchPreferences = async () => {
+          if (!user?.id) return;
+          try {
+            const data = await getUserPreferences(user.id);
+            setIsPrivate(data.is_private);
+            setEmailNotifications(data.email_notifications);
+            setPushNotifications(data.push_notifications);
+            setLocationEnabled(data.location_enabled);
+            setsmsNotifications(data.sms_notifications);
+            setsocialNotifications(data.social_notifications);
+            setgameNotifications(data.game_notifications);
+          } catch (error) {
+            console.error("Error loading preferences:", error);
+          }
+        };
+        fetchPreferences();
+      }, [user?.id]);
+    
+    const handlePreferenceToggle = (key: string, value: boolean) => {
+        const newPrefs = {
+          is_private: isPrivate,
+          email_notifications: emailNotifications,
+          push_notifications: pushNotifications,
+          location_enabled: locationEnabled,
+          sms_notifications: smsNotifications,
+          social_notifications: socialNotifications,
+          game_notifications: gameNotifications,
+          [key]: value,
+        };
+    
+        updateUserPreferences(user?.id, newPrefs).catch((err) =>
+          console.error("Failed to update preferences", err)
+        );
+    
+        switch (key) {
+          case "is_private":
+            setIsPrivate(value);
+            break;
+          case "email_notifications":
+            setEmailNotifications(value);
+            break;
+          case "push_notifications":
+            setPushNotifications(value);
+            break;
+          case "location_enabled":
+            setLocationEnabled(value);
+            break;
+          case "sms_notifications":
+            setsmsNotifications(value);
+            break;
+          case "social_notifications":
+            setsocialNotifications(value);
+            break;
+          case "game_notifications":
+            setgameNotifications(value);
+            break;
+        }
+      };
+
     const handlePasswordReset = async function updatePassword(newPassword: UpdateUserPasswordParams, confirmNewPassword: string) {
         const user = client.user;
         if (newPassword.newPassword !== confirmNewPassword) {
@@ -140,12 +219,8 @@ const Profile = () => {
                         <ScrollView className="p-4">
                             <Text className="text-lg font-Jakarta p-4">Privacy Settings: Manage data sharing, account visibility, etc.</Text>;
                             <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                                <Text className="text-black text-base">Make Account Private</Text>
-                                <Switch value={isPrivate} onValueChange={setIsPrivate} />
-                            </View>
-                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                                 <Text className="text-black text-base">Location</Text>
-                                <Switch value={locationEnabled} onValueChange={setLocationEnabled} />
+                                <Switch value={locationEnabled} onValueChange={(val) => handlePreferenceToggle("location_enabled", val)} />
                             </View>
                             <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                                 <Text className="text-black text-base">Username: {user?.username}</Text>
@@ -243,23 +318,23 @@ const Profile = () => {
                     <View className="p-4">
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Email Notifications</Text>
-                            <Switch value={emailNotifications} onValueChange={setEmailNotifications} />
+                            <Switch value={emailNotifications} onValueChange={(val) => handlePreferenceToggle("email_notifications", val)} />
                         </View>
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Push Notifications</Text>
-                            <Switch value={pushNotifications} onValueChange={setPushNotifications} />
+                            <Switch value={pushNotifications} onValueChange={(val) => handlePreferenceToggle("push_notifications", val)} />
                         </View>
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">SMS Notifications</Text>
-                            <Switch value={smsNotifications} onValueChange={setsmsNotifications} />
+                            <Switch value={smsNotifications} onValueChange={(val) => handlePreferenceToggle("sms_notifications", val)} />
                         </View>
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Social Notifications</Text>
-                            <Switch value={socialNotifications} onValueChange={setsocialNotifications} />
+                            <Switch value={socialNotifications} onValueChange={(val) => handlePreferenceToggle("social_notifications", val)} />
                         </View>
                         <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
                             <Text className="text-black text-base">Game Notifications</Text>
-                            <Switch value={gameNotifications} onValueChange={setgameNotifications} />
+                            <Switch value={gameNotifications} onValueChange={(val) => handlePreferenceToggle("game_notifications", val)} />
                         </View>
                     </View>
                 );
