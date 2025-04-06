@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, Text, View, FlatList, Alert, TouchableOpacity } from "react-native";
-import CustomButton from "@/components/CustomButton";
 import { useUser } from "@clerk/clerk-expo";
 import { fetchAPI } from "@/lib/fetch";
 import CreateWagerModal from "@/components/CreateWagerModal";
@@ -10,6 +9,10 @@ import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
 import { LinearGradient } from "expo-linear-gradient";
+import CloseWagerModal from "@/components/CloseWagerModal";
+import DisputesModal from "@/components/DisputesModal";
+import { set } from "react-hook-form";
+
 
 type TabType = "Available" | "Active" | "History" | "Disputes";
 
@@ -20,7 +23,7 @@ const Wagers = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabType>("Available");
     const [availableWagers, setAvailableWagers] = useState([]);
-    const [userWagers, setUserWagers] = useState([])
+    const [userWagers, setUserWagers] = useState<any[]>([])
     const [currentView, setCurrentView] = useState<"list" | "create" | "join">("list");
     const [selectedWager, setSelectedWager] = useState<any>(null);
     const [latitude, setLatitude] = useState<number | null>(null);
@@ -28,6 +31,9 @@ const Wagers = () => {
     const [courtData, setCourtData] = useState<{ id: string; name: string; distance: number }[]>([]);
     const [balance, setBalance] = useState(0); // Initial balance set to 0
     const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
+    const [isCloseModalVisible, setCloseModalVisible] = useState(false);
+    const [isDisputeModalVisible, setDisputeModalVisible] = useState(false);
+    
 
     const [userData, setUserData] = useState<{ clerk_id: string; username: string }[]>([]);
 
@@ -97,18 +103,109 @@ const Wagers = () => {
       } 
     };
 
-    // Fetch user wagers (using clerkId) – these include wagers the user created or participated in
-    const fetchUserWagers = async () => {
+    // Fetch wagers the user has created
+    const fetchUserCreatedWagers = async () => {
       if (!user?.id) return;
       try {
         const response = await fetchAPI(`/(api)/wager?clerkId=${user.id}`, { method: "GET" });
-        setUserWagers(response);
+        return response;
+      } catch (error) {
+        console.error("Error fetching created wagers:", error);
+        setError("Error fetching created wagers");
+        return [];
+      }
+    };
+
+    // Fetch wagers the user has joined (from wager_participants)
+    const fetchUserJoinedWagers = async () => {
+      if (!user?.id) return;
+      try {
+        const response = await fetchAPI(`/(api)/wager_participants?clerkId=${user.id}`, { method: "GET" });
+        // Normalize the joined wager result so that fields match those from created wagers.
+        return response.map((item: any) => ({
+          id: item.wager_id, // use wager_id as the wager identifier
+          creator_id: item.creator_id,
+          sports_facility_id: item.sports_facility_id,
+          base_bet_amount: item.base_bet_amount,
+          total_amount: item.total_amount,
+          status: item.wager_status,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          amount_of_participants: item.amount_of_participants,
+          // Joined flag
+          joined: true,
+          // Include Participant details
+          participant_details: {
+            participant_id: item.user_id,
+            team_name: item.team_name,
+            bet_amount: item.bet_amount,
+            joined_at: item.joined_at,
+          }
+        }));
+      } catch (error) {
+        console.error("Error fetching joined wagers:", error);
+        setError("Error fetching joined wagers");
+        return [];
+      }
+    };
+
+    // Combine both created and joined wagers into a single userWagers list
+    const fetchUserWagers = async () => {
+      if (!user?.id) return;
+      try {
+        const [created, joined] = await Promise.all([
+          fetchUserCreatedWagers(),
+          fetchUserJoinedWagers()
+        ]);
+        // Combine the created and joined wagers
+        const combinedWagers = [...(created || []), ...(joined || [])];
+
+        // Filter out duplicate wagers based on the wager ID
+        const uniqueWagers = combinedWagers.filter(
+          (wager, index, self) =>
+            index === self.findIndex((w) => w.id === wager.id)
+        );
+
+        setUserWagers(uniqueWagers);
       } catch (error) {
         console.error("Error fetching user wagers:", error);
         setError("Error fetching user wagers");
       }
     };
-    
+
+    // Fetch wager details based on wagerId
+    const fetchWagerDetails = async (wagerId: string) => {
+      try {
+        const response = await fetchAPI(`/(api)/wager_info?wagerId=${wagerId}`, { method: "GET" });
+        
+        // Normalize the wager details and participant information
+        return response.map((item: any) => ({
+          id: item.wager_id, // use wager_id as the wager identifier
+          creator_id: item.creator_id,
+          sports_facility_id: item.sports_facility_id,
+          base_bet_amount: item.base_bet_amount,
+          total_amount: item.total_amount,
+          status: item.wager_status,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          amount_of_participants: item.amount_of_participants,
+          // Include Participant details
+          participant_details: {
+            participant_id: item.user_id,
+            team_name: item.team_name,
+            bet_amount: item.bet_amount,
+            joined_at: item.joined_at,
+            winning_vote: item.winning_vote,
+          }
+        }));
+      } catch (error) {
+        console.error("Error fetching wager details:", error);
+        setError("Error fetching wager details");
+        return [];
+      }
+    };
+
+
     // Initial data fetching
     useEffect(() => {
       fetchAvailableWagers();
@@ -127,7 +224,8 @@ const Wagers = () => {
       const fetchData = async () => {
         try {
           const facilities = await fetchFacilities(latitude, longitude);
-          setCourtData(facilities);
+          const nearbyFacilities = facilities.filter((facility) => Number(facility.distance) <= 10);
+          setCourtData(nearbyFacilities)
         } catch (error) {
           setError("Failed to load facilities");
         }
@@ -167,13 +265,51 @@ const Wagers = () => {
  
     
     const handleJoinWager = (wager: { id: string; team_name: string; base_bet_amount: number; creator_id: string }) => {
+      // Find the wager in userWagers that matches the current wager ID
+      const existingWager = userWagers.find((w) => Number(w.id) === Number(wager.id));
+
+      // Extract participant_id if the wager exists
       if (wager.creator_id === user?.id) {
-        Alert.alert("Error", "You cannot wager on your own wager.");
+        Alert.alert("Error", "Cannot join your own created wager.");
+        return;
+      }
+      else if (existingWager?.participant_details.participant_id === user?.id){
+        Alert.alert("Error", "You have already joined this wager.");
         return;
       }
         setSelectedWager(wager);
         setIsJoinModalVisible(true);
     };
+
+    const handleCloseWager = (wagerDetails: any) => {
+      // Find the current user's participant record
+      const myRecord = wagerDetails.find(
+        (w: any) => w.participant_details.participant_id === user?.id
+      );
+
+      // If we found their record and they've already voted...
+      if (myRecord && myRecord.participant_details.winning_vote !== null) {
+        Alert.alert("You have already voted");
+        return;
+      }
+      setSelectedWager(wagerDetails);
+      setCloseModalVisible(true)
+    }
+
+    const handleDisputeWager = (wagerDetails: any) => {
+      // Find the current user's participant record
+      const myRecord = wagerDetails.find(
+        (w: any) => w.participant_details.participant_id === user?.id
+      );
+
+      // If we found their record and they've already voted...
+      if (myRecord && myRecord.participant_details.winning_vote !== null) {
+        Alert.alert("You have already voted");
+        return;
+      }
+      setSelectedWager(wagerDetails);
+      setDisputeModalVisible(true)
+    }
 
     
     // Navigation Tabs
@@ -186,7 +322,7 @@ const Wagers = () => {
       ];
       
       return (
-        <View className="flex-row bg-white mx-4 mt-[-20px] rounded-xl shadow-sm">
+        <View className="flex-row bg-gray-900 mx-4 mt-[-20px] rounded-xl shadow-sm">
           {tabs.map((tab) => (
             <TouchableOpacity 
               key={tab.key} 
@@ -212,10 +348,10 @@ const Wagers = () => {
     // Determine wagers to display based on activeTab
     let displayedWagers: any[] = [];
     if (activeTab === "Available") {
-      // Available wagers are those with status pending
+      // Available wagers are those with status pending (from availableWagers state)
       displayedWagers = availableWagers;
     } else {
-      // For user wagers, filter by status
+      // For user wagers (created or joined), filter by status
       if (activeTab === "Active") {
         displayedWagers = userWagers.filter(
           (wager) => wager.status === "active" || wager.status === "pending"
@@ -226,6 +362,7 @@ const Wagers = () => {
         displayedWagers = userWagers.filter((wager) => wager.status === "disputed");
       }
     }
+
 
     // Get badge color based on status
     const getBadgeColor = (status: string) => {
@@ -270,174 +407,246 @@ const Wagers = () => {
     }
     
     return (
-        <SafeAreaView className="flex-1 bg-gray-100">
-          
-          {/* Header with Balance */}
-          <LinearGradient
-            colors={['#3B82F6', '#60A5FA']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className="px-5 py-6"
-          >
-            <View className="flex-row justify-between items-center">
-              <View>
-                <Text className="text-white opacity-80 text-sm mb-1">Welcome, {user?.username}</Text>
-                <Text className="text-white text-sm font-medium">Available Balance</Text>
-              </View>
-              <View className="flex-row items-center">
-                <Text className="text-white text-2xl font-medium mr-1">$</Text>
-                <Text className="text-white text-3xl font-bold">{balance}</Text>
-              </View>
+      <View className="flex-1 bg-gray-900">
+        
+        {/* Header with Balance */}
+        <LinearGradient
+          colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="px-5 py-6"
+        >
+          <View className="flex-row justify-between items-center mb-5 mt-5">
+            <View>
+              <Text className="text-white opacity-80 text-sm mb-1">Welcome, {user?.username}</Text>
+              <Text className="text-white text-sm font-medium">Available Balance</Text>
             </View>
-          </LinearGradient>
+            <View className="flex-row items-center">
+              <Text className="text-white text-2xl font-medium mr-1">$</Text>
+              <Text className="text-white text-3xl font-bold">{balance}</Text>
+            </View>
+          </View>
+        </LinearGradient>
 
-          {/* Navigation Bar */}
-          {renderTabs()}
+        {/* Navigation Bar */}
+        {renderTabs()}
 
-          {currentView === "list" && (
-            <>
-              <View className="flex-1 p-4">
-                
-                  {/* Create Wager Button */}
-                  <TouchableOpacity
-                    className="bg-green-500 flex-row items-center justify-center py-3 rounded-lg mb-4 shadow-sm"
-                    onPress={() => setCurrentView("create")}
+        {currentView === "list" && (
+          <>
+            <View className="flex-1 p-4">
+              
+                {/* Create Wager Button */}
+                <TouchableOpacity
+                  className="h-14 rounded-xl overflow-hidden m-1"
+                  onPress={() => setCurrentView("create")}
+                >
+                  <LinearGradient
+                    colors={['#3b82f6', '#2563eb']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="w-full h-full justify-center items-center"
                   >
                     <Ionicons name="add-circle" size={20} color="#FFFFFF" />
-                    <Text className="text-white font-semibold text-base ml-2">Create a New Wager</Text>
-                  </TouchableOpacity>
+                    <Text className="text-white font-bold text-lg mb-1">Create a New Wager</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
 
-                  {/* Description Header */}
-                  <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
-                    {activeTab === "Available"
-                      ? "Available Wagers"
-                      : activeTab === "Active"
-                      ? "Your Active Wagers"
-                      : activeTab === "History"
-                      ? "History"
-                      : "Wager Disputes"}
-                  </Text>
-
-                  {/* Wagers List */}
-                  <FlatList
-                    data={displayedWagers}
-                    keyExtractor={(item) => item.id.toString()}
-                    contentContainerStyle={{ paddingBottom: 120 }}
-                    ListEmptyComponent={() => (
-                      <View className="items-center justify-center py-10">
-                        <Ionicons name="search" size={48} color="#A0AEC0" />
-                        <Text className="text-base font-medium text-gray-500 mt-3">No {activeTab} Wagers Found</Text>
-                        <Text className="text-sm text-gray-400 mt-1">Pull down to refresh</Text>
+                {/* Description Header */}
+                <Text className="text-lg font-bold text-white mt-2 mb-2">
+                  {activeTab === "Available"
+                    ? "Available Wagers"
+                    : activeTab === "Active"
+                    ? "Your Active Wagers"
+                    : activeTab === "History"
+                    ? "History"
+                    : "Wager Disputes"}
+                </Text>
+                
+                {/* Wagers List */}
+                <FlatList
+                  data={displayedWagers}
+                  keyExtractor={(item) => item.id.toString()}
+                  contentContainerStyle={{ paddingBottom: 120 }}
+                  showsVerticalScrollIndicator={false}
+                  ListEmptyComponent={() => (
+                    <View className="items-center justify-center py-12 bg-gray-800/50 rounded-2xl backdrop-blur-sm">
+                      <View className="bg-blue-500/20 p-4 rounded-full mb-3">
+                        <Ionicons name="search" size={40} color="#60A5FA" />
                       </View>
-                    )}
-                    renderItem={({ item }) => {
-                      const facility = courtData.find((court) => Number(court.id) === Number(item.sports_facility_id));
-                      const creator = userData.find((user) => user.clerk_id === item.creator_id); // Find the creator's username
-          
-                      return (
-                        <View className="bg-white rounded-xl p-4 mb-3 shadow-sm">
-                          <View className="flex-row justify-between items-start mb-3">
-                            <View>
-                              <Text className="text-xs text-gray-500 mb-1">Bet Amount</Text>
-                              <Text className="text-2xl font-bold text-gray-900">${item.base_bet_amount}</Text>
+                      <Text className="text-lg font-bold text-white mb-1">No {activeTab} Wagers Found</Text>
+                      <Text className="text-sm text-blue-300/70">Pull down to refresh</Text>
+                    </View>
+                  )}
+                  renderItem={({ item }) => {
+                    const facility = courtData.find((court) => Number(court.id) === Number(item.sports_facility_id));
+                    const creator = userData.find((user) => user.clerk_id === item.creator_id);
+
+                    return (
+                      <View className="overflow-hidden relative mb-5">
+                        {/* Background Glow Effect */}
+                        <View className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-2xl blur-xl -z-10" />
+                        
+                        <View className="bg-gray-800/90 backdrop-blur-md rounded-2xl border border-gray-700/50 shadow-lg shadow-blue-900/20">
+                          {/* Status Badge - Positioned in top-right corner */}
+                          <View className="absolute top-3 right-3 z-10">
+                            <View className={`px-3 py-1 rounded-full shadow-md ${getBadgeColor(item.status)}`}>
+                              <Text className="text-xs font-bold capitalize">{item.status}</Text>
                             </View>
-                            <View>
-                              <Text className="text-xs text-gray-500 mb-1">Total Amount</Text>
-                              <Text className="text-2xl font-bold text-gray-900">${item.total_amount}</Text>
-                            </View>
-                            <View>
-                              <View className={`px-2 py-1 rounded ${getBadgeColor(item.status)}`}>
-                                <Text className="text-xs font-medium capitalize">{item.status}</Text>
+                          </View>
+                          
+                          {/* Card Header with Amounts */}
+                          <View className="p-4 border-b border-gray-700/50">
+                            <View className="flex-row justify-between items-start">
+                              <View className="bg-gray-700/50 rounded-xl p-3 flex-1 mr-3">
+                                <Text className="text-blue-400 text-xs font-medium mb-1">Bet Amount</Text>
+                                <Text className="text-white text-2xl font-bold">${item.base_bet_amount}</Text>
+                              </View>
+                              <View className="bg-gray-700/50 rounded-xl p-3 flex-1">
+                                <Text className="text-blue-400 text-xs font-medium mb-1">Total Pool</Text>
+                                <Text className="text-white text-2xl font-bold">${item.total_amount}</Text>
                               </View>
                             </View>
                           </View>
                           
-                          <Text className="text-xs text-gray-500 mb-1">Creator</Text>
-                            <View className="flex-row items-center mb-4">
-                              <Ionicons name="person" size={16} color="#718096" />
-                              <Text className="text-sm text-gray-600 ml-1">
-                                {creator ? creator.username : "Unknown User"}
-                              </Text>
+                          {/* Card Body with Details */}
+                          <View className="p-4">
+                            <View className="space-y-4">
+                              {/* Creator Info */}
+                              <View className="flex-row items-center">
+                                <View className="w-9 h-9 bg-blue-500/20 rounded-full items-center justify-center mr-3">
+                                  <Ionicons name="person" size={18} color="#60A5FA" />
+                                </View>
+                                <View>
+                                  <Text className="text-blue-400 text-xs font-medium mb-1">Creator</Text>
+                                  <Text className="text-white text-sm font-semibold">
+                                    {creator ? creator.username : "Unknown User"}
+                                  </Text>
+                                </View>
+                              </View>
+                              
+                              {/* Participants Info */}
+                              <View className="flex-row items-center">
+                                <View className="w-9 h-9 bg-purple-500/20 rounded-full items-center justify-center mr-3">
+                                  <Ionicons name="people-outline" size={18} color="#A78BFA" />
+                                </View>
+                                <View>
+                                  <Text className="text-blue-400 text-xs font-medium mb-1">Participants</Text>
+                                  <Text className="text-white text-sm font-semibold">
+                                    {item.amount_of_participants}
+                                  </Text>
+                                </View>
+                              </View>
+                              
+                              {/* Location Info */}
+                              <View className="flex-row items-center">
+                                <View className="w-9 h-9 bg-cyan-500/20 rounded-full items-center justify-center mr-3">
+                                  <Ionicons name="location" size={18} color="#22D3EE" />
+                                </View>
+                                <View>
+                                  <Text className="text-blue-400 text-xs font-medium mb-1">Location</Text>
+                                  <Text className="text-white text-sm font-semibold">
+                                    {facility ? facility.name : "Unknown Location"}
+                                  </Text>
+                                </View>
+                              </View>
                             </View>
-                      
-                          <Text className="text-xs text-gray-500 mb-1">Amount of Participants</Text>
-                          <View className="flex-row items-center mb-4">
-                            <Ionicons name="people-outline" size={16} color="#718096" />
-                            <Text className="text-sm text-gray-600 ml-1">
-                              {item.amount_of_participants}
-                            </Text>
-                          </View>
-                          
-                          <Text className="text-xs text-gray-500 mb-1">Location</Text>
-                          <View className="flex-row items-center mb-4">
-                            <Ionicons name="location" size={16} color="#718096" />
-                            <Text className="text-sm text-gray-600 ml-1">
-                              {facility ? facility.name : "Unknown Location"}
-                            </Text>
-                          </View>
-                          
-                          {activeTab === "Available" && (
-                            <TouchableOpacity
-                              className="bg-blue-600 py-3 rounded-lg items-center"
-                              onPress={() => handleJoinWager(item)}
-                            >
-                              <Text className="text-white font-semibold text-sm">Join Wager</Text>
-                            </TouchableOpacity>
-                          )}
+                            
+                            {/* Action Buttons */}
+                            {activeTab === "Available" && (
+                              <TouchableOpacity
+                                className="mt-5 bg-gray-700 py-3.5 rounded-xl items-center shadow-md shadow-gray-900/30"
+                                onPress={() => handleJoinWager(item)}
+                              >
+                                <Text className="text-white font-bold text-sm">Join Wager</Text>
+                              </TouchableOpacity>
+                            )}
 
-                          {activeTab === "Active" && (
-                            <TouchableOpacity
-                              className="bg-blue-600 py-3 rounded-lg items-center"
-                              onPress={() => handleJoinWager(item)}
-                            >
-                              <Text className="text-white font-semibold text-sm">Finished?</Text>
-                            </TouchableOpacity>
-                          )}
+                            {activeTab === "Active" && (
+                              <TouchableOpacity
+                                className="mt-5 bg-gray-700 py-3.5 rounded-xl items-center shadow-md shadow-gray-900/30"
+                                onPress={async() => {
+                                  const wagerDetails = await fetchWagerDetails(item.id);
+                                  handleCloseWager(wagerDetails);
+                                }}
+                              >
+                                <Text className="text-white font-bold text-sm">Mark as Finished</Text>
+                              </TouchableOpacity>
+                            )}
 
-                          {activeTab === "Disputes" && (
-                            <TouchableOpacity
-                              className="bg-blue-600 py-3 rounded-lg items-center"
-                              onPress={() => handleJoinWager(item)}
-                            >
-                              <Text className="text-white font-semibold text-sm">Came to an Agreement?</Text>
-                            </TouchableOpacity>
-                          )}
+                            {activeTab === "Disputes" && (
+                              <TouchableOpacity
+                                className="mt-5 bg-gray-700 py-3.5 rounded-xl items-center shadow-md shadow-gray-900/30"
+                                onPress={async() => {
+                                  const wagerDetails = await fetchWagerDetails(item.id);
+                                  handleDisputeWager(wagerDetails);
+                                }}
+                              >
+                                <Text className="text-white font-bold text-sm">Resolve Dispute</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
                         </View>
-                      );
-                    }}
-                  />
-              </View>
-            </>
-          )}
-    
-          {currentView === "create" && (
-            <CreateWagerModal
-              visible={currentView === "create"}
+                      </View>
+                    );
+                  }}
+                />
+            </View>
+          </>
+        )}
+  
+        {currentView === "create" && (
+          <CreateWagerModal
+            visible={currentView === "create"}
+            clerkId={user?.id || ""}
+            courts={courtData}
+            onClose={() => setCurrentView("list")}
+            onCreate={() => {
+              setCurrentView("list");
+              fetchUserWagers();
+              fetchAvailableWagers();
+              fetchBalance();
+            }}
+          />
+        )}
+          <JoinWagerModal
+              visible={isJoinModalVisible}
+              selectedWager={selectedWager}
+              onClose={() => setIsJoinModalVisible(false)}
               clerkId={user?.id || ""}
-              courts={courtData}
-              onClose={() => setCurrentView("list")}
-              onCreate={() => {
-                setCurrentView("list");
+              onJoin={() => {
+                setIsJoinModalVisible(false);
                 fetchUserWagers();
                 fetchAvailableWagers();
                 fetchBalance();
               }}
-            />
-          )}
-            <JoinWagerModal
-                visible={isJoinModalVisible}
-                selectedWager={selectedWager}
-                onClose={() => setIsJoinModalVisible(false)}
-                clerkId={user?.id}
-                onJoin={() => {
-                  setIsJoinModalVisible(false);
-                  fetchUserWagers();
-                  fetchAvailableWagers();
-                  fetchBalance();
-                }}
-            />
-        </SafeAreaView>
-      );
+          />
+          <CloseWagerModal
+            isVisible={isCloseModalVisible}
+            onClose={() => setCloseModalVisible(false)}
+            selectedWager={selectedWager}
+            userId={user?.id || ""}
+            onConfirmed={() => {
+              setCloseModalVisible(false);
+              fetchUserWagers();
+              fetchAvailableWagers();
+              fetchBalance();
+            }}
+          />
+
+          <DisputesModal
+            isVisible={isDisputeModalVisible}
+            onClose={() => setDisputeModalVisible(false)}
+            selectedWager={selectedWager}
+            userId={user?.id || ""}
+            onConfirmed={() => {
+              setDisputeModalVisible(false);
+              fetchUserWagers();
+              fetchAvailableWagers();
+              fetchBalance();
+            }}
+          />
+      </View>
+    );
 };
 
 export default Wagers;

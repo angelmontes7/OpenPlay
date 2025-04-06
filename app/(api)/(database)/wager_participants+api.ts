@@ -36,8 +36,8 @@ export async function POST(request: Request) {
 
     // Insert the new participant into the wager_participants table.
     const participantResult = await sql`
-      INSERT INTO wager_participants (wager_id, user_id, team_name, bet_amount, status)
-      VALUES (${wagerId}, ${clerkId}, ${teamName}, ${betAmount}, 'pending')
+      INSERT INTO wager_participants (wager_id, user_id, team_name, bet_amount)
+      VALUES (${wagerId}, ${clerkId}, ${teamName}, ${betAmount})
       RETURNING id, wager_id, user_id, team_name, bet_amount, joined_at;
     `;
     
@@ -77,6 +77,7 @@ export async function GET(request: Request) {
     const sql = neon(`${process.env.DATABASE_URL}`);
     const { searchParams } = new URL(request.url);
     const wagerId = searchParams.get("wagerId");
+    const clerkId = searchParams.get("clerkId");
 
     let response;
 
@@ -86,6 +87,29 @@ export async function GET(request: Request) {
         SELECT * FROM wager_participants
         WHERE wager_id = ${wagerId}
         ORDER BY joined_at DESC;
+      `;
+    } else if (clerkId) {
+      // Retrieve wagers that the user has joined, along with wager details
+      response = await sql`
+        SELECT 
+          wp.id AS participant_id,
+          wp.wager_id,
+          wp.user_id,
+          wp.team_name,
+          wp.bet_amount,
+          wp.joined_at,
+          w.creator_id,
+          w.sports_facility_id,
+          w.base_bet_amount,
+          w.total_amount,
+          w.status AS wager_status,
+          w.created_at,
+          w.updated_at,
+          w.amount_of_participants
+        FROM wager_participants wp
+        JOIN wagers w ON wp.wager_id = w.id
+        WHERE wp.user_id = ${clerkId}
+        ORDER BY wp.joined_at DESC;
       `;
     } else {
       // Retrieve all wager participants.
