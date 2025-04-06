@@ -231,6 +231,7 @@ const Wallet = () => {
                 },
                 body: JSON.stringify({
                     clerkId: user?.id,
+                    holderName: model.holderName,
                     cardNumber: model.cardNumber,
                     expiryMonth: model.expiration.split("/")[0],
                     expiryYear: model.expiration.split("/")[1],
