@@ -2,23 +2,23 @@ import { neon } from '@neondatabase/serverless';
 
 export async function POST(request: Request) {
   try {
-    const { clerkId, cardNumber, expiryMonth, expiryYear, cvc } = await request.json();
+    const { clerkId, holderName, cardNumber, expiryMonth, expiryYear, cvc } = await request.json();
 
-    if (!clerkId || !cardNumber || !expiryMonth || !expiryYear || !cvc) {
+    if (!clerkId || !holderName || !cardNumber || !expiryMonth || !expiryYear || !cvc) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
       });
     }
-
+    
     // Store the card information in the database
     const sql = neon(`${process.env.DATABASE_URL}`);
     await sql`
-      INSERT INTO charge_cards (clerk_id, card_number, expiry_month, expiry_year, cvc)
-      VALUES (${clerkId}, ${cardNumber}, ${expiryMonth}, ${expiryYear}, ${cvc})
+      INSERT INTO charge_cards (clerk_id, holder_name, card_number, expiry_month, expiry_year, cvc)
+      VALUES (${clerkId}, ${holderName}, ${cardNumber}, ${expiryMonth}, ${expiryYear}, ${cvc})
       RETURNING *;
     `;
 
-    return new Response(JSON.stringify({ card: { cardNumber, expiryMonth, expiryYear, cvc } }), { status: 200 });
+    return new Response(JSON.stringify({ card: { holderName, cardNumber, expiryMonth, expiryYear, cvc } }), { status: 200 });
   } catch (error) {
     console.error("Error in POST /api/card:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 
     const sql = neon(`${process.env.DATABASE_URL}`);
     const result = await sql`
-      SELECT card_number, expiry_month, expiry_year, cvc
+      SELECT holder_name, card_number, expiry_month, expiry_year, cvc
       FROM charge_cards
       WHERE clerk_id = ${clerkId}
     `;
