@@ -67,7 +67,7 @@ const StoredCardModal: React.FC<StoredCardModalProps> = ({
       });
     }
   }, [clerkId, visible]);
-  
+
   return (
     <Modal visible={visible} transparent animationType="none">
       <BlurView intensity={90} className="flex-1 justify-center items-center bg-black/50">
@@ -128,7 +128,7 @@ const StoredCardModal: React.FC<StoredCardModalProps> = ({
                     <View>
                       <Text className="text-blue-200 text-xs">Card Holder</Text>
                       <Text className="text-white font-medium">
-                        {card.cardholder_name || "John Doe"}
+                        {card.holder_name || "John Doe"}
                       </Text>
                     </View>
                     <View>
