@@ -22,6 +22,8 @@ import InputField from '@/components/InputField';
 import CustomButton from '@/components/CustomButton';
 import FacilityDetails from '@/components/FacilityDetails';
 import * as Location from 'expo-location'
+import { fetchFacilities } from "@/lib/fetchFacilities";
+import { getUserLocation, watchUserLocation } from "@/lib/location";
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60;
@@ -61,8 +63,8 @@ export default function Home() {
   
   // Location
   const [errorMsg, setErrorMsg] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [latitude, setLatitude] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [region, setRegion] = useState({
     latitude: 41.7725,
     longitude: -88.1535,
@@ -127,107 +129,56 @@ export default function Home() {
     }
   }, [contentHeight, maxSheetPos, sheetPosition]);
 
-
   useEffect(() => {
-    watchUserLocation();
-  }, []);
-
-
-  useEffect(() => {
-    const fetchFacilities = async () => {
-      try {
-        const response = await fetch('/(api)/sports_facilities'); // Replace with your actual API endpoint
-        if (!response.ok) {
-          throw new Error('Failed to fetch facilities');
-        }
-        const data = await response.json();
-  
-        // Map the API response to the `Court` interface
-        const mappedData: Court[] = data.map((facility: any) => {
-          const courtLatitude = parseFloat(facility.coordinates.x); // Assuming `coordinates` is a POINT type
-          const courtLongitude = parseFloat(facility.coordinates.y);
-  
-          return {
-            id: facility.id.toString(),
-            name: facility.name,
-            address: facility.address,
-            available: true, // Need to create a function that calculates this
-            sport: facility.sports,
-            distance: calculateDistance(latitude, longitude, courtLatitude, courtLongitude), // Calculate distance
-            popularity: facility.stars, // Need to create a function that calculates this
-            type: facility.free_vs_paid,
-            capacity: parseInt(facility.capacity, 10),
-            coordinate: {
-              latitude: courtLatitude,
-              longitude: courtLongitude,
-            },
-            description: facility.description, 
-            amenities: facility.amenities, 
-            website: facility.website, 
-            stars: facility.stars, 
-          };
-        });
-  
-        setCourtData(mappedData);
-      } catch (error) {
-        console.error('Error fetching facilities:', error);
-        setErrorMsg('Failed to load facilities');
-      }
-    };
-  
-    if (latitude && longitude) {
-      fetchFacilities();
-    }
-  }, [latitude, longitude]); // Re-fetch facilities when the user's location changes
-
-
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-  
-    const R = 6371; // Radius of the Earth in kilometers
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
-  
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in kilometers
-  
-    return parseFloat((distance * 0.621371).toFixed(1)); // Convert to miles and round to 1 decimal place
-  };
-  
-
-  const watchUserLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-  
-    if (status !== "granted") {
-      setErrorMsg('Permission to location was not granted');
-      return;
-    }
-  
-    await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.High,
-        timeInterval: 10000, // Update every 10 seconds
-        distanceInterval: 10, // Update every 10 meters
-      },
-      (location) => {
-        const { latitude, longitude } = location.coords;
-        setLatitude(latitude);
-        setLongitude(longitude);
+    const fetchLocation = async () => {
+      const location = await getUserLocation();
+      if (location) {
+        setLatitude(location.latitude);
+        setLongitude(location.longitude);
         setRegion({
-          latitude,
-          longitude,
+          latitude: location.latitude,
+          longitude: location.longitude,
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         });
       }
-    );
-  };
+    };
 
+    fetchLocation();
+  }, []);
+
+  useEffect(() => {
+    const subscription = watchUserLocation((location) => {
+      setLatitude(location.latitude);
+      setLongitude(location.longitude);
+      setRegion({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
+    });
+
+    return () => {
+      subscription?.then((sub) => sub?.remove());
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const facilities = await fetchFacilities(latitude, longitude);
+        setCourtData(facilities);
+      } catch (error) {
+        setErrorMsg("Failed to load facilities");
+      }
+    };
+  
+    if (latitude && longitude) {
+      fetchData();
+    }
+  }, [latitude, longitude]);
+  
   const handleViewDetails = (court: Court) => {
     setSelectedCourt(court);
     setIsFacilityDetailsVisible(true);
