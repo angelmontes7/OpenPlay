@@ -12,9 +12,9 @@ import {
   PanResponderGestureState,
   Modal,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker } from 'react-native-maps';
 import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
 import { icons } from '@/constants';
@@ -24,6 +24,14 @@ import FacilityDetails from '@/components/FacilityDetails';
 import * as Location from 'expo-location'
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
+
+let MapView: any = null;
+let Marker: any = null;
+if (Platform.OS !== 'web') {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Marker = maps.Marker;
+}
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60;
@@ -96,6 +104,70 @@ export default function Home() {
   });
   const lastSheetPosition = useRef(sheetPositionValue.current);
   const listScrollOffset = useRef(0);
+
+    // New state for check-in and head count
+    const [currentCheckInCourt, setCurrentCheckInCourt] = useState<string | null>(null);
+    const [liveHeadCount, setLiveHeadCount] = useState<number>(0);
+  
+    // Function to check in a user
+    const handleCheckIn = async (courtId: string) => {
+      try {
+        const response = await fetchAPI("/(api)/check_in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user?.id, courtId }),
+        });
+        if (response.error) {
+          Alert.alert("Error", response.error);
+        } else {
+          setCurrentCheckInCourt(courtId);
+        }
+      } catch (error) {
+        Alert.alert("Error", "Failed to check in");
+      }
+    };
+  
+    // Function to check out a user
+    const handleCheckOut = async (courtId: string) => {
+      try {
+        const response = await fetchAPI("/(api)/check_out", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user?.id, courtId }),
+        });
+        if (response.error) {
+          Alert.alert("Error", response.error);
+        } else {
+          setCurrentCheckInCourt(null);
+        }
+      } catch (error) {
+        Alert.alert("Error", "Failed to check out");
+      }
+    };
+  
+    // Poll the head count every 5 seconds for the selected court
+    useEffect(() => {
+      let interval: NodeJS.Timeout;
+      if (selectedCourt) {
+        const fetchHeadCount = async () => {
+            if (Platform.OS === 'web') {
+                // For web, skip the API call or use dummy data
+                setLiveHeadCount(0);
+                return;
+              }
+            try {
+              const response = await fetchAPI(`/api/database/headcount/routes.server?courtId=${selectedCourt.id}`);
+              console.log('Raw response:', response);
+              setLiveHeadCount(response.headCount);
+            } catch (error) {
+              console.error("Error fetching head count", error);
+            }
+          };          
+        fetchHeadCount();
+        interval = setInterval(fetchHeadCount, 5000);
+      }
+      return () => interval && clearInterval(interval);
+    }, [selectedCourt]);
 
   // Check if user has DOB set.
   useEffect(() => {
@@ -203,7 +275,7 @@ export default function Home() {
       },
       onPanResponderMove: (_, gestureState: PanResponderGestureState) => {
         let newPos = lastSheetPosition.current + gestureState.dy;
-        newPos = Math.min(Math.max(newPos, 0), maxSheetPos);
+        newPos = Math.min(Math.max(newPos, 0), 335);
         sheetPosition.setValue(newPos);
       },
       onPanResponderRelease: () => {
@@ -537,31 +609,36 @@ export default function Home() {
 
       {/* Interactive Map Section */}
       <View style={styles.mapContainer}>
-        <MapView
-          style={styles.map}
-          region={region}
-        >
-          {/* User Location Marker */}
-          {latitude && longitude && (
-            <Marker
-              coordinate={{ latitude, longitude }}
-              title="Your Location"
-              pinColor="blue"
-            />
-          )}
-          {/* Render markers for each filtered court */}
-          {filteredCourts.map(court => (
-            <Marker
-              key={court.id}
-              coordinate={court.coordinate}
-              title={court.name}
-              description={`${court.sport} - ${court.location}`}
-            />
-          ))}
-        </MapView>
-      </View>
+        {Platform.OS !== 'web' && MapView ? (
+            <MapView
+            style={styles.map}
+            region={region}
+            >
+            {latitude && longitude && (
+                <Marker
+                coordinate={{ latitude, longitude }}
+                title="Your Location"
+                pinColor="blue"
+                />
+            )}
+            {filteredCourts.map(court => (
+                <Marker
+                key={court.id}
+                coordinate={court.coordinate}
+                title={court.name}
+                description={`${court.sport} - ${court.location}`}
+                />
+            ))}
+            </MapView>
+        ) : (
+            <View style={[styles.map, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Text>Map is not available on web.</Text>
+            </View>
+        )}
+        </View>
+
       
-      {/* Details Modal */}
+      {/* Facility Details Modal with Check-In/Out functionality */}
       {selectedCourt && (
         <FacilityDetails
           visible={isFacilityDetailsVisible}
@@ -574,29 +651,39 @@ export default function Home() {
           amenities={selectedCourt.amenities}
           website={selectedCourt.website}
           stars={selectedCourt.stars}
+          // Pass whether this court is the one the user is checked into
+          isCheckedIn={currentCheckInCourt === selectedCourt.id}
+          // Provide the check in/out handlers
+          onCheckIn={() => handleCheckIn(selectedCourt.id)}
+          onCheckOut={() => handleCheckOut(selectedCourt.id)}
+          // Live head count for the selected court
+          headCount={liveHeadCount}
         />
       )}
 
       {/* Draggable List Sheet */}
       {filteredCourts.length > 0 ? (
         <Animated.View
-          style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
-          {...panResponder.panHandlers}
-        >
-          <View style={styles.dragIndicator} />
-          <FlatList
-            data={filteredCourts}
-            keyExtractor={(item) => item.id}
-            bounces={false}
-            scrollEnabled={scrollEnabled}
-            onScroll={(e) => { listScrollOffset.current = e.nativeEvent.contentOffset.y; }}
-            onContentSizeChange={(_, h) => setContentHeight(h)}
-            scrollEventThrottle={16}
-            keyboardShouldPersistTaps="handled"
-            renderItem={renderCourtItem}
-            contentContainerStyle={styles.listContent}
-          />
-        </Animated.View>
+        style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
+      >
+        {/* Drag Indicator with panResponder handlers */}
+        <View style={styles.dragIndicator} {...panResponder.panHandlers} />
+        
+        {/* The FlatList for your items */}
+        <FlatList
+          data={filteredCourts}
+          keyExtractor={(item) => item.id}
+          bounces={false}
+          scrollEnabled={true}  // Let the list scroll independently
+          onScroll={(e) => { listScrollOffset.current = e.nativeEvent.contentOffset.y; }}
+          onContentSizeChange={(_, h) => setContentHeight(h)}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          renderItem={renderCourtItem}
+          contentContainerStyle={styles.listContent}
+        />
+      </Animated.View>
+      
       ) : (
         <Animated.View
           style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
@@ -692,12 +779,13 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   dragIndicator: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#ccc',
+    width: 80,
+    height: 1,
+    backgroundColor: 'white',
     borderRadius: 2.5,
     alignSelf: 'center',
-    marginVertical: 10,
+    marginVertical: 20,
+    paddingVertical: 10,
   },
   listContent: {
     backgroundColor: 'white',
