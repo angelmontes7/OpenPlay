@@ -105,69 +105,73 @@ export default function Home() {
   const lastSheetPosition = useRef(sheetPositionValue.current);
   const listScrollOffset = useRef(0);
 
-    // New state for check-in and head count
-    const [currentCheckInCourt, setCurrentCheckInCourt] = useState<string | null>(null);
-    const [liveHeadCount, setLiveHeadCount] = useState<number>(0);
+  // New state for check-in and head count
+  const [currentCheckInCourt, setCurrentCheckInCourt] = useState<string | null>(null);
+  const [liveHeadCount, setLiveHeadCount] = useState<number>(0);
+
+  // Function to check in a user
+  const handleCheckIn = async (courtId: string) => {
+    try {
+      const response = await fetchAPI("/(api)/check_in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id, courtId }),
+      });
+      if (response.error) {
+        Alert.alert("Error", response.error);
+      } else {
+        setCurrentCheckInCourt(courtId);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to check in");
+    }
+  };
+
+  // Function to check out a user
+  const handleCheckOut = async (courtId: string) => {
+    try {
+      const response = await fetchAPI("/(api)/check_out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id, courtId }),
+      });
+      if (response.error) {
+        Alert.alert("Error", response.error);
+      } else {
+        setCurrentCheckInCourt(null);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to check out");
+    }
+  };
+
+  // Poll the head count every 5 seconds for the selected court
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
   
-    // Function to check in a user
-    const handleCheckIn = async (courtId: string) => {
-      try {
-        const response = await fetchAPI("/(api)/check_in", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user?.id, courtId }),
-        });
-        if (response.error) {
-          Alert.alert("Error", response.error);
-        } else {
-          setCurrentCheckInCourt(courtId);
+    if (selectedCourt) {
+      console.log("Selected Court:", selectedCourt);
+      const fetchHeadCount = async () => {
+        try {
+          if (!selectedCourt.id) {
+            console.error("Selected court does not have an ID:", selectedCourt);
+            return;
+          }
+  
+          const response = await fetchAPI(`/(api)/head_count?courtId=${selectedCourt.id}`);
+          console.log("Raw response:", response);
+          setLiveHeadCount(response.count);
+        } catch (error) {
+          console.error("Error fetching head count:", error);
         }
-      } catch (error) {
-        Alert.alert("Error", "Failed to check in");
-      }
-    };
+      };
   
-    // Function to check out a user
-    const handleCheckOut = async (courtId: string) => {
-      try {
-        const response = await fetchAPI("/(api)/check_out", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user?.id, courtId }),
-        });
-        if (response.error) {
-          Alert.alert("Error", response.error);
-        } else {
-          setCurrentCheckInCourt(null);
-        }
-      } catch (error) {
-        Alert.alert("Error", "Failed to check out");
-      }
-    };
+      fetchHeadCount();
+      interval = setInterval(fetchHeadCount, 10000);
+    }
   
-    // Poll the head count every 5 seconds for the selected court
-    useEffect(() => {
-      let interval: NodeJS.Timeout;
-      if (selectedCourt) {
-        const fetchHeadCount = async () => {
-            if (Platform.OS === 'web') {
-                // For web, skip the API call or use dummy data
-                setLiveHeadCount(0);
-                return;
-              }
-            try {
-              const response = await fetchAPI(`/api/database/headcount/routes.server?courtId=${selectedCourt.id}`);
-              console.log('Raw response:', response);
-              setLiveHeadCount(response.headCount);
-            } catch (error) {
-              console.error("Error fetching head count", error);
-            }
-          };          
-        fetchHeadCount();
-        interval = setInterval(fetchHeadCount, 5000);
-      }
-      return () => interval && clearInterval(interval);
-    }, [selectedCourt]);
+    return () => interval && clearInterval(interval);
+  }, [selectedCourt]);
 
   // Check if user has DOB set.
   useEffect(() => {
@@ -781,7 +785,7 @@ const styles = StyleSheet.create({
   dragIndicator: {
     width: 80,
     height: 1,
-    backgroundColor: 'white',
+    backgroundColor: 'green',
     borderRadius: 2.5,
     alignSelf: 'center',
     marginVertical: 20,
