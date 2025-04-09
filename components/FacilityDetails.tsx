@@ -12,6 +12,10 @@ interface FacilityDetailsProps {
   amenities: string;
   website: string;
   stars: number;
+  headCount: number;
+  isCheckedIn: boolean;
+  onCheckIn: () => void;
+  onCheckOut: () => void;
 }
 
 const FacilityDetails: React.FC<FacilityDetailsProps> = ({
@@ -25,17 +29,21 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
   amenities,
   website,
   stars,
+  headCount,
+  isCheckedIn,
+  onCheckIn,
+  onCheckOut,
 }) => {
   return (
     <Modal
       visible={visible}
-      transparent={false} // This ensures it takes up the entire screen
+      transparent={false}
       animationType="slide"
       onRequestClose={onClose}
     >
       <SafeAreaView className="flex-1 bg-white">
         <ScrollView contentContainerStyle={{ padding: 16 }}>
-          {/* Placeholder for image (empty space for now) */}
+          {/* Placeholder for image */}
           <View className="w-full h-40 bg-gray-300 rounded-lg mb-4" />
 
           {/* Name */}
@@ -44,7 +52,7 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
           {/* Stars */}
           <Text className="text-yellow-500 text-center mb-2">
             {'★'.repeat(stars)}{' '}
-            {'☆'.repeat(5 - stars)} {/* Display stars */}
+            {'☆'.repeat(5 - stars)}
           </Text>
 
           {/* Address */}
@@ -78,10 +86,32 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
             <Text className="text-blue-500 text-center">Visit Website</Text>
           </TouchableOpacity>
 
+          {/* Live Head Count */}
+          <Text className="text-lg text-gray-700 mb-2 text-center">
+            Current Head Count: {headCount}
+          </Text>
+
+          {/* Check In / Check Out Button */}
+          {isCheckedIn ? (
+            <TouchableOpacity
+              onPress={onCheckOut}
+              className="bg-red-500 py-2 px-4 rounded-lg mb-4"
+            >
+              <Text className="text-white text-center font-bold">Check Out</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={onCheckIn}
+              className="bg-green-500 py-2 px-4 rounded-lg mb-4"
+            >
+              <Text className="text-white text-center font-bold">Check In</Text>
+            </TouchableOpacity>
+          )}
+
           {/* Close Button */}
           <TouchableOpacity
-            className="bg-blue-500 py-2 px-4 rounded-lg"
             onPress={onClose}
+            className="bg-blue-500 py-2 px-4 rounded-lg"
           >
             <Text className="text-white text-center font-bold">Close</Text>
           </TouchableOpacity>
