@@ -24,6 +24,7 @@ import FacilityDetails from '@/components/FacilityDetails';
 import * as Location from 'expo-location'
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
+import { LinearGradient } from 'expo-linear-gradient';
 
 let MapView: any = null;
 let Marker: any = null;
@@ -150,7 +151,6 @@ export default function Home() {
     let interval: NodeJS.Timeout;
   
     if (selectedCourt) {
-      console.log("Selected Court:", selectedCourt);
       const fetchHeadCount = async () => {
         try {
           if (!selectedCourt.id) {
@@ -348,13 +348,19 @@ export default function Home() {
         {item.address} | {item.sport} | {item.distance} Miles | {item.popularity} Star{item.popularity > 1 ? 's' : ''} | {item.type} | Capacity: {item.capacity}
       </Text>
       <TouchableOpacity
-        style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
         disabled={!item.available}
         onPress={() => handleViewDetails(item)} // Pass the entire court object
       >
-        <Text style={styles.bookButtonText}>
-          {item.available ? 'View Details' : 'Unavailable'}
-        </Text>
+        <LinearGradient
+          colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.bookButton, { opacity: item.available ? 1 : 0.5 }]} // Adjust opacity if unavailable
+        >
+          <Text style={styles.bookButtonText}>
+            {item.available ? 'View Details' : 'Unavailable'}
+          </Text>
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -471,10 +477,10 @@ export default function Home() {
       <View style={styles.searchContainer}>
         <TextInput
           placeholder="Search for courts..."
-          placeholderTextColor="grey"
+          placeholderTextColor="white"
           value={search}
           onChangeText={setSearch}
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: 'white' }]}
         />
         <TouchableOpacity
           style={styles.filterButton}
@@ -671,7 +677,13 @@ export default function Home() {
         style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
       >
         {/* Drag Indicator with panResponder handlers */}
-        <View style={styles.dragIndicator} {...panResponder.panHandlers} />
+        <LinearGradient
+          colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.dragIndicator}
+          {...panResponder.panHandlers} // Pass pan handlers to the LinearGradient
+        />
         
         {/* The FlatList for your items */}
         <FlatList
@@ -702,7 +714,7 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#111827' },
   searchContainer: {
     position: 'absolute',
     top: 15,
@@ -717,26 +729,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     borderRadius: 5,
-    backgroundColor: '#eee',
+    backgroundColor: '#111827',
   },
   filterButton: {
     marginLeft: 10,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 5,
-    backgroundColor: '#eee',
+    backgroundColor: '#111827',
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
   filtersContainer: {
     position: 'absolute',
     top: SHEET_TOP,
     left: 15,
     right: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#111827',
     borderRadius: 5,
     padding: 10,
     zIndex: 11,
@@ -750,20 +762,21 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: 'white',
   },
   filterOption: { marginBottom: 10 },
-  filterLabel: { fontWeight: 'bold', marginBottom: 5 },
+  filterLabel: { color: 'white', fontWeight: 'bold', marginBottom: 5 },
   filterOptionsRow: { flexDirection: 'row', flexWrap: 'wrap' },
   filterOptionButton: {
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
-    backgroundColor: '#eee',
+    backgroundColor: 'rgba(31, 41, 55, 0.9)',
     marginRight: 5,
     marginBottom: 5,
   },
   filterOptionButtonSelected: { backgroundColor: '#007bff' },
-  filterOptionText: { color: 'black' },
+  filterOptionText: { color: 'white' },
   filterOptionTextSelected: { color: 'white' },
   mapContainer: {
     position: 'absolute',
@@ -775,6 +788,7 @@ const styles = StyleSheet.create({
   },
   map: { flex: 1 },
   sheetContainer: {
+    backgroundColor:"#111827",
     position: 'absolute',
     top: SHEET_TOP,
     left: 0,
@@ -785,19 +799,18 @@ const styles = StyleSheet.create({
   dragIndicator: {
     width: 80,
     height: 1,
-    backgroundColor: 'green',
     borderRadius: 2.5,
     alignSelf: 'center',
     marginVertical: 20,
     paddingVertical: 10,
   },
   listContent: {
-    backgroundColor: 'white',
+    backgroundColor: '#111827',
     paddingBottom: TAB_BAR_HEIGHT + 20,
   },
   listItem: {
     padding: 15,
-    backgroundColor: 'white',
+    backgroundColor: '#rgba(31, 41, 55, 0.9)',
     marginHorizontal: 15,
     marginVertical: 5,
     borderRadius: 10,
@@ -807,8 +820,8 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  listItemText: { fontSize: 18, fontWeight: 'bold' },
-  listItemSubText: { color: 'gray', marginTop: 5 },
+  listItemText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  listItemSubText: { color: 'white', marginTop: 5 },
   bookButton: {
     marginTop: 10,
     padding: 10,
