@@ -322,7 +322,7 @@ const Wagers = () => {
       ];
       
       return (
-        <View className="flex-row bg-gray-900 mx-4 mt-[-20px] rounded-xl shadow-sm">
+        <View className="flex-row bg-gray-900 mx-4 mt-[-20px] rounded-xl shadow-sm py-2 px-2">
           {tabs.map((tab) => (
             <TouchableOpacity 
               key={tab.key} 
@@ -416,7 +416,7 @@ const Wagers = () => {
           end={{ x: 1, y: 1 }}
           className="px-5 py-6"
         >
-          <View className="flex-row justify-between items-center mb-5 mt-5">
+          <View className="flex-row justify-between items-center mb-5 mt-5 p-2 pt-10">
             <View>
               <Text className="text-white opacity-80 text-sm mb-1">Welcome, {user?.username}</Text>
               <Text className="text-white text-sm font-medium">Available Balance</Text>
