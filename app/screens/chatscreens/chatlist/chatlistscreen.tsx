@@ -1,130 +1,39 @@
-// import React, { useEffect, useState } from 'react';
-// import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-// import { NativeStackScreenProps } from '@react-navigation/native-stack';
-// import { ChatStackParamList } from '../../../(root)/(tabs)/chat';
-// import { fetchChatRooms } from '../../../../chat-server/chat-api'; // Import the fetch function
-// import { createChatRoom } from '../../../../chat-server/chat-api'; // Import the create function
-
-// // Type for navigation props
-// type Props = NativeStackScreenProps<ChatStackParamList, 'ChatList'>;
-
-// export default function ChatListScreen({ navigation }: Props) {
-//   const [chatRooms, setChatRooms] = useState<any[]>([]);
-
-//   // Fetch chatrooms from the backend when the screen is mounted
-//   useEffect(() => {
-//     const loadChatRooms = async () => {
-//       const rooms = await fetchChatRooms();
-//       setChatRooms(rooms);
-//     };
-
-//     loadChatRooms();
-//   }, []);
-
-//   // Navigate to a chat room
-//   const goToChatRoom = (roomId: string, roomName: string) => {
-//     navigation.navigate('ChatRoom', { roomId, roomName });
-//   };
-
-//   // Function to handle creating a new chatroom
-//   const handleCreateNewChat = async () => {
-//     const newRoomName = `Chat Room ${chatRooms.length + 1}`; // Example of a default name
-//     const newRoom = await createChatRoom(newRoomName);  // Create a new chatroom using the API
-
-//     if (newRoom) {
-//       // If the chatroom was created successfully, add it to the chatRooms state
-//       setChatRooms((prevRooms) => [...prevRooms, newRoom]);
-//     } else {
-//       alert('Failed to create chatroom');
-//     }
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>Chat Rooms</Text>
-
-//       <FlatList
-//         data={chatRooms}
-//         keyExtractor={(item) => item.id.toString()}
-//         renderItem={({ item }) => (
-//           <TouchableOpacity onPress={() => goToChatRoom(item.id, item.name)}>
-//             <View style={styles.chatItem}>
-//               <Text style={styles.chatItemText}>{item.name}</Text>
-//             </View>
-//           </TouchableOpacity>
-//         )}
-//       />
-
-//       {/* Floating Add New Chat Button */}
-//       <TouchableOpacity 
-//         style={styles.floatingButton} 
-//         onPress={handleCreateNewChat}
-//       >
-//         <Text style={styles.floatingButtonText}>+</Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#f9f9f9',
-//     padding: 16,
-//   },
-//   title: {
-//     fontSize: 24,
-//     fontWeight: 'bold',
-//     marginBottom: 20,
-//     textAlign: 'center',
-//   },
-//   chatItem: {
-//     backgroundColor: '#ffffff',
-//     padding: 15,
-//     marginBottom: 10,
-//     borderRadius: 8,
-//     elevation: 2,  // Add shadow on Android
-//     shadowColor: '#000',  // Add shadow on iOS
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 4,
-//   },
-//   chatItemText: {
-//     fontSize: 18,
-//     color: '#333',
-//   },
-//   floatingButton: {
-//     position: 'absolute',
-//     bottom: 30,
-//     right: 30,
-//     backgroundColor: '#007bff',
-//     width: 60,
-//     height: 60,
-//     borderRadius: 30,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     elevation: 5,  // Shadow for Android
-//     shadowColor: '#000',  // Shadow for iOS
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.3,
-//     shadowRadius: 4,
-//   },
-//   floatingButtonText: {
-//     fontSize: 30,
-//     color: '#fff',
-//     fontWeight: 'bold',
-//   },
-// });
-
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, TextInput, View, Text } from 'react-native';
 import { fetchAPI } from '@/lib/fetch';
+import { useAuth } from '@clerk/clerk-expo';
+import { useUser } from '@clerk/clerk-expo';
+
 
 const ChatListScreen = () => {
+  const { user } = useUser();
   const [isModalVisible, setModalVisible] = useState(false);
   const [newChatName, setNewChatName] = useState('');
-  const [userId, setUserId] = useState(1); // Set this to the logged-in user's ID (use Clerk or auth context)
   const [chatrooms, setChatrooms] = useState<any[]>([]);
+  const { userId: clerkId } = useAuth();
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      if (!clerkId) return;
+
+      try {
+        const res = await fetch(`/(api)/user?clerkId=${user?.id}`);
+        const data = await res.json();
+        if (res.ok) {
+          setUserId(data.id);
+        } else {
+          console.error(data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching user ID:', error);
+      }
+    };
+
+    fetchUserId();
+  }, [clerkId]);
+
+  // Now you can use `userId` in your fetchChatrooms or createNewChat functions
 
   // Function to open/close the modal
   const toggleModal = () => setModalVisible(!isModalVisible);
@@ -132,13 +41,13 @@ const ChatListScreen = () => {
   // Function to fetch chatrooms
   const fetchChatrooms = async () => {
     try {
-      const response = await fetchAPI(`/(api)/chatrooms?userId=${userId}`);
+      const data = await fetchAPI(`/(api)/chatrooms?userId=${userId}`);
       // const data = await response.json();
 
-      if (response.ok) {
-        setChatrooms(response.chatrooms);
+      if (data.ok) {
+        setChatrooms(data.chatrooms);
       } else {
-        console.error(response.error);
+        console.error(data.error);
       }
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
@@ -153,7 +62,13 @@ const ChatListScreen = () => {
         return;
       }
 
-      const response = await fetchAPI("/(api)/chatrooms?userId=${userId}", {
+      if (!userId) {
+        alert("User not loaded yet");
+        return;
+      }
+    
+
+      const data = await fetchAPI("/(api)/chatrooms", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,9 +81,9 @@ const ChatListScreen = () => {
         
       });
 
-      const data = await response.json();
+      // const data = await response.json();
 
-      if (response.ok) {
+      if (data.chatroomId) {
         console.log('Chatroom created:', data.chatroomId);
         // After creating the chat, fetch the updated chat list
         fetchChatrooms();
@@ -185,8 +100,10 @@ const ChatListScreen = () => {
   };
 
   useEffect(() => {
-    fetchChatrooms(); // Fetch chatrooms when the component mounts
-  }, [userId]);
+    if (userId !== null) {
+      fetchChatrooms(); // Fetch chatrooms when the component mounts
+    }
+    }, [userId]);
 
   return (
     <View>
