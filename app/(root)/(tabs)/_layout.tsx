@@ -57,7 +57,7 @@ const Layout = () => (
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: 15,
-        borderColor: "rgba(99, 102, 241, 0.2)",
+        borderColor: 'rgba(59, 130, 246, 0.9)',
         borderWidth: 1,
         shadowColor: "#000",
         shadowOffset: {
