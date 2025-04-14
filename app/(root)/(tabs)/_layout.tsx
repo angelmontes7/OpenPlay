@@ -101,6 +101,15 @@ const Layout = () => (
       }}
     />
     <Tabs.Screen
+      name="wallet"
+      options={{
+        title: "Wallet",
+        tabBarIcon: ({focused}) => (
+          <TabIcon focused={focused} source={icons.target} />
+        ),
+      }}
+    />
+    <Tabs.Screen
       name="profile"
       options={{
         title: "Profile",
@@ -110,6 +119,7 @@ const Layout = () => (
       }}
     />
     </Tabs>
+    
 );
 
 export default Layout;
