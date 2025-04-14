@@ -1,12 +1,21 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text, View } from "react-native";
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import ChatListScreen from '../../screens/chatscreens/chatlist/chatlistscreen'
+import ChatRoomScreen from '@/app/screens/chatscreens/chatroom/chatroomscreen';
 
-const Chat = () => {
-    return (
-        <SafeAreaView>
-            <Text> Home </Text>
-        </SafeAreaView>
-    );
+export type ChatStackParamList = {  // 👈 Add `export` here
+  ChatList: undefined;
+  ChatRoom: { roomId: string; roomName: string };
+  NewChat: undefined;
 };
 
-export default Chat;
+const ChatStack = createNativeStackNavigator<ChatStackParamList>();
+
+export default function ChatTab() {
+  return (
+    <ChatStack.Navigator>
+      <ChatStack.Screen name="ChatList" component={ChatListScreen} />
+      <ChatStack.Screen name="ChatRoom" component={ChatRoomScreen} />
+{/* //      <ChatStack.Screen name="NewChat" component={NewChatScreen} /> */}
+    </ChatStack.Navigator>
+  );
+}
