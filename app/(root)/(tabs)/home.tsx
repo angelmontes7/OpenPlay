@@ -279,7 +279,7 @@ export default function Home() {
       },
       onPanResponderMove: (_, gestureState: PanResponderGestureState) => {
         let newPos = lastSheetPosition.current + gestureState.dy;
-        newPos = Math.min(Math.max(newPos, 0), 335);
+        newPos = Math.min(Math.max(newPos, 10), 470);
         sheetPosition.setValue(newPos);
       },
       onPanResponderRelease: () => {
@@ -618,35 +618,39 @@ export default function Home() {
       )}
 
       {/* Interactive Map Section */}
-      <View style={styles.mapContainer}>
-        {Platform.OS !== 'web' && MapView ? (
-            <MapView
-            style={styles.map}
-            region={region}
-            >
-            {latitude && longitude && (
-                <Marker
-                coordinate={{ latitude, longitude }}
-                title="Your Location"
-                pinColor="blue"
-                />
-            )}
-            {filteredCourts.map(court => (
-                <Marker
-                key={court.id}
-                coordinate={court.coordinate}
-                title={court.name}
-                description={`${court.sport} - ${court.location}`}
-                />
-            ))}
-            </MapView>
-        ) : (
-            <View style={[styles.map, { justifyContent: 'center', alignItems: 'center' }]}>
-            <Text>Map is not available on web.</Text>
-            </View>
-        )}
+      <LinearGradient
+      colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+      style={styles.gradientBorder}
+      >
+        <View style={styles.mapContainer}>
+          {Platform.OS !== 'web' && MapView ? (
+              <MapView
+              style={styles.map}
+              region={region}
+              >
+              {latitude && longitude && (
+                  <Marker
+                  coordinate={{ latitude, longitude }}
+                  title="Your Location"
+                  pinColor="blue"
+                  />
+              )}
+              {filteredCourts.map(court => (
+                  <Marker
+                  key={court.id}
+                  coordinate={court.coordinate}
+                  title={court.name}
+                  description={`${court.sport} - ${court.location}`}
+                  />
+              ))}
+              </MapView>
+          ) : (
+              <View style={[styles.map, { justifyContent: 'center', alignItems: 'center' }]}>
+              <Text>Map is not available on web.</Text>
+              </View>
+          )}
         </View>
-
+      </LinearGradient>
       
       {/* Facility Details Modal with Check-In/Out functionality */}
       {selectedCourt && (
@@ -717,7 +721,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111827' },
   searchContainer: {
     position: 'absolute',
-    top: 15,
+    top: 65,
     left: 15,
     right: 15,
     flexDirection: 'row',
@@ -729,14 +733,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     borderRadius: 5,
-    backgroundColor: '#111827',
+    backgroundColor: 'rgba(31, 41, 55, 0.9)',
   },
   filterButton: {
     marginLeft: 10,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 5,
-    backgroundColor: '#111827',
+    backgroundColor: 'rgba(31, 41, 55, 0.9)',
   },
   filterButtonText: {
     fontSize: 14,
@@ -778,13 +782,20 @@ const styles = StyleSheet.create({
   filterOptionButtonSelected: { backgroundColor: '#007bff' },
   filterOptionText: { color: 'white' },
   filterOptionTextSelected: { color: 'white' },
-  mapContainer: {
+  gradientBorder: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 115,
+    left: 10,
+    right: 10,
     height: height * 0.5,
-    zIndex: 0,
+    borderRadius: 12,
+    padding: 1, // Simulates the border thickness
+  },
+  mapContainer: {
+    flex: 1,
+    backgroundColor: '#1f2937', // Or whatever background your map needs
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   map: { flex: 1 },
   sheetContainer: {
@@ -797,8 +808,8 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   dragIndicator: {
-    width: 80,
-    height: 1,
+    width: 350,
+    height: 5,
     borderRadius: 2.5,
     alignSelf: 'center',
     marginVertical: 20,

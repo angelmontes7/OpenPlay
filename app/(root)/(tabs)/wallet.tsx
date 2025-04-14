@@ -272,7 +272,7 @@ const Wallet = () => {
                 colors={['#4338ca', '#3b82f6', '#0ea5e9']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="pt-8 pb-16 shadow-lg"
+                className="pt-20 pb-20 shadow-lg"
             >
                 <Text className="text-blue-100 text-center mb-2 font-medium">Your Balance</Text>
                 <View className="flex-row items-center justify-center">
