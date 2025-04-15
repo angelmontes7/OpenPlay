@@ -453,7 +453,7 @@ const Profile = () => {
     };
 
     return (
-        <View className="flex-1 bg-gray-900">
+        <View className="flex-1 bg-gray-900 pt-12">
             {/* Header */}
             <View className="flex-row justify-between items-center p-4">
                 {/* Back Button for Subsections */}
@@ -463,7 +463,9 @@ const Profile = () => {
                     </TouchableOpacity>
                 )}
                 {/* Username */}
-                {activeSection === "profile" && <Text className="text-white text-lg font-JakartaBold">OpenPlay</Text>}
+                <View className="items-center justify-center w-full">
+                {activeSection === "profile" && <Text className="text-white text-2xl font-JakartaBold">OpenPlay</Text>}
+                </View>
             </View>
 
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
