@@ -10,6 +10,7 @@ import * as ImagePicker from "expo-image-picker";
 import { UpdateUserPasswordParams } from "@clerk/types";
 import { supabase } from "@/app/(api)/(cloud)/config/initSupabase";
 import { fetchAPI } from "@/lib/fetch"
+//import { LinearGradient } from "expo-linear-gradient";
 
 const getUserPreferences = async (clerkId) => {
     const res = await fetch(`/(api)/preferences?clerkId=${clerkId}`);
@@ -214,206 +215,255 @@ const Profile = () => {
     const renderContent = () => {
         switch (activeSection) {
             case "privacy":
-                return (
-                    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-                        <ScrollView className="p-4">
-                            <Text className="text-lg font-Jakarta p-4">Privacy Settings: Manage data sharing, account visibility, etc.</Text>;
-                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                                <Text className="text-black text-base">Location</Text>
-                                <Switch value={locationEnabled} onValueChange={(val) => handlePreferenceToggle("location_enabled", val)} />
-                            </View>
-                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                                <Text className="text-black text-base">Username: {user?.username}</Text>
-                            </View>
-                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                                <Text className="text-black text-base">Email: {user?.primaryEmailAddress?.emailAddress}</Text>
-                            </View>
-                            <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                                <Text className="text-black text-base">Password: {'****'}</Text>
-                            </View>
-                            <CustomButton
-                                title={isChangingPassword ? "Cancel" : "Change Password"}
-                                onPress={() => setIsChangingPassword(!isChangingPassword)}
-                                className="mt-6 space-y-4 mx-auto w-3/4"
-                            />
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <ScrollView className="px-4 py-6 bg-gray-900">
+        <View className="bg-gray-800/80 border border-gray-700 rounded-2xl p-4 shadow-md shadow-blue-500/10 backdrop-blur-md mb-6">
+          <Text className="text-white text-lg font-bold mb-3">Privacy Settings</Text>
 
-                            {isChangingPassword && (
-                                <>
-                                    <ScrollView className="max-h-90">
-                                        <View className="relative">
-                                            <TextInput
-                                                className="border border-gray-300 rounded p-2 mt-3"
-                                                placeholder="Enter old password"
-                                                secureTextEntry={!isOldPasswordVisible}
-                                                value={oldPassword}
-                                                onChangeText={setOldPassword}
-                                            />
-                                            <TouchableOpacity
-                                                onPress={() => setIsOldPasswordVisible(!isOldPasswordVisible)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1">
-                                                <Ionicons
-                                                    name={isOldPasswordVisible ? "eye" : "eye-off"}
-                                                    size={20}
-                                                    color="gray"
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <View className="relative">
-                                            <TextInput
-                                                className={`border rounded p-2 mt-3 ${errorpassword ? 'border-red-500' : 'border-gray-300'}`}
-                                                placeholder="Enter new password"
-                                                secureTextEntry={!isNewPasswordVisible}
-                                                value={newPassword}
-                                                onChangeText={(text) => {
-                                                    setNewPassword(text)
-                                                    setErrorPassword(false);
-                                                }}
-                                            />
-                                            <TouchableOpacity
-                                                onPress={() => setIsNewPasswordVisible(!isNewPasswordVisible)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1">
-                                                <Ionicons
-                                                    name={isNewPasswordVisible ? "eye" : "eye-off"}
-                                                    size={20}
-                                                    color="gray"
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <View className="relative">
-                                            <TextInput
-                                                className={`border rounded p-2 mt-3 ${errorpassword ? 'border-red-500' : 'border-gray-300'}`}
-                                                placeholder="Re-enter new password"
-                                                secureTextEntry={!isConfirmNewPasswordVisible}
-                                                value={confirmNewPassword}
-                                                onChangeText={(text) => {
-                                                    setConfirmNewPassword(text);
-                                                    setErrorPassword(false);
-                                                }}
-                                            />
-                                            <TouchableOpacity
-                                                onPress={() => setIsConfirmNewPasswordVisible(!isConfirmNewPasswordVisible)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1">
-                                                <Ionicons
-                                                    name={isConfirmNewPasswordVisible ? "eye" : "eye-off"}
-                                                    size={20}
-                                                    color="gray"
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                        {errorpassword && <Text className="text-red-500 text-sm">Passwords do not match.</Text>}
-                                        <CustomButton
-                                            title="Submit New Password"
-                                            onPress={() => handlePasswordReset({ newPassword, currentPassword: oldPassword }, confirmNewPassword)}
-                                            className="mt-6 space-y-4 mx-auto w-3/4"
-                                        />
-                                    </ScrollView>
-                                </>
-                            )}
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-white text-base">Location</Text>
+            <Switch
+              value={locationEnabled}
+              onValueChange={(val) => handlePreferenceToggle("location_enabled", val)}
+              thumbColor={locationEnabled ? "#3B82F6" : "#6B7280"}
+              trackColor={{ false: "#4B5563", true: "#2563EB" }}
+            />
+          </View>
 
-                        </ScrollView>
-                    </KeyboardAvoidingView>
-                );
-            case "notifications":
-                return (
-                    <View className="p-4">
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Email Notifications</Text>
-                            <Switch value={emailNotifications} onValueChange={(val) => handlePreferenceToggle("email_notifications", val)} />
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Push Notifications</Text>
-                            <Switch value={pushNotifications} onValueChange={(val) => handlePreferenceToggle("push_notifications", val)} />
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">SMS Notifications</Text>
-                            <Switch value={smsNotifications} onValueChange={(val) => handlePreferenceToggle("sms_notifications", val)} />
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Social Notifications</Text>
-                            <Switch value={socialNotifications} onValueChange={(val) => handlePreferenceToggle("social_notifications", val)} />
-                        </View>
-                        <View className="flex-row justify-between items-center py-3 border-b border-gray-300">
-                            <Text className="text-black text-base">Game Notifications</Text>
-                            <Switch value={gameNotifications} onValueChange={(val) => handlePreferenceToggle("game_notifications", val)} />
-                        </View>
-                    </View>
-                );
-            case "support":
-                return (
-                    <View className="p-4">
-                        <Text className="text-lg font-JakartaBold p-4">FAQs</Text>
-                        {[
-                            { question: "How do I reset my password?", answer: "Go to Settings > Privacy and click 'Change Password'." },
-                            { question: "How can I contact support?", answer: "You can email us at support@openplay.com." },
-                            { question: "Where can I find OpenPlay’s Terms of Service?", answer: "Check our website at www.openplay.com/terms." }
-                        ].map((faq, index) => (
-                            <View key={index} className="py-3 border-b border-gray-300">
-                                <TouchableOpacity onPress={() => Alert.alert(faq.question, faq.answer)}>
-                                    <Text className="text-black text-base font-JakartaSemiBold">{faq.question}</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ))}
-                        <Text className="text-lg font-JakartaBold p-4 mt-4">Contact Us</Text>
-                        <Text className="text-black text-base px-4">📩 support@openplay.com</Text>
+          <View className="mb-3">
+            <Text className="text-blue-400 text-xs mb-1">Username</Text>
+            <Text className="text-white text-base">{user?.username}</Text>
+          </View>
+          <View className="mb-3">
+            <Text className="text-blue-400 text-xs mb-1">Email</Text>
+            <Text className="text-white text-base">{user?.primaryEmailAddress?.emailAddress}</Text>
+          </View>
+          <View>
+            <Text className="text-blue-400 text-xs mb-1">Password</Text>
+            <Text className="text-white text-base">****</Text>
+          </View>
 
-                        <Text className="text-lg font-JakartaBold p-4 mt-4">Socials</Text>
-                        <View className="flex-row justify-around p-4">
-                            {[
-                                { name: "Instagram", icon: icons.Instagram, link: "https://instagram.com/royalpaisa_" },
-                                { name: "Snapchat", icon: icons.snapchat, link: "https://snapchat.com/add/openplay" },
-                                { name: "Facebook", icon: icons.facebook, link: "https://facebook.com/openplay" }
-                            ].map((social, index) => (
-                                <TouchableOpacity key={index} onPress={() => Linking.openURL(social.link)}>
-                                    <Image source={social.icon} className="w-10 h-10" />
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+          <CustomButton
+            title={isChangingPassword ? "Cancel" : "Change Password"}
+            onPress={() => setIsChangingPassword(!isChangingPassword)}
+            className="mt-6"
+          />
+        </View>
 
-                        {/* Community Forum Section */}
-                        <View className="mt-6 space-y-4 mx-auto w-3/4">
-                            <CustomButton
-                                title="Join Community Forum"
-                                onPress={() => Linking.openURL("https://community.openplay.com")}
-                            />
-                        </View>
-                    </View>
-                );
+        {isChangingPassword && (
+          <View className="bg-gray-800/80 border border-gray-700 rounded-2xl p-4 shadow-md shadow-purple-500/10 backdrop-blur-md">
+            <Text className="text-white text-lg font-bold mb-3">Update Password</Text>
 
-            default:
-                return (
-                    <View className="mt-6 mx-6 bg-gray-100 p-4 rounded-lg">
-                        {[
-                            { title: "Wallet", route: "/wallet", isExternal: true },
-                            { title: "Privacy", route: "privacy" },
-                            { title: "Notifications", route: "notifications" },
-                            { title: "Support", route: "support" },
-                        ].map((item, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                onPress={() => item.isExternal ? router.push(item.route as any) : setActiveSection(item.route)}
-                                className="flex-row justify-between items-center py-3 border-b border-gray-300"
-                            >
-                                <Text className="text-black text-base">{item.title}</Text>
-                                <Image source={icons.arrowDown} className="w-5 h-5" />
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                );
+            <View className="relative mb-4">
+              <TextInput
+                className="bg-gray-700 text-white p-3 rounded-lg"
+                placeholder="Enter old password"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry={!isOldPasswordVisible}
+                value={oldPassword}
+                onChangeText={setOldPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setIsOldPasswordVisible(!isOldPasswordVisible)}
+                className="absolute right-3 top-4"
+              >
+                <Ionicons
+                  name={isOldPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#9CA3AF"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View className="relative mb-4">
+              <TextInput
+                className={`p-3 rounded-lg ${errorpassword ? 'bg-red-600/20 border border-red-500' : 'bg-gray-700'}`}
+                placeholder="Enter new password"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry={!isNewPasswordVisible}
+                value={newPassword}
+                onChangeText={(text) => {
+                  setNewPassword(text);
+                  setErrorPassword(false);
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setIsNewPasswordVisible(!isNewPasswordVisible)}
+                className="absolute right-3 top-4"
+              >
+                <Ionicons
+                  name={isNewPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#9CA3AF"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View className="relative mb-4">
+              <TextInput
+                className={`p-3 rounded-lg ${errorpassword ? 'bg-red-600/20 border border-red-500' : 'bg-gray-700'}`}
+                placeholder="Re-enter new password"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry={!isConfirmNewPasswordVisible}
+                value={confirmNewPassword}
+                onChangeText={(text) => {
+                  setConfirmNewPassword(text);
+                  setErrorPassword(false);
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setIsConfirmNewPasswordVisible(!isConfirmNewPasswordVisible)}
+                className="absolute right-3 top-4"
+              >
+                <Ionicons
+                  name={isConfirmNewPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#9CA3AF"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {errorpassword && (
+              <Text className="text-red-400 text-sm mb-4">
+                Passwords do not match.
+              </Text>
+            )}
+
+            <CustomButton
+              title="Submit New Password"
+              onPress={() =>
+                handlePasswordReset({ newPassword, currentPassword: oldPassword }, confirmNewPassword)
+              }
+              className="mt-2"
+            />
+          </View>
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+
+  case "notifications":
+    return (
+      <ScrollView className="px-4 py-6 bg-gray-900">
+        <View className="bg-gray-800/80 border border-gray-700 rounded-2xl p-5 shadow-md shadow-purple-500/10 backdrop-blur-md">
+          <Text className="text-white text-lg font-bold mb-5">Notification Preferences</Text>
+  
+          {[
+            { label: "Email Notifications", value: emailNotifications, key: "email_notifications" },
+            { label: "Push Notifications", value: pushNotifications, key: "push_notifications" },
+            { label: "SMS Notifications", value: smsNotifications, key: "sms_notifications" },
+            { label: "Social Notifications", value: socialNotifications, key: "social_notifications" },
+            { label: "Game Notifications", value: gameNotifications, key: "game_notifications" },
+          ].map(({ label, value, key }) => (
+            <View
+              key={key}
+              className="flex-row justify-between items-center mb-4 border-b border-gray-700 pb-3"
+            >
+              <Text className="text-white text-base">{label}</Text>
+              <Switch
+                value={value}
+                onValueChange={(val) => handlePreferenceToggle(key, val)}
+                thumbColor={value ? "#3B82F6" : "#6B7280"}
+                trackColor={{ false: "#4B5563", true: "#2563EB" }}
+              />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    );
+  
+    case "support":
+        return (
+          <ScrollView className="p-4 space-y-6 bg-gray-900">
+            {/* FAQs Section */}
+            <View className="bg-gray-800/90 backdrop-blur-md rounded-2xl border border-gray-700/50 p-4">
+              <Text className="text-white text-xl font-bold mb-4">FAQs</Text>
+              {[
+                { question: "How do I reset my password?", answer: "Go to Settings > Privacy and click 'Change Password'." },
+                { question: "How can I contact support?", answer: "You can email us at support@openplay.com." },
+                { question: "Where can I find OpenPlay’s Terms of Service?", answer: "Check our website at www.openplay.com/terms." }
+              ].map((faq, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => Alert.alert(faq.question, faq.answer)}
+                  className="mb-4"
+                >
+                  <View className="bg-gray-700/60 p-3 rounded-xl">
+                    <Text className="text-white font-semibold text-base">{faq.question}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+      
+            {/* Contact Us */}
+            <View className="bg-gray-800/90 backdrop-blur-md rounded-2xl border border-gray-700/50 p-4">
+              <Text className="text-white text-xl font-bold mb-3">Contact Us</Text>
+              <Text className="text-blue-400 text-base">📩 support@openplay.com</Text>
+            </View>
+      
+            {/* Socials Section */}
+            <View className="bg-gray-800/90 backdrop-blur-md rounded-2xl border border-gray-700/50 p-4">
+              <Text className="text-white text-xl font-bold mb-3">Socials</Text>
+              <View className="flex-row justify-around items-center mt-2">
+                {[
+                  { name: "Instagram", icon: icons.Instagram, link: "https://instagram.com/royalpaisa_" },
+                  { name: "Snapchat", icon: icons.snapchat, link: "https://snapchat.com/add/openplay" },
+                  { name: "Facebook", icon: icons.facebook, link: "https://facebook.com/openplay" }
+                ].map((social, index) => (
+                  <TouchableOpacity key={index} onPress={() => Linking.openURL(social.link)}>
+                    <Image source={social.icon} className="w-10 h-10" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+      
+            {/* Community Forum Button */}
+            <View className="items-center mt-4">
+              <CustomButton
+                title="Join Community Forum"
+                onPress={() => Linking.openURL("https://community.openplay.com")}
+                className="w-full"
+              />
+            </View>
+          </ScrollView>
+        );
+      
+        default:
+            return (
+                <View className="mt-6 mx-6 bg-gray-800/90 backdrop-blur-md p-4 rounded-2xl border border-gray-700/50 shadow-md shadow-blue-900/10">
+                    {[
+                        { title: "Wallet", route: "/wallet", isExternal: true },
+                        { title: "Privacy", route: "privacy" },
+                        { title: "Notifications", route: "notifications" },
+                        { title: "Support", route: "support" },
+                    ].map((item, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => item.isExternal ? router.push(item.route as any) : setActiveSection(item.route)}
+                            className="flex-row justify-between items-center py-4 border-b border-gray-700"
+                        >
+                            <Text className="text-white text-base font-medium">{item.title}</Text>
+                            <Image source={icons.arrowDown} className="w-5 h-5" />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            );
         }
     };
 
     return (
-        <View className="flex-1 bg-white">
+        <View className="flex-1 bg-gray-900">
             {/* Header */}
             <View className="flex-row justify-between items-center p-4">
                 {/* Back Button for Subsections */}
                 {activeSection !== "profile" && (
                     <TouchableOpacity onPress={() => setActiveSection("profile")} className="flex-row items-center">
-                        <Text className="text-black text-lg font-Jakarta">&lt; {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}</Text>
+                        <Text className="text-white text-lg font-Jakarta">&lt; {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}</Text>
                     </TouchableOpacity>
                 )}
                 {/* Username */}
-                {activeSection === "profile" && <Text className="text-lg font-JakartaBold">OpenPlay</Text>}
+                {activeSection === "profile" && <Text className="text-white text-lg font-JakartaBold">OpenPlay</Text>}
             </View>
 
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -423,8 +473,8 @@ const Profile = () => {
                         <TouchableOpacity onPress={pickImage}>
                             <Image source={{ uri: profilePic }} className="w-28 h-28 rounded-full border-2 border-gray-300" />
                         </TouchableOpacity>
-                        <Text className="text-black text-md font-JakartaSemiBold mt-2">{user?.username}</Text>
-                        <Text className="text-gray-500 text-sm">Member since {user?.createdAt?.getFullYear()}</Text>
+                        <Text className="text-white text-md font-JakartaSemiBold mt-2">{user?.username}</Text>
+                        <Text className="text-gray-400 text-sm">Member since {user?.createdAt?.getFullYear()}</Text>
                     </View>
                 )}
 
