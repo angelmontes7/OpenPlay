@@ -12,9 +12,9 @@ import {
   PanResponderGestureState,
   Modal,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker } from 'react-native-maps';
 import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
 import { icons } from '@/constants';
@@ -24,6 +24,15 @@ import FacilityDetails from '@/components/FacilityDetails';
 import * as Location from 'expo-location'
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
+import { LinearGradient } from 'expo-linear-gradient';
+
+let MapView: any = null;
+let Marker: any = null;
+if (Platform.OS !== 'web') {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Marker = maps.Marker;
+}
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60;
@@ -96,6 +105,73 @@ export default function Home() {
   });
   const lastSheetPosition = useRef(sheetPositionValue.current);
   const listScrollOffset = useRef(0);
+
+  // New state for check-in and head count
+  const [currentCheckInCourt, setCurrentCheckInCourt] = useState<string | null>(null);
+  const [liveHeadCount, setLiveHeadCount] = useState<number>(0);
+
+  // Function to check in a user
+  const handleCheckIn = async (courtId: string) => {
+    try {
+      const response = await fetchAPI("/(api)/check_in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id, courtId }),
+      });
+      if (response.error) {
+        Alert.alert("Error", response.error);
+      } else {
+        setCurrentCheckInCourt(courtId);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to check in");
+    }
+  };
+
+  // Function to check out a user
+  const handleCheckOut = async (courtId: string) => {
+    try {
+      const response = await fetchAPI("/(api)/check_out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id, courtId }),
+      });
+      if (response.error) {
+        Alert.alert("Error", response.error);
+      } else {
+        setCurrentCheckInCourt(null);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to check out");
+    }
+  };
+
+  // Poll the head count every 5 seconds for the selected court
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+  
+    if (selectedCourt) {
+      const fetchHeadCount = async () => {
+        try {
+          if (!selectedCourt.id) {
+            console.error("Selected court does not have an ID:", selectedCourt);
+            return;
+          }
+  
+          const response = await fetchAPI(`/(api)/head_count?courtId=${selectedCourt.id}`);
+          console.log("Raw response:", response);
+          setLiveHeadCount(response.count);
+        } catch (error) {
+          console.error("Error fetching head count:", error);
+        }
+      };
+  
+      fetchHeadCount();
+      interval = setInterval(fetchHeadCount, 10000);
+    }
+  
+    return () => interval && clearInterval(interval);
+  }, [selectedCourt]);
 
   // Check if user has DOB set.
   useEffect(() => {
@@ -203,7 +279,7 @@ export default function Home() {
       },
       onPanResponderMove: (_, gestureState: PanResponderGestureState) => {
         let newPos = lastSheetPosition.current + gestureState.dy;
-        newPos = Math.min(Math.max(newPos, 0), maxSheetPos);
+        newPos = Math.min(Math.max(newPos, 10), 470);
         sheetPosition.setValue(newPos);
       },
       onPanResponderRelease: () => {
@@ -272,13 +348,19 @@ export default function Home() {
         {item.address} | {item.sport} | {item.distance} Miles | {item.popularity} Star{item.popularity > 1 ? 's' : ''} | {item.type} | Capacity: {item.capacity}
       </Text>
       <TouchableOpacity
-        style={[styles.bookButton, { backgroundColor: item.available ? 'green' : 'gray' }]}
         disabled={!item.available}
         onPress={() => handleViewDetails(item)} // Pass the entire court object
       >
-        <Text style={styles.bookButtonText}>
-          {item.available ? 'View Details' : 'Unavailable'}
-        </Text>
+        <LinearGradient
+          colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.bookButton, { opacity: item.available ? 1 : 0.5 }]} // Adjust opacity if unavailable
+        >
+          <Text style={styles.bookButtonText}>
+            {item.available ? 'View Details' : 'Unavailable'}
+          </Text>
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -395,10 +477,10 @@ export default function Home() {
       <View style={styles.searchContainer}>
         <TextInput
           placeholder="Search for courts..."
-          placeholderTextColor="grey"
+          placeholderTextColor="white"
           value={search}
           onChangeText={setSearch}
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: 'white' }]}
         />
         <TouchableOpacity
           style={styles.filterButton}
@@ -536,32 +618,41 @@ export default function Home() {
       )}
 
       {/* Interactive Map Section */}
-      <View style={styles.mapContainer}>
-        <MapView
-          style={styles.map}
-          region={region}
-        >
-          {/* User Location Marker */}
-          {latitude && longitude && (
-            <Marker
-              coordinate={{ latitude, longitude }}
-              title="Your Location"
-              pinColor="blue"
-            />
+      <LinearGradient
+      colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+      style={styles.gradientBorder}
+      >
+        <View style={styles.mapContainer}>
+          {Platform.OS !== 'web' && MapView ? (
+              <MapView
+              style={styles.map}
+              region={region}
+              >
+              {latitude && longitude && (
+                  <Marker
+                  coordinate={{ latitude, longitude }}
+                  title="Your Location"
+                  pinColor="blue"
+                  />
+              )}
+              {filteredCourts.map(court => (
+                  <Marker
+                  key={court.id}
+                  coordinate={court.coordinate}
+                  title={court.name}
+                  description={`${court.sport} - ${court.location}`}
+                  />
+              ))}
+              </MapView>
+          ) : (
+              <View style={[styles.map, { justifyContent: 'center', alignItems: 'center' }]}>
+              <Text>Map is not available on web.</Text>
+              </View>
           )}
-          {/* Render markers for each filtered court */}
-          {filteredCourts.map(court => (
-            <Marker
-              key={court.id}
-              coordinate={court.coordinate}
-              title={court.name}
-              description={`${court.sport} - ${court.location}`}
-            />
-          ))}
-        </MapView>
-      </View>
+        </View>
+      </LinearGradient>
       
-      {/* Details Modal */}
+      {/* Facility Details Modal with Check-In/Out functionality */}
       {selectedCourt && (
         <FacilityDetails
           visible={isFacilityDetailsVisible}
@@ -574,29 +665,45 @@ export default function Home() {
           amenities={selectedCourt.amenities}
           website={selectedCourt.website}
           stars={selectedCourt.stars}
+          // Pass whether this court is the one the user is checked into
+          isCheckedIn={currentCheckInCourt === selectedCourt.id}
+          // Provide the check in/out handlers
+          onCheckIn={() => handleCheckIn(selectedCourt.id)}
+          onCheckOut={() => handleCheckOut(selectedCourt.id)}
+          // Live head count for the selected court
+          headCount={liveHeadCount}
         />
       )}
 
       {/* Draggable List Sheet */}
       {filteredCourts.length > 0 ? (
         <Animated.View
-          style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
-          {...panResponder.panHandlers}
-        >
-          <View style={styles.dragIndicator} />
-          <FlatList
-            data={filteredCourts}
-            keyExtractor={(item) => item.id}
-            bounces={false}
-            scrollEnabled={scrollEnabled}
-            onScroll={(e) => { listScrollOffset.current = e.nativeEvent.contentOffset.y; }}
-            onContentSizeChange={(_, h) => setContentHeight(h)}
-            scrollEventThrottle={16}
-            keyboardShouldPersistTaps="handled"
-            renderItem={renderCourtItem}
-            contentContainerStyle={styles.listContent}
-          />
-        </Animated.View>
+        style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
+      >
+        {/* Drag Indicator with panResponder handlers */}
+        <LinearGradient
+          colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.dragIndicator}
+          {...panResponder.panHandlers} // Pass pan handlers to the LinearGradient
+        />
+        
+        {/* The FlatList for your items */}
+        <FlatList
+          data={filteredCourts}
+          keyExtractor={(item) => item.id}
+          bounces={false}
+          scrollEnabled={true}  // Let the list scroll independently
+          onScroll={(e) => { listScrollOffset.current = e.nativeEvent.contentOffset.y; }}
+          onContentSizeChange={(_, h) => setContentHeight(h)}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          renderItem={renderCourtItem}
+          contentContainerStyle={styles.listContent}
+        />
+      </Animated.View>
+      
       ) : (
         <Animated.View
           style={[styles.sheetContainer, { transform: [{ translateY: sheetPosition }] }]}
@@ -611,10 +718,10 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#111827' },
   searchContainer: {
     position: 'absolute',
-    top: 15,
+    top: 65,
     left: 15,
     right: 15,
     flexDirection: 'row',
@@ -626,26 +733,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     borderRadius: 5,
-    backgroundColor: '#eee',
+    backgroundColor: 'rgba(31, 41, 55, 0.9)',
   },
   filterButton: {
     marginLeft: 10,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 5,
-    backgroundColor: '#eee',
+    backgroundColor: 'rgba(31, 41, 55, 0.9)',
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
   },
   filtersContainer: {
     position: 'absolute',
     top: SHEET_TOP,
     left: 15,
     right: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#111827',
     borderRadius: 5,
     padding: 10,
     zIndex: 11,
@@ -659,31 +766,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: 'white',
   },
   filterOption: { marginBottom: 10 },
-  filterLabel: { fontWeight: 'bold', marginBottom: 5 },
+  filterLabel: { color: 'white', fontWeight: 'bold', marginBottom: 5 },
   filterOptionsRow: { flexDirection: 'row', flexWrap: 'wrap' },
   filterOptionButton: {
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
-    backgroundColor: '#eee',
+    backgroundColor: 'rgba(31, 41, 55, 0.9)',
     marginRight: 5,
     marginBottom: 5,
   },
   filterOptionButtonSelected: { backgroundColor: '#007bff' },
-  filterOptionText: { color: 'black' },
+  filterOptionText: { color: 'white' },
   filterOptionTextSelected: { color: 'white' },
-  mapContainer: {
+  gradientBorder: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 115,
+    left: 10,
+    right: 10,
     height: height * 0.5,
-    zIndex: 0,
+    borderRadius: 12,
+    padding: 1, // Simulates the border thickness
+  },
+  mapContainer: {
+    flex: 1,
+    backgroundColor: '#1f2937', // Or whatever background your map needs
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   map: { flex: 1 },
   sheetContainer: {
+    backgroundColor:"#111827",
     position: 'absolute',
     top: SHEET_TOP,
     left: 0,
@@ -692,20 +808,20 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   dragIndicator: {
-    width: 40,
+    width: 350,
     height: 5,
-    backgroundColor: '#ccc',
     borderRadius: 2.5,
     alignSelf: 'center',
-    marginVertical: 10,
+    marginVertical: 20,
+    paddingVertical: 10,
   },
   listContent: {
-    backgroundColor: 'white',
+    backgroundColor: '#111827',
     paddingBottom: TAB_BAR_HEIGHT + 20,
   },
   listItem: {
     padding: 15,
-    backgroundColor: 'white',
+    backgroundColor: '#rgba(31, 41, 55, 0.9)',
     marginHorizontal: 15,
     marginVertical: 5,
     borderRadius: 10,
@@ -715,8 +831,8 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  listItemText: { fontSize: 18, fontWeight: 'bold' },
-  listItemSubText: { color: 'gray', marginTop: 5 },
+  listItemText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  listItemSubText: { color: 'white', marginTop: 5 },
   bookButton: {
     marginTop: 10,
     padding: 10,
