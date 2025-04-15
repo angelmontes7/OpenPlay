@@ -32,7 +32,6 @@ const ChargeCardModal: React.FC<ChargeCardModalProps> = ({ visible, onClose, onS
 
   function handleFormSubmit(model: FormModel) {
     onSubmit(model);
-    Alert.alert('Success: ' + JSON.stringify(model, null, 2))
     reset();
     onClose(); // Hides the modal
   }

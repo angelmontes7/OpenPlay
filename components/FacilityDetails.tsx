@@ -1,5 +1,20 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, Linking, ScrollView, SafeAreaView } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { 
+  Modal, 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  Linking, 
+  ScrollView, 
+  SafeAreaView,
+  Animated,
+  Image,
+  Dimensions,
+  Platform,
+  StatusBar
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 interface FacilityDetailsProps {
   visible: boolean;
@@ -12,6 +27,11 @@ interface FacilityDetailsProps {
   amenities: string;
   website: string;
   stars: number;
+  headCount: number;
+  isCheckedIn: boolean;
+  onCheckIn: () => void;
+  onCheckOut: () => void;
+  image?: any; // Optional image source
 }
 
 const FacilityDetails: React.FC<FacilityDetailsProps> = ({
@@ -25,68 +45,164 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
   amenities,
   website,
   stars,
+  headCount,
+  isCheckedIn,
+  onCheckIn,
+  onCheckOut,
+  image,
 }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
+  const screenHeight = Dimensions.get('window').height;
+  
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  }, [visible, fadeAnim, slideAnim]);
+
+  const InfoItem = ({ label, content }) => (
+    <View className="mb-4 bg-gray-700/50 p-3 rounded-xl shadow-sm">
+      <Text className="text-blue-400 text-sm mb-1">{label}</Text>
+      <Text className="text-white text-base">{content}</Text>
+    </View>
+  );
+
+  // Calculate star display
+  const renderStars = () => {
+    const fullStars = Math.floor(stars);
+    const halfStar = stars % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+    
+    return (
+      <View className="flex-row justify-center mb-4">
+        {[...Array(fullStars)].map((_, i) => (
+          <Ionicons key={`full-${i}`} name="star" size={20} color="#FACC15" />
+        ))}
+        {halfStar && <Ionicons name="star-half" size={20} color="#FACC15" />}
+        {[...Array(emptyStars)].map((_, i) => (
+          <Ionicons key={`empty-${i}`} name="star-outline" size={20} color="#FACC15" />
+        ))}
+      </View>
+    );
+  };
+
   return (
     <Modal
       visible={visible}
-      transparent={false} // This ensures it takes up the entire screen
-      animationType="slide"
+      transparent={true}
+      animationType="none"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white">
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
-          {/* Placeholder for image (empty space for now) */}
-          <View className="w-full h-40 bg-gray-300 rounded-lg mb-4" />
-
-          {/* Name */}
-          <Text className="text-3xl font-bold text-center mb-2">{name}</Text>
-
-          {/* Stars */}
-          <Text className="text-yellow-500 text-center mb-2">
-            {'★'.repeat(stars)}{' '}
-            {'☆'.repeat(5 - stars)} {/* Display stars */}
-          </Text>
-
-          {/* Address */}
-          <Text className="text-lg text-gray-700 mb-2">{address}</Text>
-
-          {/* Sports */}
-          <Text className="text-gray-600 mb-2">
-            <Text className="font-semibold">Sports: </Text>{sports}
-          </Text>
-
-          {/* Capacity */}
-          <Text className="text-gray-600 mb-2">
-            <Text className="font-semibold">Capacity: </Text>{capacity}
-          </Text>
-
-          {/* Description */}
-          <Text className="text-gray-600 mb-2">
-            <Text className="font-semibold">Description: </Text>{description}
-          </Text>
-
-          {/* Amenities */}
-          <Text className="text-gray-600 mb-2">
-            <Text className="font-semibold">Amenities: </Text>{amenities}
-          </Text>
-
-          {/* Website link */}
-          <TouchableOpacity
-            onPress={() => Linking.openURL(website)}
-            className="mb-4"
+      <View className="flex-1 bg-black bg-opacity-50">
+        <SafeAreaView className="flex-1">
+          <Animated.View 
+            className="flex-1 bg-gray-900 rounded-t-3xl overflow-hidden"
+            style={{ 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+              marginTop: screenHeight * 0.001, // .1% from top
+            }}
           >
-            <Text className="text-blue-500 text-center">Visit Website</Text>
-          </TouchableOpacity>
-
-          {/* Close Button */}
-          <TouchableOpacity
-            className="bg-blue-500 py-2 px-4 rounded-lg"
-            onPress={onClose}
-          >
-            <Text className="text-white text-center font-bold">Close</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
+            {/* Header with close button */}
+            <View className="px-4 pt-4 flex-row justify-between items-center">
+              <TouchableOpacity 
+                onPress={onClose}
+                className="w-10 h-10 rounded-full bg-gray-100 justify-center items-center"
+              >
+                <Ionicons name="close" size={24} color="#374151" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => Linking.openURL(website)}
+                className="py-2 px-4 rounded-full bg-gray-100 flex-row items-center"
+              >
+                <Ionicons name="globe-outline" size={16} color="#3B82F6" />
+                <Text className="text-blue-500 ml-1 font-medium">Website</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView 
+              className="flex-1 mt-2"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 30 }}
+            >
+              {/* Image with gradient overlay */}
+              <View className="w-full h-56 mb-4 overflow-hidden">
+                {image ? (
+                  <Image 
+                    source={image} 
+                    className="w-full h-full" 
+                    resizeMode="cover" 
+                  />
+                ) : (
+                  <View className="w-full h-full bg-gray-200 justify-center items-center">
+                    <Ionicons name="image-outline" size={50} color="#9CA3AF" />
+                  </View>
+                )}
+                <LinearGradient
+                  colors={['rgba(0,0,0,0.6)', 'transparent']}
+                  className="absolute top-0 left-0 right-0 h-20"
+                />
+              </View>
+              
+              {/* Content */}
+              <View className="px-6">
+                {/* Name and stars */}
+                <Text className="text-3xl font-bold text-white mb-1">{name}</Text>
+                {renderStars()}
+                
+                {/* Address */}
+                <View className="flex-row items-center mb-6">
+                  <Ionicons name="location" size={18} color="#4B5563" />
+                  <Text className="text-white ml-1 flex-1">{address}</Text>
+                </View>
+                
+                {/* Head count with background */}
+                <View className="bg-gray-700/50 p-4 rounded-2xl mb-6">
+                  <Text className="text-center text-gray-600 mb-2">Current Capacity</Text>
+                  <View className="flex-row justify-center items-center">
+                    <Ionicons name="people" size={24} color="#4F46E5" />
+                    <Text className="text-indigo-600 text-2xl font-bold ml-2">{headCount}</Text>
+                    <Text className="text-gray-500 ml-1">/ {capacity}</Text>
+                  </View>
+                </View>
+                
+                {/* Check In/Out Button */}
+                <TouchableOpacity
+                  onPress={isCheckedIn ? onCheckOut : onCheckIn}
+                  className={`py-4 px-6 rounded-xl mb-6 ${isCheckedIn ? 'bg-red-500' : 'bg-blue-500'}`}
+                >
+                  <Text className="text-white text-center font-bold text-lg">
+                    {isCheckedIn ? 'Check Out' : 'Check In'}
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* Info sections */}
+                <View className="mb-4">
+                  <Text className="text-xl font-semibold text-white mb-3">Facility Info</Text>
+                  <InfoItem label="Sports Available" content={sports} />
+                  <InfoItem label="Description" content={description} />
+                  <InfoItem label="Amenities" content={amenities} />
+                </View>
+              </View>
+            </ScrollView>
+          </Animated.View>
+        </SafeAreaView>
+      </View>
     </Modal>
   );
 };
