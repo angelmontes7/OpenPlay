@@ -52,7 +52,7 @@ export const googleOAuth = async (startOAuthFlow: any) => {
       const updatedSignUp = await signUp.update({ username });
 
       if (updatedSignUp.createdUserId) {
-        await fetchAPI("/(api)/user", {
+        await fetchAPI("/api/user", {
           method: "POST",
           body: JSON.stringify({
             username: updatedSignUp.username, 

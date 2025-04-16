@@ -46,7 +46,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
         ) => {
           try {
             const { paymentIntent, customer } = await fetchAPI(
-              "/(api)/(stripe)/create",
+              "/api/create",
               {
                 method: "POST",
                 headers: {
@@ -62,7 +62,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
             );
 
             if (paymentIntent.client_secret) {
-              const { result } = await fetchAPI("/(api)/(stripe)/pay", {
+              const { result } = await fetchAPI("/api/pay", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",

@@ -13,13 +13,13 @@ import { fetchAPI } from "@/lib/fetch"
 //import { LinearGradient } from "expo-linear-gradient";
 
 const getUserPreferences = async (clerkId) => {
-    const res = await fetch(`/(api)/preferences?clerkId=${clerkId}`);
+    const res = await fetchAPI(`/api/preferences?clerkId=${clerkId}`);
     if (!res.ok) throw new Error("Failed to fetch preferences");
     return res.json();
   };
   
   const updateUserPreferences = async (clerkId, prefs) => {
-    const res = await fetch("/(api)/preferences", {
+    const res = await fetchAPI("/api/preferences", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -58,7 +58,7 @@ const Profile = () => {
     useEffect(() => {
         const fetchProfilePic = async () => {
             try {
-                const response = await fetchAPI(`/(api)/update_profile_pic?clerkId=${user?.id}`, {
+                const response = await fetchAPI(`/api/profile-pic?clerkId=${user?.id}`, {
                     method: "GET",
                 });
                 if (response && response.profilePicUrl !== undefined) {
@@ -107,7 +107,7 @@ const Profile = () => {
 
     const saveProfilePicUrl = async (url: string) => {
         try {
-            const response = await fetch("/(api)/(database)/update_profile_pic", {
+            const response = await fetchAPI("/api/profile-pic", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -81,7 +81,7 @@ const SignUp = () => {
             // If verification was completed, set the session to active
             // and redirect the user
             if (signUpAttempt.status === 'complete') {
-                await fetchAPI("/(api)/user", {
+                await fetchAPI("/api/user", {
                     method: "POST",
                     body: JSON.stringify({
                         username: form.username,
@@ -91,7 +91,7 @@ const SignUp = () => {
                     }),
                 });
 
-                await fetchAPI("/(api)/connected-account", {
+                await fetchAPI("/api/connected-account", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

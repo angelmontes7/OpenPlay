@@ -1,4 +1,4 @@
-import { InputFieldProps } from "@/mobile-app/types/type";
+import { InputFieldProps } from "@/types/type";
 import { KeyboardAvoidingView, TouchableWithoutFeedback, Text, View, Image, TextInput, Platform, Keyboard } from "react-native";
 
 const InputField = ({

@@ -28,10 +28,8 @@ export const calculateDistance = (
     longitude: number
   ): Promise<Court[]> => {
     try {
-      console.log("Fetching facilities from API...");
-  
       // Fetch the parsed JSON data directly
-      const data = await fetchAPI("/(api)/sports_facilities"); // Replace with your actual API endpoint
+      const data = await fetchAPI("/api/sports-facilities");
   
       // Map the API response to the `Court` interface
       const mappedData: Court[] = data.map((facility: any) => {

@@ -1,10 +1,18 @@
 import {useState, useEffect, useCallback} from "react";
 
-export const fetchAPI = async (url: string, options?: RequestInit) => {
+// note to self: need to keep changing this to my ip run ipconfig getifaddr en0 in terminal to find ip 
+// We will change this once we have deployed app on to an actual server
+const BASE_URL = "http://172.17.55.101:5001";
+ 
+
+export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
     try {
-        const response = await fetch(url, options);
+
+        const response = await fetch(`${BASE_URL}${endpoint}`, {
+            ...options
+        });
         if (!response.ok) {
-            new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         return await response.json();
     } catch (error) {

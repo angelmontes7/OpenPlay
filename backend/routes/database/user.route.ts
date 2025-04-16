@@ -74,7 +74,7 @@ router.patch('/', async (req, res) => {
 router.get('/', async(req, res) => {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);
-        const { clerkId } = req.body
+        const { clerkId } = req.query
 
         if (clerkId) {
             // Fetch specific user by clerkId

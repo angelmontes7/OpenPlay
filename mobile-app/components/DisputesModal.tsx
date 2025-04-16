@@ -3,6 +3,7 @@ import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Alert, Animated
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
+import { fetchAPI } from "@/lib/fetch"
 
 interface DisputesModalProps {
   isVisible: boolean;
@@ -70,7 +71,7 @@ const DisputesModal: React.FC<DisputesModalProps> = ({ isVisible, onClose, selec
       winning_vote: selectedTeam,
     });
     try {
-      const response = await fetch("/(api)/wager_confirm", {
+      const response = await fetchAPI("/api/wager-confirm", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -35,7 +35,7 @@ const StoredCardModal: React.FC<StoredCardModalProps> = ({
   useEffect(() => {
     const fetchStoredCards = async () => {
       try {
-        const response = await fetchAPI(`/(api)/charge_cards?clerkId=${clerkId}`, {
+        const response = await fetchAPI(`/api/charge-cards?clerkId=${clerkId}`, {
           method: "GET",
         });
 

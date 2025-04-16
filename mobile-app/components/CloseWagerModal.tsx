@@ -3,6 +3,7 @@ import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Alert, Animated
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
+import { fetchAPI } from "@/lib/fetch"
 interface CloseWagerModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -69,7 +70,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
       winning_vote: selectedTeam,
     });
     try {
-      const response = await fetch("/(api)/wager_confirm", {
+      const response = await fetchAPI("/api/wager-confirm", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,7 +94,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
   const handleDisputeSubmit = async () => {
     
     try {
-      const response = await fetch("/(api)/wager", {
+      const response = await fetchAPI("/api/wager", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -116,7 +117,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
 
   const handleResetVotes = async () => {
     try {
-      const response = await fetch("/(api)/wager_reset_votes", {
+      const response = await fetchAPI("/api/wager-reset-votes", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
