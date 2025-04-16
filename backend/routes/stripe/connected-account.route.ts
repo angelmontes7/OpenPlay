@@ -1,10 +1,12 @@
 import { Stripe } from "stripe";
 import { neon } from '@neondatabase/serverless';
 import express from "express";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 router.post("/", async (req, res) => {
   try {
     const { clerkId, email } = req.body;

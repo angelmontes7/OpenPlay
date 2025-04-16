@@ -8,7 +8,7 @@ import { useRouter } from "expo-router";
 import { ReactNativeModal } from "react-native-modal";
 import * as ImagePicker from "expo-image-picker";
 import { UpdateUserPasswordParams } from "@clerk/types";
-import { supabase } from "@/app/(api)/(cloud)/config/initSupabase";
+
 import { fetchAPI } from "@/lib/fetch"
 //import { LinearGradient } from "expo-linear-gradient";
 
