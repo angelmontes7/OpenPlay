@@ -6,7 +6,7 @@ const router = express.Router();
 router.post('/', async (req, res) => {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);
-        const { clerkId, type, amount } = await req.body;
+        const { clerkId, type, amount } = req.body;
 
         if (!clerkId || !type || !amount) {
             return res.status(400).json({ error: "Missing required fields" });
