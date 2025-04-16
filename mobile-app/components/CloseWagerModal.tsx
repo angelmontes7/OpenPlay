@@ -64,11 +64,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
       Alert.alert("Error", "Please select a team");
       return;
     }
-    console.log("Request Body:", {
-      wagerId: wagerId,
-      userId: userId,
-      winning_vote: selectedTeam,
-    });
+
     try {
       const response = await fetchAPI("/api/wager-confirm", {
         method: "PATCH",
@@ -79,6 +75,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
             winning_vote: selectedTeam,
         }),
       });
+
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to update wager status");
