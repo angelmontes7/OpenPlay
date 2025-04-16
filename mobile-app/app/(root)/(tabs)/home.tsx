@@ -112,7 +112,7 @@ export default function Home() {
   // Function to check in a user
   const handleCheckIn = async (courtId: string) => {
     try {
-      const response = await fetchAPI("/(api)/check_in", {
+      const response = await fetchAPI("/api/check-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user?.id, courtId }),
@@ -130,7 +130,7 @@ export default function Home() {
   // Function to check out a user
   const handleCheckOut = async (courtId: string) => {
     try {
-      const response = await fetchAPI("/(api)/check_out", {
+      const response = await fetchAPI("/api/check-out", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user?.id, courtId }),
@@ -157,7 +157,7 @@ export default function Home() {
             return;
           }
   
-          const response = await fetchAPI(`/(api)/head_count?courtId=${selectedCourt.id}`);
+          const response = await fetchAPI(`/api/head-count?courtId=${selectedCourt.id}`);
           console.log("Raw response:", response);
           setLiveHeadCount(response.count);
         } catch (error) {
@@ -177,11 +177,10 @@ export default function Home() {
     const checkUserDOB = async () => {
         if (!user?.id) return;
         try {
-            const response = await fetchAPI(`/(api)/user?clerkId=${user.id}`);
+            const response = await fetchAPI(`/api/user?clerkId=${user.id}`);
             console.log(response);  // Log the response data for debugging
             setData(response);
-            console.log('Fetched user data:', response);
-      
+
             if (response?.dob === null) {
               setShowDOBModal(true);  // Show the modal if DOB is null
             }
@@ -375,7 +374,7 @@ export default function Home() {
     }
 
     try {
-      const response = await fetchAPI("/(api)/user", {
+      const response = await fetchAPI("/api/user", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

@@ -30,7 +30,6 @@ import payoutApi from './routes/stripe/payout.route.ts';
 // Load environment variables
 dotenv.config();
 
-console.log("Stripe Secret Key:", process.env.STRIPE_SECRET_KEY);
 const app = express();
 const PORT = process.env.PORT || 5000;
 

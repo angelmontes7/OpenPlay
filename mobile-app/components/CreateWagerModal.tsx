@@ -55,7 +55,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
   useEffect(() => {
     const fetchBalance = async () => {
         try {
-            const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
+            const response = await fetchAPI(`/api/balance?clerkId=${user?.id}`, {
                 method: "GET",
             });
 
@@ -91,7 +91,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
     
     try {    
         // Step 1: Deduct balance
-        const balanceResponse = await fetchAPI("/(api)/balance", {
+        const balanceResponse = await fetchAPI("/api/balance", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -107,7 +107,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
             setWalletBalance(balanceResponse.balance);
 
             // Store the transaction
-            await fetchAPI("/(api)/transactions", {
+            await fetchAPI("/api/transactions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -121,7 +121,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
         }
 
         // Step 2: Create wager
-        const wagerResponse = await fetchAPI('/(api)/wager', {
+        const wagerResponse = await fetchAPI('/api/wager', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(wagerData),
@@ -136,7 +136,7 @@ const CreateWagerModal: React.FC<CreateWagerModalProps> = ({ visible, onClose, c
 
         console.log("Wager Reponse: ", wagerResponse)
         // Step 3: Insert creator as first participant
-        const participantResponse = await fetchAPI('/(api)/wager_participants', {
+        const participantResponse = await fetchAPI('/api/wager-participants', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

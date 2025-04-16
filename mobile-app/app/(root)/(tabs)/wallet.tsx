@@ -26,7 +26,7 @@ const Wallet = () => {
     useEffect(() => {
         const fetchBalance = async () => {
             try {
-                const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
+                const response = await fetchAPI(`/api/balance?clerkId=${user?.id}`, {
                     method: "GET",
                 });
 
@@ -40,7 +40,7 @@ const Wallet = () => {
 
         const fetchTransactions = async () => {
             try {
-                const response = await fetchAPI(`/(api)/transactions?clerkId=${user?.id}`, {
+                const response = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
                     method: "GET",
                 });
 
@@ -67,7 +67,7 @@ const Wallet = () => {
     const onPaymentSuccess = async (amount: string) => {
         setIsAddFundsModalVisible(false);
         try {
-            const response = await fetchAPI("/(api)/balance", {
+            const response = await fetchAPI("/api/balance", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -83,7 +83,7 @@ const Wallet = () => {
                 setBalance(response.balance);
 
                 // Store the transaction
-                await fetchAPI("/(api)/transactions", {
+                await fetchAPI("/api/transactions", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -96,7 +96,7 @@ const Wallet = () => {
                 });
 
                 // Fetch the updated transactions
-                const transactionsResponse = await fetchAPI(`/(api)/transactions?clerkId=${user?.id}`, {
+                const transactionsResponse = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
                     method: "GET",
                 });
 
@@ -118,7 +118,7 @@ const Wallet = () => {
         console.log("We are in withdraw")
         setIsAddFundsModalVisible(false);
         try {
-            const response = await fetchAPI("/(api)/balance", {
+            const response = await fetchAPI("/api/balance", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -134,7 +134,7 @@ const Wallet = () => {
                 setBalance(response.balance);
 
                 // Store the transaction
-                await fetchAPI("/(api)/transactions", {
+                await fetchAPI("/api/transactions", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -147,7 +147,7 @@ const Wallet = () => {
                 });
 
                 // Fetch the updated transactions
-                const transactionsResponse = await fetchAPI(`/(api)/transactions?clerkId=${user?.id}`, {
+                const transactionsResponse = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
                     method: "GET",
                 });
 
@@ -164,13 +164,13 @@ const Wallet = () => {
     const handleWithdraw = async () => {
         try {
             // Fetch the connected account ID from your database
-            const accountResponse = await fetchAPI(`/(api)/connected-account?clerkId=${user?.id}`, {
+            const accountResponse = await fetchAPI(`/api/connected-account?clerkId=${user?.id}`, {
                 method: "GET",
             });
 
             const connectedAccountId = accountResponse.connected_account_id;
 
-            const response = await fetchAPI("/(api)/payout", {
+            const response = await fetchAPI("/api/payout", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -186,7 +186,7 @@ const Wallet = () => {
                 setBalance(balance - parseFloat(amount));
 
                 // Store the transaction
-                await fetchAPI("/(api)/transactions", {
+                await fetchAPI("/api/transactions", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -199,7 +199,7 @@ const Wallet = () => {
                 });
 
                 // Fetch the updated transactions
-                const transactionsResponse = await fetchAPI(`/(api)/transactions?clerkId=${user?.id}`, {
+                const transactionsResponse = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
                     method: "GET",
                 });
 
@@ -224,7 +224,7 @@ const Wallet = () => {
 
     const handleAddCard = async (model: FormModel) => {
         try {
-            const response = await fetchAPI("/(api)/charge_cards", {
+            const response = await fetchAPI("/api/charge-cards", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

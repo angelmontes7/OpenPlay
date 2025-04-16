@@ -51,7 +51,7 @@ const JoinWagerModal: React.FC<JoinWagerModalProps> = ({ visible, onClose, selec
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const response = await fetchAPI(`/(api)/balance?clerkId=${user?.id}`, {
+        const response = await fetchAPI(`/api/balance?clerkId=${user?.id}`, {
           method: 'GET',
         });
         if (response.balance !== undefined) {
@@ -80,7 +80,7 @@ const JoinWagerModal: React.FC<JoinWagerModalProps> = ({ visible, onClose, selec
 
     try {
       // Deduct balance
-      const balanceResponse = await fetchAPI('/(api)/balance', {
+      const balanceResponse = await fetchAPI('/api/balance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,7 +93,7 @@ const JoinWagerModal: React.FC<JoinWagerModalProps> = ({ visible, onClose, selec
         setWalletBalance(balanceResponse.balance);
 
         // Store transaction
-        await fetchAPI('/(api)/transactions', {
+        await fetchAPI('/api/transactions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -105,7 +105,7 @@ const JoinWagerModal: React.FC<JoinWagerModalProps> = ({ visible, onClose, selec
       }
 
       // Add participant to wager
-      const participantResponse = await fetchAPI('/(api)/wager_participants', {
+      const participantResponse = await fetchAPI('/api/wager-participants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
