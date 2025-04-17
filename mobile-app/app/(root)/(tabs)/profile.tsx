@@ -13,22 +13,21 @@ import { fetchAPI } from "@/lib/fetch"
 //import { LinearGradient } from "expo-linear-gradient";
 
 const getUserPreferences = async (clerkId) => {
-    const res = await fetchAPI(`/api/preferences?clerkId=${clerkId}`);
-    if (!res.ok) throw new Error("Failed to fetch preferences");
-    return res.json();
-  };
-  
-  const updateUserPreferences = async (clerkId, prefs) => {
-    const res = await fetchAPI("/api/preferences", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ clerkId, ...prefs }),
-    });
-    if (!res.ok) throw new Error("Failed to update preferences");
-    return res.json();
-  };
+  const data = await fetchAPI(`/api/preferences?clerkId=${clerkId}`);
+  return data;
+};
+
+const updateUserPreferences = async (clerkId, prefs) => {
+  const data = await fetchAPI("/api/preferences", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ clerkId, ...prefs }),
+  });
+
+  return data;
+};
 
 const Profile = () => {
     const { user } = useUser();
@@ -130,23 +129,30 @@ const Profile = () => {
     };
 
     useEffect(() => {
-        const fetchPreferences = async () => {
-          if (!user?.id) return;
-          try {
-            const data = await getUserPreferences(user.id);
-            setIsPrivate(data.is_private);
-            setEmailNotifications(data.email_notifications);
-            setPushNotifications(data.push_notifications);
-            setLocationEnabled(data.location_enabled);
-            setsmsNotifications(data.sms_notifications);
-            setsocialNotifications(data.social_notifications);
-            setgameNotifications(data.game_notifications);
-          } catch (error) {
-            console.error("Error loading preferences:", error);
-          }
-        };
-        fetchPreferences();
-      }, [user?.id]);
+      const fetchPreferences = async () => {
+        if (!user?.id) {
+          console.error("User ID is missing");
+          return;
+        }
+    
+        try {
+          const data = await getUserPreferences(user.id);
+    
+          // Ensure all fields are present in the response
+          setIsPrivate(data.is_private ?? false);
+          setEmailNotifications(data.email_notifications ?? true);
+          setPushNotifications(data.push_notifications ?? false);
+          setLocationEnabled(data.location_enabled ?? false);
+          setsmsNotifications(data.sms_notifications ?? false);
+          setsocialNotifications(data.social_notifications ?? false);
+          setgameNotifications(data.game_notifications ?? false);
+        } catch (error) {
+          console.error("Error loading preferences:", error);
+        }
+      };
+    
+      fetchPreferences();
+    }, [user?.id]);
     
     const handlePreferenceToggle = (key: string, value: boolean) => {
         const newPrefs = {
