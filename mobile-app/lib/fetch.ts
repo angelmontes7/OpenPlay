@@ -2,7 +2,7 @@ import {useState, useEffect, useCallback} from "react";
 
 // note to self: need to keep changing this to my ip run ipconfig getifaddr en0 in terminal to find ip 
 // We will change this once we have deployed app on to an actual server
-const BASE_URL = "http://172.17.55.101:5001";
+const BASE_URL = "http://172.17.54.73:5001";
  
 
 export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
