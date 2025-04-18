@@ -81,8 +81,8 @@ const DisputesModal: React.FC<DisputesModalProps> = ({ isVisible, onClose, selec
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to update wager status");
+      
+      if (response?.error) throw new Error(response.error || "Failed to update wager status");
 
       Alert.alert("Success", "You have voted.");
       onConfirmed()

@@ -1,4 +1,5 @@
 import { ScrollView, Text, View, Alert, TouchableOpacity } from "react-native";
+import React from "react";
 import RoundButton from "@/components/RoundButton";
 import { Ionicons } from "@expo/vector-icons";
 import { StripeProvider } from "@stripe/stripe-react-native";
@@ -10,6 +11,7 @@ import StoredCardModal from "@/components/StoredCardModal";
 import AddFundsModal from "@/components/AddFundsModal";
 import WithdrawFundsModal from "@/components/WithdrawFundsModal";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
 
 const Wallet = () => {
     const { user } = useUser();
@@ -23,39 +25,44 @@ const Wallet = () => {
     const [storedCards, setStoredCards] = useState([]); // Store an array of cards
 
     //**** WHAT APPEARS WHEN THE WALLET IS OPENED UP ****/
-    useEffect(() => {
-        const fetchBalance = async () => {
-            try {
-                const response = await fetchAPI(`/api/balance?clerkId=${user?.id}`, {
-                    method: "GET",
-                });
+    
+    const fetchBalance = async () => {
+        try {
+            const response = await fetchAPI(`/api/balance?clerkId=${user?.id}`, {
+                method: "GET",
+            });
 
-                if (response.balance !== undefined) {
-                    setBalance(response.balance);
-                }
-            } catch (error) {
-                console.error("Error fetching balance:", error);
+            if (response.balance !== undefined) {
+                setBalance(response.balance);
             }
-        };
+        } catch (error) {
+            console.error("Error fetching balance:", error);
+        }
+    };
 
-        const fetchTransactions = async () => {
-            try {
-                const response = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
-                    method: "GET",
-                });
+    const fetchTransactions = async () => {
+        try {
+            const response = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
+                method: "GET",
+            });
 
-                if (response.transactions) {
-                    setTransactions(response.transactions);
-                }
-            } catch (error) {
-                console.error("Error fetching transactions:", error);
+            if (response.transactions) {
+                setTransactions(response.transactions);
             }
-        };
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+        }
+    };
 
+        
+    
+    // Refresh balance and transactions when the Wallet tab is focused
+    useFocusEffect(
+        React.useCallback(() => {
         fetchBalance();
         fetchTransactions();
-    }, [user?.id]);
-    
+        }, [user?.id])
+    );
 
 
 
