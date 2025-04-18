@@ -76,9 +76,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
         }),
       });
 
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to update wager status");
+      if (response?.error) throw new Error(response.error || "Failed to update wager status");
 
       Alert.alert("Success", "You have voted.");
       onConfirmed()
@@ -99,9 +97,8 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
             status: "disputed" 
         }),
       });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to update wager status");
+      
+      if (response?.error) throw new Error(response.error || "Failed to update wager status");
 
       handleResetVotes();
       Alert.alert("Success", "Wager has been disputed. Each user must vote again in the disputes section.");
@@ -122,8 +119,8 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to reset votes");
+      
+      if (response?.error) throw new Error(response.error || "Failed to reset votes");
   
     } catch (err) {
       Alert.alert("Error", err instanceof Error ? err.message : "Unknown error");
