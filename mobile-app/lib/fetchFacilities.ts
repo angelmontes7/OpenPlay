@@ -29,7 +29,7 @@ export const calculateDistance = (
   ): Promise<Court[]> => {
     try {
       // Fetch the parsed JSON data directly
-      const data = await fetchAPI("/api/sports-facilities");
+      const data = await fetchAPI("/api/database/sports-facilities");
   
       // Map the API response to the `Court` interface
       const mappedData: Court[] = data.map((facility: any) => {

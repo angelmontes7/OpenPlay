@@ -39,7 +39,7 @@ const Wagers = () => {
 
     const fetchUserData = async () => {
       try {
-        const response = await fetchAPI("/api/user", {
+        const response = await fetchAPI("/api/database/user", {
           method: "GET",
         });
 
@@ -60,7 +60,7 @@ const Wagers = () => {
       const checkUserDOB = async () => {
           if (!user?.id) return;
           try {
-              const response = await fetchAPI(`/api/user?clerkId=${user.id}`);
+              const response = await fetchAPI(`/api/database/user?clerkId=${user.id}`);
                           
               const userData = response?.[0]; // access first item of array as response is stored in array instead of just an object
               const dob = userData?.dob ?? null;
@@ -79,7 +79,7 @@ const Wagers = () => {
     // Fetch Balance
     const fetchBalance = async () => {
         try {
-            const response = await fetchAPI(`/api/balance?clerkId=${user?.id}`, {
+            const response = await fetchAPI(`/api/database/balance?clerkId=${user?.id}`, {
                 method: "GET",
             });
 
@@ -94,7 +94,7 @@ const Wagers = () => {
     // Fetch available wagers (wagers with status "pending" – no clerkId filter)
     const fetchAvailableWagers = async () => {
       try {
-          const response = await fetchAPI(`/api/wager`, {
+          const response = await fetchAPI(`/api/database/wager`, {
               method: "GET",
           });
           
@@ -110,7 +110,7 @@ const Wagers = () => {
     const fetchUserCreatedWagers = async () => {
       if (!user?.id) return;
       try {
-        const response = await fetchAPI(`/api/wager?clerkId=${user.id}`, { method: "GET" });
+        const response = await fetchAPI(`/api/database/wager?clerkId=${user.id}`, { method: "GET" });
         return response;
       } catch (error) {
         console.error("Error fetching created wagers:", error);
@@ -123,7 +123,7 @@ const Wagers = () => {
     const fetchUserJoinedWagers = async () => {
       if (!user?.id) return;
       try {
-        const response = await fetchAPI(`/api/wager-participants?clerkId=${user.id}`, { method: "GET" });
+        const response = await fetchAPI(`/api/database/wager-participants?clerkId=${user.id}`, { method: "GET" });
         // Normalize the joined wager result so that fields match those from created wagers.
         return response.map((item: any) => ({
           id: item.wager_id, // use wager_id as the wager identifier
@@ -179,7 +179,7 @@ const Wagers = () => {
     // Fetch wager details based on wagerId
     const fetchWagerDetails = async (wagerId: string) => {
       try {
-        const response = await fetchAPI(`/api/wager-info?wagerId=${wagerId}`, { method: "GET" });
+        const response = await fetchAPI(`/api/database/wager-info?wagerId=${wagerId}`, { method: "GET" });
         
         // Normalize the wager details and participant information
         return response.map((item: any) => ({

@@ -66,7 +66,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
     }
 
     try {
-      const response = await fetchAPI("/api/wager-confirm", {
+      const response = await fetchAPI("/api/database/wager-confirm", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,7 +89,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
   const handleDisputeSubmit = async () => {
     
     try {
-      const response = await fetchAPI("/api/wager", {
+      const response = await fetchAPI("/api/database/wager", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -111,7 +111,7 @@ const CloseWagerModal: React.FC<CloseWagerModalProps> = ({ isVisible, onClose, s
 
   const handleResetVotes = async () => {
     try {
-      const response = await fetchAPI("/api/wager-reset-votes", {
+      const response = await fetchAPI("/api/database/wager-reset-votes", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

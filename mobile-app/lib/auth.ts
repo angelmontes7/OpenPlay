@@ -53,7 +53,7 @@ export const googleOAuth = async (startOAuthFlow: any) => {
       const updatedSignUp = await signUp.update({ username });
 
       if (updatedSignUp.createdUserId) {
-        await fetchAPI("/api/user", {
+        await fetchAPI("/api/database/user", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -67,7 +67,7 @@ export const googleOAuth = async (startOAuthFlow: any) => {
       }
 
       try {
-        const response = await fetchAPI("/api/connected-account", {
+        const response = await fetchAPI("/api/stripe/connected-account", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -85,7 +85,7 @@ export const googleOAuth = async (startOAuthFlow: any) => {
       } catch (error) {
           console.error('Error creating connected account', error);
       }
-      
+
       if (updatedSignUp.createdSessionId) {
         await setActive({ session: updatedSignUp.createdSessionId });
         return {

@@ -71,7 +71,7 @@ const DisputesModal: React.FC<DisputesModalProps> = ({ isVisible, onClose, selec
       winning_vote: selectedTeam,
     });
     try {
-      const response = await fetchAPI("/api/wager-confirm", {
+      const response = await fetchAPI("/api/database/wager-confirm", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
