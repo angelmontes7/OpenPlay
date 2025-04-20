@@ -386,7 +386,6 @@ export default function Home() {
           dob: dob,
         }),
       }); 
-      setData(response)
       setShowDOBModal(false);
       setDob(dob); // Update state with the saved DOB
       Alert.alert("Success", "Your DOB has been updated.");
