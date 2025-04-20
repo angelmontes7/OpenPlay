@@ -12,10 +12,12 @@ router.post("/", async (req, res) => {
   try {
     const { clerkId, email } = req.body;
 
+    console.log("clerkId:", clerkId, "email:", email);
+
     if (!clerkId || !email) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-
+    
     // Create a connected account
     const account = await stripe.accounts.create({
       type: "express",
@@ -43,6 +45,7 @@ router.post("/", async (req, res) => {
 
     return res.status(200).json({ accountId: account.id, onboardingLink: accountLink.url });
   } catch (error) {
+    console.error("POST /connected-account error:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 });

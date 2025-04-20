@@ -5,27 +5,27 @@ import morgan from "morgan";
 import helmet from "helmet";
 
 // Import route files from the 'routes/database' folder
-import balanceApi from './routes/database/balance.route.ts';
-import chargeCardsApi from './routes/database/charge-cards.route.ts';
-import checkInApi from './routes/database/check-in.route.ts';
-import checkOutApi from './routes/database/check-out.route.ts';
-import headCountApi from './routes/database/head-count.route.ts';
-import preferencesApi from './routes/database/preferences.route.ts';
-import sportsFacilitiesApi from './routes/database/sports-facilities.route.ts';
-import transactionsApi from './routes/database/transactions.route.ts';
-import updateProfilePicApi from './routes/database/profile-pic.route.ts';
-import userApi from './routes/database/user.route.ts';
-import wagerApi from './routes/database/wager.route.ts';
-import wagerConfirmApi from './routes/database/wager-confirm.route.ts';
-import wagerInfoApi from './routes/database/wager-info.route.ts';
-import wagerParticipantsApi from './routes/database/wager-participants.route.ts';
-import wagerResetVotesApi from './routes/database/wager-reset-votes.route.ts';
+import balanceApi from './routes/database/balance.route';
+import chargeCardsApi from './routes/database/charge-cards.route';
+import checkInApi from './routes/database/check-in.route';
+import checkOutApi from './routes/database/check-out.route';
+import headCountApi from './routes/database/head-count.route';
+import preferencesApi from './routes/database/preferences.route';
+import sportsFacilitiesApi from './routes/database/sports-facilities.route';
+import transactionsApi from './routes/database/transactions.route';
+import updateProfilePicApi from './routes/database/profile-pic.route';
+import userApi from './routes/database/user.route';
+import wagerApi from './routes/database/wager.route';
+import wagerConfirmApi from './routes/database/wager-confirm.route';
+import wagerInfoApi from './routes/database/wager-info.route';
+import wagerParticipantsApi from './routes/database/wager-participants.route';
+import wagerResetVotesApi from './routes/database/wager-reset-votes.route';
 
 // Import Stripe-related APIs
-import connectedAccountApi from './routes/stripe/connected-account.route.ts';
-import createApi from './routes/stripe/create.route.ts';
-import payApi from './routes/stripe/pay.route.ts';
-import payoutApi from './routes/stripe/payout.route.ts';
+import connectedAccountApi from './routes/stripe/connected-account.route';
+import createApi from './routes/stripe/create.route';
+import payApi from './routes/stripe/pay.route';
+import payoutApi from './routes/stripe/payout.route';
 
 // Load environment variables
 dotenv.config();

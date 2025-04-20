@@ -4,6 +4,7 @@ import * as AuthSession from 'expo-auth-session';
 import { useRouter } from 'expo-router';
 import { fetchAPI } from './fetch';
 import * as Linking from "expo-linking";
+import * as WebBrowser from 'expo-web-browser';
 export const createTokenCache = (): TokenCache => {
     return {
       getToken: async (key: string) => {
@@ -34,7 +35,7 @@ export const googleOAuth = async (startOAuthFlow: any) => {
     });
 
     const { createdSessionId, setActive, signUp, signIn } = response;
-
+    
     // If the session is already created, activate it
     if (createdSessionId) {
       await setActive({ session: createdSessionId });
@@ -54,6 +55,9 @@ export const googleOAuth = async (startOAuthFlow: any) => {
       if (updatedSignUp.createdUserId) {
         await fetchAPI("/api/user", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             username: updatedSignUp.username, 
             email: updatedSignUp.emailAddress, 
@@ -62,7 +66,26 @@ export const googleOAuth = async (startOAuthFlow: any) => {
         });
       }
 
+      try {
+        const response = await fetchAPI("/api/connected-account", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                clerkId: updatedSignUp.createdUserId,
+                email: updatedSignUp.emailAddress,
+            }),
+        });
 
+        if (response.onboardingLink) {
+        // Open the Stripe onboarding link using Expo's WebBrowser
+            await WebBrowser.openBrowserAsync(response.onboardingLink);
+        }
+      } catch (error) {
+          console.error('Error creating connected account', error);
+      }
+      
       if (updatedSignUp.createdSessionId) {
         await setActive({ session: updatedSignUp.createdSessionId });
         return {
