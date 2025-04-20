@@ -8,7 +8,7 @@ dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-const renderUrl = 'https://openplay-4o4a.onrender.com'; // This is your deployed URL
+const renderUrl = 'https://openplay-4o4a.onrender.com';
 
 router.post("/", async (req, res) => {
   try {
