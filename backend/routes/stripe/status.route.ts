@@ -10,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const renderUrl = 'https://openplay-4o4a.onrender.com';
 
-router.post("/status", async (req, res) => {
+router.post("/", async (req, res) => {
     const { connectedAccountId } = req.body;
 
     if (!connectedAccountId) return res.status(400).json({ error: "Missing account ID" });
