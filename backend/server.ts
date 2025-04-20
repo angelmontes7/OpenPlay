@@ -59,10 +59,20 @@ app.use(express.urlencoded({ extended: true }));
 io.on("connection", (socket) => {
   console.log("A user connected");
 
+  socket.on("join-room", (roomId) => {
+    console.log(`User joined room: ${roomId}`);
+    socket.join(roomId);
+  });
+
+  socket.on("leave-room", (roomId) => {
+    console.log(`User left room: ${roomId}`);
+    socket.leave(roomId);
+  });
+
   // Handle incoming messages
-  socket.on("send-message", ({ text, senderId, username }) => {
-    // Broadcast message to all other clients (excluding the sender)
-    socket.broadcast.emit("receive-message", { text, senderId, username });
+  socket.on("send-message", ({ text, senderId, username, roomId }) => {
+    const message = { text, senderId, username };
+    io.to(roomId).emit("receive-message", message);
   });
 
   socket.on("disconnect", () => {
