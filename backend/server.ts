@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import helmet from "helmet";
+import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
 
 // Import route files from the 'routes/database' folder
 import balanceApi from './routes/database/balance.route';
@@ -35,12 +37,37 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Create HTTP server instance
+const httpServer = createServer(app);
+
+// Setup Socket.IO with CORS config
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: "*", // change this in prod
+    methods: ["GET", "POST"],
+  },
+});
+
 // Middleware
 app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// --- SOCKET.IO EVENTS ---
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("send-message", (message) => {
+    console.log("Message received:", message);
+    io.emit("receive-message", message);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
 
 // Registering routes with their respective paths
 app.use('/api/database/balance', balanceApi);
@@ -79,6 +106,6 @@ app.get("/health", (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
