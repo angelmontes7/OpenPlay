@@ -90,6 +90,13 @@ const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose, onPayme
 
           {/* Modal Content */}
           <View className="p-6">
+            {/* Stripe Onboarding Notice */}
+            <View className="mb-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
+              <Text className="text-blue-200 text-xs text-center">
+                *Complete Stripe setup to add funds. You'll be redirected if not done after clicking confirm. Withdrawals will be available 7 days after funding.*
+              </Text>
+            </View>
+
             {/* Input Field */}
             <View className="mb-6 relative">
               <View className="absolute top-0 left-0 w-full h-full bg-blue-500/10 rounded-xl blur-md" />
