@@ -57,15 +57,16 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- SOCKET.IO EVENTS ---
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("A user connected");
 
-  socket.on("send-message", (message) => {
-    console.log("Message received:", message);
-    io.emit("receive-message", message);
+  // Handle incoming messages
+  socket.on("send-message", ({ text, senderId }) => {
+    // Broadcast message to all other clients (excluding the sender)
+    socket.broadcast.emit("receive-message", { text, senderId });
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    console.log("User disconnected");
   });
 });
 
