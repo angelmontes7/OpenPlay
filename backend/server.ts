@@ -60,9 +60,9 @@ io.on("connection", (socket) => {
   console.log("A user connected");
 
   // Handle incoming messages
-  socket.on("send-message", ({ text, senderId }) => {
+  socket.on("send-message", ({ text, senderId, username }) => {
     // Broadcast message to all other clients (excluding the sender)
-    socket.broadcast.emit("receive-message", { text, senderId });
+    socket.broadcast.emit("receive-message", { text, senderId, username });
   });
 
   socket.on("disconnect", () => {
