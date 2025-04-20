@@ -7,6 +7,7 @@ dotenv.config();
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
 router.post("/", async (req, res) => {
   try {
     const { clerkId, email } = req.body;
@@ -18,7 +19,18 @@ router.post("/", async (req, res) => {
     // Create a connected account
     const account = await stripe.accounts.create({
       type: "express",
+      country: 'US',
       email: email,
+      capabilities: {
+        transfers: { requested: true },
+      }
+    });
+
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: 'openplay://stripe-onboarding?status=refresh',
+      return_url:  'openplay://stripe-onboarding?status=success',
+      type: 'account_onboarding'
     });
 
     // Store the connected account ID in your database
@@ -29,7 +41,7 @@ router.post("/", async (req, res) => {
       WHERE clerk_id = ${clerkId}
     `;
 
-    return res.status(200).json({ account });
+    return res.status(200).json({ accountId: account.id, onboardingLink: accountLink.url });
   } catch (error) {
     return res.status(500).json({ error: "Internal Server Error" });
   }

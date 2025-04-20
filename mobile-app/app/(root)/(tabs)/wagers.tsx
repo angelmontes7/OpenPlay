@@ -61,8 +61,11 @@ const Wagers = () => {
           if (!user?.id) return;
           try {
               const response = await fetchAPI(`/api/user?clerkId=${user.id}`);
-              setDob(response.dob);
-              console.log('Fetched user DOB:', response);
+                          
+              const userData = response?.[0]; // access first item of array as response is stored in array instead of just an object
+              const dob = userData?.dob ?? null;
+  
+              setDob(dob); 
           } catch (error) {
               console.error("Error fetching DOB:", error);
               setError("Error fetching DOB");

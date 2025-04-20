@@ -4,6 +4,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
+import * as Linking from 'expo-linking';
+import { Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+
 import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo'
 import { createTokenCache } from '@/lib/auth';
 
@@ -28,6 +32,24 @@ export default function RootLayout() {
       'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env',
     )
   }
+
+  const router = useRouter();
+
+  // Deep link listener for Stripe Connect onboarding return
+  useEffect(() => {
+    const onUrl = ({ url }: { url: string }) => {
+      const { queryParams } = Linking.parse(url);
+      if (queryParams?.status === 'success') {
+        Alert.alert('🎉', 'Stripe onboarding complete!');
+        router.replace('/(root)/(tabs)/home');
+      } else if (queryParams?.status === 'refresh') {
+        Alert.alert('⚠️', 'Please complete your Stripe verification.');
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', onUrl);
+    return () => subscription.remove();
+  }, [router]);
 
   useEffect(() => {
     if (loaded) {

@@ -1,7 +1,7 @@
 import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { Alert, Image, Text, View } from "react-native";
 import { ReactNativeModal } from "react-native-modal";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useStripe } from "@stripe/stripe-react-native";
 import { router } from "expo-router";
 import CustomButton from "@/components/CustomButton";
@@ -10,12 +10,15 @@ import { fetchAPI } from "@/lib/fetch";
 import { PaymentProps } from "@/types/type";
 
 const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps, ref) => {
+  const { user } = useUser();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const { userId } = useAuth();
   const [success, setSuccess] = useState<boolean>(false);
+  const [connectedId, setConnectedId] = useState<string | null>(null);
 
   const openPaymentSheet = async () => {
-    await initializePaymentSheet();
+    const connectedIdValue = await fetchConnectedId(); // get ID directly
+    await initializePaymentSheet(connectedIdValue);
 
     const { error } = await presentPaymentSheet();
 
@@ -31,7 +34,26 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
     openPaymentSheet,
   }));
 
-  const initializePaymentSheet = async () => {
+  const fetchConnectedId = async () => {
+    try {
+      if (!user?.id) return;
+
+      const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
+        method: "GET",
+      });
+      
+      const userData = response?.[0];
+      const connectedAccountId = userData?.connected_account_id ?? null;
+  
+      setConnectedId(connectedAccountId)
+
+      return connectedAccountId;
+    } catch (error) {
+      console.error("Error fetching users stripe connected id:", error);
+    }
+  };
+
+  const initializePaymentSheet = async (connectedId: string | null) => {
     const { error } = await initPaymentSheet({
       merchantDisplayName: "Example, Inc.",
       intentConfiguration: {
@@ -45,6 +67,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
           intentCreationCallback,
         ) => {
           try {
+            console.log("The connected account id is: ", connectedId)
             const { paymentIntent, customer } = await fetchAPI(
               "/api/create",
               {
@@ -56,7 +79,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
                   name: fullName || email.split("@")[0],
                   email: email,
                   amount: amount,
-                  paymentMethodId: paymentMethod.id,
+                  connectedAccountId: connectedId,
                 }),
               },
             );

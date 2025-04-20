@@ -12,6 +12,7 @@ import { fetchAPI } from "@/lib/fetch";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Animatable from "react-native-animatable";
+import * as WebBrowser from "expo-web-browser";
 
 const SignUp = () => {
     const { isLoaded, signUp, setActive } = useSignUp();
@@ -83,6 +84,9 @@ const SignUp = () => {
             if (signUpAttempt.status === 'complete') {
                 await fetchAPI("/api/user", {
                     method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify({
                         username: form.username,
                         email: form.email,
@@ -90,17 +94,27 @@ const SignUp = () => {
                         clerkId: signUpAttempt.createdUserId,
                     }),
                 });
+                
+                try {
+                    const response = await fetchAPI("/api/connected-account", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            clerkId: signUpAttempt.createdUserId,
+                            email: form.email,
+                        }),
+                    });
 
-                await fetchAPI("/api/connected-account", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        clerkId: signUpAttempt.createdUserId,
-                        email: form.email,
-                    }),
-                });
+                    if (response.onboardingLink) {
+                    // Open the Stripe onboarding link using Expo's WebBrowser
+                        await WebBrowser.openBrowserAsync(response.onboardingLink);
+                    }
+                } catch (error) {
+                    console.error('Error creating connected account', error);
+                }
+                
 
                 await setActive({ session: signUpAttempt.createdSessionId })
                 setVerification({ ...verification, state: 'success' })

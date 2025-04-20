@@ -121,108 +121,95 @@ const Wallet = () => {
         setIsWithdrawFundsModalVisible(true);
     };
 
-    const onWithdrawSuccess = async (amount: string) => {
-        console.log("We are in withdraw")
-        setIsAddFundsModalVisible(false);
+    const handleWithdraw = async (withdrawAmount: string) => {
         try {
-            const response = await fetchAPI("/api/balance", {
+          const parsedAmount = parseFloat(withdrawAmount);
+          if (!withdrawAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+            return Alert.alert("Invalid amount", "Please enter a valid withdrawal amount.");
+          }
+      
+          // Get the user's Stripe connected account ID
+          const accountResponse = await fetchAPI(`/api/connected-account?clerkId=${user?.id}`, {
+            method: "GET",
+          });
+      
+          const connectedAccountId = accountResponse.connected_account_id;
+      
+          if (!connectedAccountId) {
+            return Alert.alert("Error", "No connected account found.");
+          }
+      
+          // Attempt payout via your backend
+          const response = await fetchAPI("/api/payout", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              clerkId: user?.id,
+              amount: parsedAmount,
+            }),
+          });
+      
+          if (response.needs_bank_account) {
+            return Alert.alert(
+              "Bank Account Required",
+              "You need to add a bank account before withdrawing. Please go to your payment settings to add one."
+            );
+          }
+      
+          if (response.payout) {
+            // Update balance in your database
+            const balanceResponse = await fetchAPI("/api/balance", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                clerkId: user?.id,
+                type: "subtract",
+                amount: parsedAmount,
+              }),
+            });
+      
+            if (balanceResponse.balance) {
+              setBalance(balanceResponse.balance);
+      
+              // Store withdrawal transaction
+              await fetchAPI("/api/transactions", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
+                  "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    clerkId: user?.id,
-                    type: "subtract",
-                    amount: parseFloat(amount),
+                  clerkId: user?.id,
+                  type: "withdraw",
+                  amount: parsedAmount,
                 }),
-            });
-
-            if (response.balance) {
-                setBalance(response.balance);
-
-                // Store the transaction
-                await fetchAPI("/api/transactions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        clerkId: user?.id,
-                        type: "subtract",
-                        amount: parseFloat(amount),
-                    }),
-                });
-
-                // Fetch the updated transactions
-                const transactionsResponse = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
-                    method: "GET",
-                });
-
-                if (transactionsResponse.transactions) {
-                    setTransactions(transactionsResponse.transactions);
-                }
-            }
-        } catch (error) {
-            console.error("Error updating balance:", error);
-        }
-    };
-
-    /* No longer using this function as removal of funds through stripe became too much of a hassle
-    const handleWithdraw = async () => {
-        try {
-            // Fetch the connected account ID from your database
-            const accountResponse = await fetchAPI(`/api/connected-account?clerkId=${user?.id}`, {
+              });
+      
+              // Fetch updated transaction history
+              const transactionsResponse = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
                 method: "GET",
-            });
-
-            const connectedAccountId = accountResponse.connected_account_id;
-
-            const response = await fetchAPI("/api/payout", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    clerkId: user?.id,
-                    amount: parseFloat(amount),
-                    destination: connectedAccountId,
-                }),
-            });
-
-            if (response.payout) {
-                setBalance(balance - parseFloat(amount));
-
-                // Store the transaction
-                await fetchAPI("/api/transactions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        clerkId: user?.id,
-                        type: "withdraw",
-                        amount: parseFloat(amount),
-                    }),
-                });
-
-                // Fetch the updated transactions
-                const transactionsResponse = await fetchAPI(`/api/transactions?clerkId=${user?.id}`, {
-                    method: "GET",
-                });
-
-                if (transactionsResponse.transactions) {
-                    setTransactions(transactionsResponse.transactions);
-                }
-
-                Alert.alert("Success", "Withdrawal successful.");
+              });
+      
+              if (transactionsResponse.transactions) {
+                setTransactions(transactionsResponse.transactions);
+              }
+      
+              setIsWithdrawFundsModalVisible(false);
+              Alert.alert("Success", "Withdrawal processed successfully.");
             }
+          } else {
+            Alert.alert("Error", "Withdrawal failed. Please try again.");
+          }
         } catch (error) {
-            console.error("Error processing withdrawal:", error);
-            Alert.alert("Error", "Failed to process withdrawal. Please try again.");
+          console.error("Error processing withdrawal:", error);
+          Alert.alert("Error", "Something went wrong. Please try again later.");
         }
     };
-    */
-
+      
+    
 
     //****ADD CARD COMPONENTS****//
     const onAddCard = () => {  
@@ -451,7 +438,8 @@ const Wallet = () => {
             <WithdrawFundsModal
               visible={isWithdrawFundsModalVisible}
               onClose={() => setIsWithdrawFundsModalVisible(false)}
-              onWithdrawSuccess={onWithdrawSuccess}
+              onWithdrawSuccess={handleWithdraw}
+              availableBalance={balance}
             />
       
             <ChargeCardModal
