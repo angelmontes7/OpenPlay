@@ -4,6 +4,7 @@ import { ReactNativeModal } from "react-native-modal";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useStripe } from "@stripe/stripe-react-native";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import CustomButton from "@/components/CustomButton";
 import { images } from "@/constants";
 import { fetchAPI } from "@/lib/fetch";
@@ -17,16 +18,42 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
   const [connectedId, setConnectedId] = useState<string | null>(null);
 
   const openPaymentSheet = async () => {
-    const connectedIdValue = await fetchConnectedId(); // get ID directly
-    await initializePaymentSheet(connectedIdValue);
+    const connectedIdValue = await fetchConnectedId();
+    if (!connectedIdValue) {
+      Alert.alert("Missing account", "No connected account found.");
+      return;
+    }
 
-    const { error } = await presentPaymentSheet();
-
-    if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
-    } else {
-      setSuccess(true);
-      onSuccess();
+    try {
+      const response = await fetchAPI(`/api/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connectedAccountId: connectedIdValue }),
+      });
+  
+      if (response.status === "restricted") {
+        if (response.onboardingLink) {
+          await WebBrowser.openBrowserAsync(response.onboardingLink);
+          return; // Stop here since user needs to onboard
+        } else {
+          Alert.alert("Account Issue", "Unable to onboard at this time.");
+          return;
+        }
+      }
+  
+      // if status === "enabled"
+      await initializePaymentSheet(connectedIdValue);
+      const { error } = await presentPaymentSheet();
+  
+      if (error) {
+        Alert.alert(`Error code: ${error.code}`, error.message);
+      } else {
+        setSuccess(true);
+        onSuccess();
+      }
+    } catch (err) {
+      console.error("Error checking Stripe status:", err);
+      Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
 
