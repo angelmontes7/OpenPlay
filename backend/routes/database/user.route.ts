@@ -79,14 +79,14 @@ router.get('/', async(req, res) => {
         if (clerkId) {
             // Fetch specific user by clerkId
             const response = await sql`
-                SELECT dob FROM users WHERE clerk_id = ${clerkId} LIMIT 1;
+                SELECT * FROM users WHERE clerk_id = ${clerkId} LIMIT 1;
             `;
 
             if (response.length === 0) {
                 return res.status(404).json({ error: "User not found" });
             }
 
-            return res.status(200).json({dob: response[0].dob});
+            return res.status(200).json(response);
         } else {
             // Fetch all users
             const response = await sql`

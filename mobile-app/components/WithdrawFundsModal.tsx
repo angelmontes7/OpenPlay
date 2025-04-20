@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, Animated, Dimensions, Alert } from 'react-native';
 import { useUser } from "@clerk/clerk-expo";
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,12 +7,13 @@ import { Ionicons } from '@expo/vector-icons';
 interface WithDrawFundsModalProps {
   visible: boolean;
   onClose: () => void;
-  onWithdrawSuccess: (amount: string) => void;
+  onWithdrawSuccess: (amount: number) => void; 
+  availableBalance?: number; // display max balance
 }
 
 const { height } = Dimensions.get('window');
 
-const WithDrawFundsModal: React.FC<WithDrawFundsModalProps> = ({ visible, onClose, onWithdrawSuccess }) => {
+const WithDrawFundsModal: React.FC<WithDrawFundsModalProps> = ({ visible, onClose, onWithdrawSuccess, availableBalance, }) => {
   const [inputAmount, setInputAmount] = useState('');
   const { user } = useUser();
   const animatedValue = useRef(new Animated.Value(0)).current;
@@ -33,20 +34,18 @@ const WithDrawFundsModal: React.FC<WithDrawFundsModalProps> = ({ visible, onClos
     }
   }, [visible]);
 
-  useEffect(() => {
-    if (!visible) {
-      setInputAmount(''); // Clear the input amount when the modal is closed
-    }
-  }, [visible]);
-
   const handleConfirmWithdraw = async () => {
-    if (inputAmount.trim() === '' || isNaN(Number(inputAmount))) {
-      alert('Please enter a valid amount');
-      return;
+    const parsedAmount = parseFloat(inputAmount);
+
+    if (!inputAmount.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
+      return Alert.alert('Invalid amount', 'Please enter a valid withdrawal amount.');
     }
 
-    onWithdrawSuccess(inputAmount);
-    onClose();
+    if (availableBalance && parsedAmount > availableBalance) {
+      return Alert.alert('Insufficient Balance', 'You cannot withdraw more than your available balance.');
+    }
+
+    onWithdrawSuccess(parsedAmount);
   };
 
   return (
@@ -100,6 +99,12 @@ const WithDrawFundsModal: React.FC<WithDrawFundsModalProps> = ({ visible, onClos
               />
               <Text className="absolute right-4 top-4 text-blue-400 font-bold">USD</Text>
             </View>
+            
+            {availableBalance !== undefined && (
+              <Text className="text-center text-sm text-gray-400 mb-4">
+                Available: ${availableBalance}
+              </Text>
+            )}
 
             {/* Buttons */}
             <View className="flex-row w-full justify-between space-x-3">

@@ -67,8 +67,7 @@ export default function Home() {
   // Consts for DOB check
   const [dob, setDob] = useState<string | null>(null);
   const [showDOBModal, setShowDOBModal] = useState(false);
-  const [data, setData] = useState<{ dob: string } | null>(null);
-  
+
   // Location
   const [errorMsg, setErrorMsg] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -178,11 +177,14 @@ export default function Home() {
         if (!user?.id) return;
         try {
             const response = await fetchAPI(`/api/user?clerkId=${user.id}`);
-            console.log(response);  // Log the response data for debugging
-            setData(response);
+            
+            const userData = response?.[0]; // safely access first item in array
+            const dob = userData?.dob ?? null;
 
-            if (response?.dob === null) {
-              setShowDOBModal(true);  // Show the modal if DOB is null
+            setDob(dob); // Only store the DOB
+
+            if (dob === null) {
+                setShowDOBModal(true); // Show the modal if DOB is null
             }
         } catch (error) {
           console.error("Error fetching DOB:", error);
