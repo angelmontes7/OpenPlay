@@ -21,6 +21,7 @@ import wagerInfoApi from './routes/database/wager-info.route';
 import wagerParticipantsApi from './routes/database/wager-participants.route';
 import wagerResetVotesApi from './routes/database/wager-reset-votes.route';
 import stripeRedirectRoutes from "./stripe-redirect"
+import stripeStatus from "./routes/stripe/status.route"
 
 // Import Stripe-related APIs
 import connectedAccountApi from './routes/stripe/connected-account.route';
@@ -57,13 +58,15 @@ app.use('/api/wager-confirm', wagerConfirmApi);
 app.use('/api/wager-info', wagerInfoApi);
 app.use('/api/wager-participants', wagerParticipantsApi);
 app.use('/api/wager-reset-votes', wagerResetVotesApi);
-app.use("/api/stripe-redirect", stripeRedirectRoutes);
+
 
 // Stripe API routes
 app.use('/api/connected-account', connectedAccountApi);
 app.use('/api/create', createApi);
 app.use('/api/pay', payApi);
 app.use('/api/payout', payoutApi);
+app.use("/api/stripe-redirect", stripeRedirectRoutes);
+app.use("/api/stripe-status", stripeStatus)
 
 // Routes
 app.get("/", (req, res) => {
