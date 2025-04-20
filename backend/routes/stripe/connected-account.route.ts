@@ -8,6 +8,8 @@ dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+const renderUrl = 'https://openplay-4o4a.onrender.com'; // This is your deployed URL
+
 router.post("/", async (req, res) => {
   try {
     const { clerkId, email } = req.body;
@@ -30,11 +32,11 @@ router.post("/", async (req, res) => {
 
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: 'openplay://stripe-onboarding?status=refresh',
-      return_url:  'openplay://stripe-onboarding?status=success',
+      refresh_url: `${renderUrl}/api/stripe-redirect?status=refresh`,
+      return_url:  `${renderUrl}/api/stripe-redirect?status=success`,
       type: 'account_onboarding'
     });
-
+ 
     // Store the connected account ID in your database
     const sql = neon(`${process.env.DATABASE_URL}`);
     await sql`
