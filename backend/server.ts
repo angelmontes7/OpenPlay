@@ -31,7 +31,7 @@ import payoutApi from './routes/stripe/payout.route';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
