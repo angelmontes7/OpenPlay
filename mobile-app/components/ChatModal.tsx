@@ -32,17 +32,19 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
     socket.emit("join-room", facilityId);
 
     const handleReceiveMessage = (msg: { text: string; senderId: string; username: string }) => {
-      const newMessage: ChatMessage = {
-        id: Date.now().toString(),
-        text: msg.text,
-        username: msg.username,
-        isSent: msg.senderId === clerkId,
-        timestamp: new Date()
-      };
-      setMessages((prev) => [...prev, newMessage]);
+        if (msg.senderId !== clerkId) {
+            const newMessage: ChatMessage = {
+                id: Date.now().toString(),
+                text: msg.text,
+                username: msg.username,
+                isSent: msg.senderId === clerkId,
+                timestamp: new Date()
+            };
+            setMessages((prev) => [...prev, newMessage]);
+        }
     };
 
-    socket.off("receive-message").on("receive-message", handleReceiveMessage);
+    socket.on("receive-message", handleReceiveMessage);
 
     return () => {
       socket.emit("leave-room", facilityId);
