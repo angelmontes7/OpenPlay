@@ -1,28 +1,32 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, TextInput, Button, FlatList, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import socket from "@/lib/socket";
-import { useAuth } from '@clerk/clerk-expo';
+import { View, TextInput, FlatList, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import socket from "@/lib/socket"; // assuming your socket logic is here
+import { useUser } from '@clerk/clerk-expo';
 
 // Message structure to distinguish between sent and received messages
 interface ChatMessage {
   id: string;
   text: string;
+  username: string;
   isSent: boolean; // true if sent by user, false if received
   timestamp: Date;
 }
 
 const Chat = () => {
-  const { userId: clerkId } = useAuth();
+  const { user } = useUser();
+  const clerkId = user?.id;
+  const userName = user?.username || user?.fullName || "Anonymous";
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     // Handle incoming messages
-    socket.on('receive-message', (msg: { text: string; senderId: string }) => {
+    socket.on('receive-message', (msg: { text: string; senderId: string; username: string }) => {
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         text: msg.text,
+        username: msg.username,
         isSent: msg.senderId === clerkId, // Check if the message was sent by this user
         timestamp: new Date()
       };
@@ -49,19 +53,21 @@ const Chat = () => {
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         text: message,
+        username: userName || "Anonymous",
         isSent: true,
         timestamp: new Date()
       };
-      
+
       // Add message to local state first (optimistic UI update)
       setMessages((prev) => [...prev, newMessage]);
-      
-      // Send message through socket
+
+      // Send message through socket, including clerkId and username
       socket.emit('send-message', {
         text: message,
-        senderId: clerkId
+        senderId: clerkId,
+        username: userName || "Anonymous"
       });
-      
+
       // Clear input field
       setMessage('');
     }
@@ -72,23 +78,26 @@ const Chat = () => {
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
-    // Tailwind classes for message bubbles
-    const bubbleClasses = item.isSent 
-      ? "bg-blue-500 self-end rounded-2xl py-3 px-4 mt-1 mb-1 max-w-xs ml-10" 
+    const bubbleClasses = item.isSent
+      ? "bg-blue-500 self-end rounded-2xl py-3 px-4 mt-1 mb-1 max-w-xs ml-10"
       : "bg-gray-200 self-start rounded-2xl py-3 px-4 mt-1 mb-1 max-w-xs mr-10";
-    
-    const textClasses = item.isSent 
-      ? "text-white text-base" 
+
+    const textClasses = item.isSent
+      ? "text-white text-base"
       : "text-gray-800 text-base";
-    
-    const timestampClasses = item.isSent 
-      ? "text-xs text-blue-100 mt-1 text-right" 
+
+    const timestampClasses = item.isSent
+      ? "text-xs text-blue-100 mt-1 text-right"
       : "text-xs text-gray-500 mt-1 text-right";
 
     return (
-      <View className={bubbleClasses}>
-        <Text className={textClasses}>{item.text}</Text>
-        <Text className={timestampClasses}>{formatTime(item.timestamp)}</Text>
+      <View className="mb-2">
+        {/* Display username above the message bubble */}
+        {!item.isSent && <Text className="text-sm font-bold text-gray-700">{item.username}</Text>}
+        <View className={bubbleClasses}>
+          <Text className={textClasses}>{item.text}</Text>
+          <Text className={timestampClasses}>{formatTime(item.timestamp)}</Text>
+        </View>
       </View>
     );
   };
@@ -103,7 +112,7 @@ const Chat = () => {
         <View className="h-12 bg-gray-100 justify-center items-center border-b border-gray-300">
           <Text className="text-lg font-bold text-gray-800">Chat</Text>
         </View>
-        
+
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -112,7 +121,7 @@ const Chat = () => {
           contentContainerStyle={{ padding: 10, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
         />
-        
+
         <View className="flex-row px-3 py-2 mb-20 bg-gray-100 border-t border-gray-300 items-center">
           <TextInput
             value={message}
@@ -124,7 +133,7 @@ const Chat = () => {
             returnKeyType="send"
             onSubmitEditing={handleSend}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleSend}
             disabled={!message.trim()}
             className="ml-2 p-1"
