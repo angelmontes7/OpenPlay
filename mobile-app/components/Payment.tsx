@@ -25,7 +25,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
     }
 
     try {
-      const response = await fetchAPI(`/api/status`, {
+      const response = await fetchAPI(`/api/stripe/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ connectedAccountId: connectedIdValue }),
@@ -65,7 +65,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
     try {
       if (!user?.id) return;
 
-      const response = await fetchAPI(`/api/user?clerkId=${user.id}`, {
+      const response = await fetchAPI(`/api/database/user?clerkId=${user.id}`, {
         method: "GET",
       });
       
@@ -96,7 +96,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
           try {
             console.log("The connected account id is: ", connectedId)
             const { paymentIntent, customer } = await fetchAPI(
-              "/api/create",
+              "/api/stripe/create",
               {
                 method: "POST",
                 headers: {
@@ -112,7 +112,7 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
             );
 
             if (paymentIntent.client_secret) {
-              const { result } = await fetchAPI("/api/pay", {
+              const { result } = await fetchAPI("/api/stripe/pay", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",

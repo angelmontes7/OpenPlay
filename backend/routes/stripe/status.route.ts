@@ -12,7 +12,7 @@ const renderUrl = 'https://openplay-4o4a.onrender.com';
 
 router.post("/", async (req, res) => {
     const { connectedAccountId } = req.body;
-
+    
     if (!connectedAccountId) return res.status(400).json({ error: "Missing account ID" });
 
     try {

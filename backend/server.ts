@@ -43,30 +43,30 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Registering routes with their respective paths
-app.use('/api/balance', balanceApi);
-app.use('/api/charge-cards', chargeCardsApi);
-app.use('/api/check-in', checkInApi);
-app.use('/api/check-out', checkOutApi);
-app.use('/api/head-count', headCountApi);
-app.use('/api/preferences', preferencesApi);
-app.use('/api/sports-facilities', sportsFacilitiesApi);
-app.use('/api/transactions', transactionsApi);
-app.use('/api/update-profile-pic', updateProfilePicApi);
-app.use('/api/user', userApi);
-app.use('/api/wager', wagerApi);
-app.use('/api/wager-confirm', wagerConfirmApi);
-app.use('/api/wager-info', wagerInfoApi);
-app.use('/api/wager-participants', wagerParticipantsApi);
-app.use('/api/wager-reset-votes', wagerResetVotesApi);
+app.use('/api/database/balance', balanceApi);
+app.use('/api/database/charge-cards', chargeCardsApi);
+app.use('/api/database/check-in', checkInApi);
+app.use('/api/database/check-out', checkOutApi);
+app.use('/api/database/head-count', headCountApi);
+app.use('/api/database/preferences', preferencesApi);
+app.use('/api/database/sports-facilities', sportsFacilitiesApi);
+app.use('/api/database/transactions', transactionsApi);
+app.use('/api/database/update-profile-pic', updateProfilePicApi);
+app.use('/api/database/user', userApi);
+app.use('/api/database/wager', wagerApi);
+app.use('/api/database/wager-confirm', wagerConfirmApi);
+app.use('/api/database/wager-info', wagerInfoApi);
+app.use('/api/database/wager-participants', wagerParticipantsApi);
+app.use('/api/database/wager-reset-votes', wagerResetVotesApi);
 
 
 // Stripe API routes
-app.use('/api/connected-account', connectedAccountApi);
-app.use('/api/create', createApi);
-app.use('/api/pay', payApi);
-app.use('/api/payout', payoutApi);
-app.use("/api/stripe-redirect", stripeRedirectRoutes);
-app.use("/api/stripe-status", stripeStatus)
+app.use('/api/stripe/connected-account', connectedAccountApi);
+app.use('/api/stripe/create', createApi);
+app.use('/api/stripe/pay', payApi);
+app.use('/api/stripe/payout', payoutApi);
+app.use("/api/stripe/redirect", stripeRedirectRoutes);
+app.use("/api/stripe/status", stripeStatus)
 
 // Routes
 app.get("/", (req, res) => {
