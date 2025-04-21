@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, Text, View, FlatList, Alert, TouchableOpacity } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
+import { router, useRouter } from "expo-router";
 import { fetchAPI } from "@/lib/fetch";
 import CreateWagerModal from "@/components/CreateWagerModal";
 import JoinWagerModal from "@/components/JoinWagerModal";
@@ -12,6 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import CloseWagerModal from "@/components/CloseWagerModal";
 import DisputesModal from "@/components/DisputesModal";
 import { set } from "react-hook-form";
+import { useFocusEffect } from "expo-router";
 
 
 type TabType = "Available" | "Active" | "History" | "Disputes";
@@ -33,9 +35,29 @@ const Wagers = () => {
     const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
     const [isCloseModalVisible, setCloseModalVisible] = useState(false);
     const [isDisputeModalVisible, setDisputeModalVisible] = useState(false);
-    
+    const [locationAllowed, setLocationAllowed] = useState(true);
+    const [prefsLoaded, setPrefsLoaded] = useState(false);
+
 
     const [userData, setUserData] = useState<{ clerk_id: string; username: string }[]>([]);
+    useFocusEffect(
+      useCallback(() => {
+        if (!user?.id) return;
+    
+        const fetchPrefs = async () => {
+          try {
+            const res = await fetchAPI(`/api/database/preferences?clerkId=${user.id}`);
+            setLocationAllowed(res.location_enabled);
+          } catch (err) {
+            console.error("Could not load prefs", err);
+          } finally {
+            setPrefsLoaded(true);
+          }
+        };
+    
+        fetchPrefs();
+      }, [user?.id])
+    );
 
     const fetchUserData = async () => {
       try {
@@ -262,6 +284,36 @@ const Wagers = () => {
         subscription?.then((sub) => sub?.remove());
       };
     }, []);
+    
+    if (!prefsLoaded) {
+      return (
+        <SafeAreaView className="flex-1 items-center justify-center bg-gray-900">
+          <ActivityIndicator size="large" color="#3B82F6" />
+        </SafeAreaView>
+      );
+    }
+  
+    if (!locationAllowed) {
+      return (
+        <SafeAreaView className="flex-1 items-center justify-center bg-gray-900 px-8">
+          <Ionicons name="location-off" size={64} color="#EF4444" />
+          <Text className="text-white text-2xl font-bold mt-4 mb-2">
+            Location Disabled
+          </Text>
+          <Text className="text-gray-400 text-center mb-6">
+            Turn on location in Settings → Privacy so we can show nearby courts
+            and let you wager.
+          </Text>
+  
+          <TouchableOpacity
+            className="bg-blue-600 px-6 py-3 rounded-xl"
+            onPress={() => router.push("/profile?section=privacy")}
+          >
+            <Text className="text-white font-semibold">Go to Settings</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      );
+    }
 
     // Check if user is under 21 (legal gambling age)
     const isUnder21 = dob ? new Date().getTime() - new Date(dob).getTime() < 21 * 365.25 * 24 * 60 * 60 * 1000: true;
