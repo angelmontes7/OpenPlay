@@ -156,7 +156,6 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
                 />
               </View>
 
-              
               {/* Content */}
               <View className="px-6">
                 {/* Name and stars */}
