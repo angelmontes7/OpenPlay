@@ -60,10 +60,13 @@ const Profile = () => {
                 const response = await fetchAPI(`/api/database/profile-pic?clerkId=${user?.id}`, {
                     method: "GET",
                 });
-            
+                
                 if (response && response.profilePicUrl !== undefined) {
                     setProfilePic(response.profilePicUrl);
+                } else{
+                  setProfilePic(images.defaultProfile)
                 }
+                
             } catch (error) {
                 console.error("Error fetching profile pic:", error);
             }
@@ -89,21 +92,33 @@ const Profile = () => {
     };
 
     const uploadImage = async (uri) => {
+      try {
         const response = await fetch(uri);
         const blob = await response.blob();
-        const arrayBuffer = await new Response(blob).arrayBuffer();
-        const fileName = `public/${Date.now()}.jpg`;
-        const { error } = await supabase
-            .storage
-            .from('profile-pics')
-            .upload(fileName, arrayBuffer, { contentType: 'image/jpeg', upsert: false });
-        if (error) {
-            console.error('Error uploading image: ', error);
-        } else {
-            const uploadedUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profile-pics/${fileName}`;
-            setProfilePic(uploadedUrl);
+    
+        const formData = new FormData();
+        formData.append("file", {
+          uri,
+          name: `profile-${Date.now()}.jpg`,
+          type: "image/jpeg",
+        } as any);
+    
+        const result = await fetchAPI("/api/supabase/upload", {
+          method: "POST",
+          body: formData,
+        });
+    
+        if (!result || !result.url) {
+          throw new Error("Image upload failed");
         }
-    }
+    
+        setProfilePic(result.url);
+        await saveProfilePicUrl(result.url);
+      } catch (err) {
+        console.error("Upload image error:", err);
+        Alert.alert("Error", "Image upload failed.");
+      }
+    };    
 
     const saveProfilePicUrl = async (url: string) => {
         try {
@@ -480,7 +495,7 @@ const Profile = () => {
                 {activeSection === "profile" && (
                     <View className="items-center mt-5">
                         <TouchableOpacity onPress={pickImage}>
-                            <Image source={{ uri: profilePic }} className="w-28 h-28 rounded-full border-2 border-gray-300" />
+                            <Image source={{ uri: profilePic || images.defaultProfile }} className="w-28 h-28 rounded-full border-2 border-gray-300" />
                         </TouchableOpacity>
                         <Text className="text-white text-md font-JakartaSemiBold mt-2">{user?.username}</Text>
                         <Text className="text-gray-400 text-sm">Member since {user?.createdAt?.getFullYear()}</Text>

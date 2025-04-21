@@ -35,6 +35,9 @@ import createApi from './routes/stripe/create.route';
 import payApi from './routes/stripe/pay.route';
 import payoutApi from './routes/stripe/payout.route';
 
+// Import Supabase-related API's
+import uploadRoutes from './routes/supabase/upload.route'
+
 // Load environment variables
 dotenv.config();
 
@@ -119,6 +122,9 @@ app.use('/api/stripe/pay', payApi);
 app.use('/api/stripe/payout', payoutApi);
 app.use("/api/stripe/redirect", stripeRedirectRoutes);
 app.use("/api/stripe/status", stripeStatus)
+
+// Supabase API routes
+app.use('/api/supabase/upload', uploadRoutes)
 
 // Routes
 app.get("/", (req, res) => {
