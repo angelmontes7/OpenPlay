@@ -133,10 +133,6 @@ const Profile = () => {
                 }),
             });
     
-            if (!response.ok) {
-                throw new Error("Failed to save profile picture URL");
-            }
-    
             Alert.alert("Success", "Profile picture updated successfully.");
         } catch (error) {
             console.error("Error saving profile picture URL:", error);
