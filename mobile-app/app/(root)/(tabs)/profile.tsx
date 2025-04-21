@@ -60,6 +60,7 @@ const Profile = () => {
                 const response = await fetchAPI(`/api/database/profile-pic?clerkId=${user?.id}`, {
                     method: "GET",
                 });
+            
                 if (response && response.profilePicUrl !== undefined) {
                     setProfilePic(response.profilePicUrl);
                 }

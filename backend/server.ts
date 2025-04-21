@@ -15,6 +15,7 @@ import checkInApi from './routes/database/check-in.route';
 import checkOutApi from './routes/database/check-out.route';
 import headCountApi from './routes/database/head-count.route';
 import preferencesApi from './routes/database/preferences.route';
+import profilePicApi from './routes/database/profile-pic.route'
 import sportsFacilitiesApi from './routes/database/sports-facilities.route';
 import transactionsApi from './routes/database/transactions.route';
 import updateProfilePicApi from './routes/database/profile-pic.route';
@@ -99,6 +100,7 @@ app.use('/api/database/check-in', checkInApi);
 app.use('/api/database/check-out', checkOutApi);
 app.use('/api/database/head-count', headCountApi);
 app.use('/api/database/preferences', preferencesApi);
+app.use('/api/database/profile-pic', profilePicApi);
 app.use('/api/database/sports-facilities', sportsFacilitiesApi);
 app.use('/api/database/transactions', transactionsApi);
 app.use('/api/database/update-profile-pic', updateProfilePicApi);
