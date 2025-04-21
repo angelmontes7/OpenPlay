@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
 router.get('/', async(req, res) => {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);
-        const { clerkId } = req.body
+        const { clerkId } = req.query
 
         if (!clerkId) {
             return res.status(400).json({ error: "Missing Clerk ID" });
