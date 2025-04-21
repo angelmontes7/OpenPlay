@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, TextInput, FlatList, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, TextInput, FlatList, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Modal, Animated, Easing } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import socket from "@/lib/socket";
 import { useUser } from '@clerk/clerk-expo';
 import { fetchAPI } from '@/lib/fetch';
+import { BlurView } from 'expo-blur';
 
 interface ChatModalProps {
   visible: boolean;
@@ -26,9 +29,34 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(100)).current;
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        })
+      ]).start();
+    } else {
+      fadeAnim.setValue(0);
+      slideAnim.setValue(100);
+    }
+  }, [visible]);
 
   useEffect(() => {
     const fetchMessages = async () => {
+      setIsLoading(true);
       try {
         const data = await fetchAPI(`/api/database/messages?facility_id=${facilityId}`, {
           method: "GET",
@@ -47,6 +75,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
         }
       } catch (error) {
         console.error("Failed to fetch messages:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
   
@@ -116,85 +146,127 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
+  const renderMessage = ({ item, index }: { item: ChatMessage, index: number }) => {
+    const isFirstMessageFromUser = index === 0 || 
+      messages[index - 1].username !== item.username;
+
     const bubbleClasses = item.isSent
-      ? "bg-blue-500 self-end rounded-2xl py-3 px-4 mt-1 mb-1 max-w-xs ml-10"
-      : "bg-gray-200 self-start rounded-2xl py-3 px-4 mt-1 mb-1 max-w-xs mr-10";
+      ? "bg-indigo-600 self-end rounded-2xl rounded-tr-none py-2 px-4 mt-1 mb-1 max-w-xs ml-10"
+      : "bg-gray-800 self-start rounded-2xl rounded-tl-none py-2 px-4 mt-1 mb-1 max-w-xs mr-10";
 
     const textClasses = item.isSent
       ? "text-white text-base"
-      : "text-gray-800 text-base";
+      : "text-gray-100 text-base";
 
     const timestampClasses = item.isSent
-      ? "text-xs text-blue-100 mt-1 text-right"
-      : "text-xs text-gray-500 mt-1 text-right";
+      ? "text-xs text-indigo-200 mt-1 text-right"
+      : "text-xs text-gray-400 mt-1 text-right";
 
     return (
-      <View className="mb-2">
-        {!item.isSent && (
-          <Text className="text-xs font-bold text-gray-700">{item.username}</Text>
+      <Animated.View 
+        className="mb-2"
+        style={{
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
+        }}
+      >
+        {!item.isSent && isFirstMessageFromUser && (
+          <View className="flex-row items-center mb-1">
+            <View className="w-8 h-8 rounded-full bg-purple-500 mr-2 items-center justify-center">
+              <Text className="text-white font-bold">{item.username.charAt(0).toUpperCase()}</Text>
+            </View>
+            <Text className="text-xs font-bold text-gray-300">{item.username}</Text>
+          </View>
         )}
-        <View className={bubbleClasses}>
+        <View className={`${bubbleClasses} shadow-sm`}>
           <Text className={textClasses}>{item.text}</Text>
           <Text className={timestampClasses}>{formatTime(item.timestamp)}</Text>
         </View>
-      </View>
+      </Animated.View>
     );
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 mt-12 bg-gray-100">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
-          keyboardVerticalOffset={90}
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent>
+      <BlurView intensity={30} tint="dark" className="flex-1">
+        <Animated.View 
+          className="flex-1 mt-10 rounded-t-3xl overflow-hidden"
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }}
         >
-          {/* Header */}
-          <View className="h-12 bg-white justify-center items-center border-b border-gray-300 flex-row px-4">
-            <Text className="text-lg font-bold flex-1 text-center">{facilityName} Chat</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text className="text-blue-500 text-base">Close</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Messages */}
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMessage}
-            contentContainerStyle={{ padding: 10, paddingBottom: 20 }}
-            showsVerticalScrollIndicator={false}
-          />
-          {messages.length === 0 && (
-            <Text className="text-center text-gray-400 mt-4">No messages yet. Say something!</Text>
-          )}
-
-          {/* Input */}
-          <View className="flex-row px-3 py-2 mb-5 bg-white border-t border-gray-300 items-center">
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Message"
-              placeholderTextColor="#8e8e93"
-              className="flex-1 bg-gray-100 rounded-full px-4 py-2 min-h-10 max-h-24 text-base"
-              multiline
-              returnKeyType="send"
-              onSubmitEditing={handleSend}
-            />
-            <TouchableOpacity
-              onPress={handleSend}
-              disabled={!message.trim()}
-              className="ml-2 p-1"
+          <LinearGradient
+            colors={['#1a1a2e', '#16213e', '#0f3460']}
+            className="flex-1"
+          >
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              className="flex-1"
+              keyboardVerticalOffset={40}
             >
-              <Text className={`text-blue-500 font-semibold text-base ${!message.trim() ? 'opacity-50' : ''}`}>
-                Send
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
+              {/* Header */}
+              <View className="h-16 justify-center items-center border-b border-gray-700 flex-row px-4">
+                <View className="w-3 h-3 rounded-full bg-purple-500 mr-2" />
+                <Text className="text-xl font-bold flex-1 text-center text-white">{facilityName}</Text>
+                <TouchableOpacity 
+                  onPress={onClose}
+                  className="bg-gray-800 rounded-full w-8 h-8 items-center justify-center"
+                >
+                  <Ionicons name="close" size={18} color="#fff" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Messages */}
+              {isLoading ? (
+                <View className="flex-1 justify-center items-center">
+                  <View className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
+                  <Text className="text-gray-300 mt-4">Loading messages...</Text>
+                </View>
+              ) : (
+                <>
+                  {messages.length === 0 ? (
+                    <View className="flex-1 justify-center items-center p-6">
+                      <Ionicons name="chatbubble-ellipses-outline" size={60} color="#4F46E5" />
+                      <Text className="text-center text-gray-400 mt-4 text-lg">No messages yet. Start the conversation!</Text>
+                    </View>
+                  ) : (
+                    <FlatList
+                      ref={flatListRef}
+                      data={messages}
+                      keyExtractor={(item) => item.id}
+                      renderItem={renderMessage}
+                      contentContainerStyle={{ padding: 12, paddingBottom: 20 }}
+                      showsVerticalScrollIndicator={false}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* Input */}
+              <View className="px-4 mb-5 py-3 border-t border-gray-800 items-center flex-row">
+                <TextInput
+                  value={message}
+                  onChangeText={setMessage}
+                  placeholder="Type a message..."
+                  placeholderTextColor="#9ca3af"
+                  className="flex-1 bg-gray-800 rounded-full px-5 py-3 min-h-10 max-h-24 text-base text-white"
+                  multiline
+                  returnKeyType="send"
+                  onSubmitEditing={handleSend}
+                />
+                <TouchableOpacity
+                  onPress={handleSend}
+                  disabled={!message.trim()}
+                  className={`ml-2 p-3 rounded-full ${message.trim() ? 'bg-indigo-600' : 'bg-gray-700'}`}
+                >
+                  <Ionicons name="send" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </KeyboardAvoidingView>
+          </LinearGradient>
+        </Animated.View>
+      </BlurView>
     </Modal>
   );
 };
