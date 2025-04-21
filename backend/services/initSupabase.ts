@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL as string
-const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string
+const url = process.env.SUPABASE_URL
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Initialize the Supabase client
 if (!url || !key) {
