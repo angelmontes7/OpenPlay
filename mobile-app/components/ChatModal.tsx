@@ -30,8 +30,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const data = await fetchAPI(`/api/database/messages/${facilityId}`);
-  
+        const data = await fetchAPI(`/api/database/messages/${facilityId}`, {
+          method: "GET",
+        });
+        
         const formattedMessages: ChatMessage[] = data.map((msg: any) => ({
           id: msg.id.toString(),
           text: msg.text,

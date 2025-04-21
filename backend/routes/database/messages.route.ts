@@ -41,7 +41,6 @@ router.get('/', async (req, res) => {
             WHERE facility_id = ${facility_id}
             ORDER BY timestamp ASC;
         `;
-
         return res.status(200).json({ messages: response });
     } catch (error) {
         console.error("Error in GET /api/messages:", error);
