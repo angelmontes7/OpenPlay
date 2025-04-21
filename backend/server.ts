@@ -5,6 +5,8 @@ import morgan from "morgan";
 import helmet from "helmet";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
+import { neon } from '@neondatabase/serverless';
+const db = neon(process.env.DATABASE_URL!);
 
 // Import route files from the 'routes/database' folder
 import balanceApi from './routes/database/balance.route';
@@ -24,6 +26,7 @@ import wagerParticipantsApi from './routes/database/wager-participants.route';
 import wagerResetVotesApi from './routes/database/wager-reset-votes.route';
 import stripeRedirectRoutes from "./stripe-redirect"
 import stripeStatus from "./routes/stripe/status.route"
+import messagesApi from "./routes/database/messages.route"
 
 // Import Stripe-related APIs
 import connectedAccountApi from './routes/stripe/connected-account.route';
@@ -70,9 +73,18 @@ io.on("connection", (socket) => {
   });
 
   // Handle incoming messages
-  socket.on("send-message", ({ text, senderId, username, roomId }) => {
-    const message = { text, senderId, username };
-    io.to(roomId).emit("receive-message", message);
+  socket.on("send-message", async ({ text, senderId, username, roomId }) => {
+    try {
+      // Save to DB
+      await db`
+      INSERT INTO messages (facility_id, text, sender_id, username)
+      VALUES (${roomId}, ${text}, ${senderId}, ${username})
+      `;
+      const message = { text, senderId, username };
+      io.to(roomId).emit("receive-message", message);
+    } catch (err) {
+      console.error("Error saving message:", err);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -96,7 +108,7 @@ app.use('/api/database/wager-confirm', wagerConfirmApi);
 app.use('/api/database/wager-info', wagerInfoApi);
 app.use('/api/database/wager-participants', wagerParticipantsApi);
 app.use('/api/database/wager-reset-votes', wagerResetVotesApi);
-
+app.use('/api/database/messages', messagesApi);
 
 // Stripe API routes
 app.use('/api/stripe/connected-account', connectedAccountApi);
