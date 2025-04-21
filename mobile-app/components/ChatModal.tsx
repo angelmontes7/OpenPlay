@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, TextInput, FlatList, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import socket from "@/lib/socket";
 import { useUser } from '@clerk/clerk-expo';
+import { fetchAPI } from '@/lib/fetch';
 
 interface ChatModalProps {
   visible: boolean;
@@ -26,6 +27,30 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const data = await fetchAPI(`/api/database/messages/${facilityId}`);
+  
+        const formattedMessages: ChatMessage[] = data.map((msg: any) => ({
+          id: msg.id.toString(),
+          text: msg.text,
+          username: msg.username,
+          isSent: msg.sender_id === clerkId,
+          timestamp: new Date(msg.created_at),
+        }));
+  
+        setMessages(formattedMessages);
+      } catch (error) {
+        console.error("Failed to fetch messages:", error);
+      }
+    };
+  
+    if (visible && facilityId) {
+      fetchMessages();
+    }
+  }, [visible, facilityId]);
+  
   useEffect(() => {
     if (!visible || !facilityId) return;
 
