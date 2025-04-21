@@ -40,7 +40,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
             text: msg.text,
             username: msg.username,
             isSent: msg.sender_id === clerkId,
-            timestamp: new Date(msg.created_at),
+            timestamp: new Date(msg.timestamp),
           }));
     
           setMessages(formattedMessages);
