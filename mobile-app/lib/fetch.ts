@@ -6,12 +6,15 @@ const BASE_URL = "https://openplay-4o4a.onrender.com";
  
 
 export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
+    
     try {
-        
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             ...options
         });
         if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error(`Route not found. Please check the URL: ${BASE_URL}${endpoint}`);
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         return await response.json();
