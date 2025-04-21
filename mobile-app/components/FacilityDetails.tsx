@@ -27,6 +27,7 @@ interface FacilityDetailsProps {
   amenities: string;
   website: string;
   stars: number;
+  facilities_pic_url: string;
   headCount: number;
   isCheckedIn: boolean;
   onCheckIn: () => void;
@@ -45,6 +46,7 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
   amenities,
   website,
   stars,
+  facilities_pic_url,
   headCount,
   isCheckedIn,
   onCheckIn,
@@ -99,7 +101,7 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
       </View>
     );
   };
-
+  console.log("Facilities pic: ", facilities_pic_url)
   return (
     <Modal
       visible={visible}
@@ -142,22 +144,18 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
             >
               {/* Image with gradient overlay */}
               <View className="w-full h-56 mb-4 overflow-hidden">
-                {image ? (
-                  <Image 
-                    source={image} 
-                    className="w-full h-full" 
-                    resizeMode="cover" 
-                  />
-                ) : (
-                  <View className="w-full h-full bg-gray-200 justify-center items-center">
-                    <Ionicons name="image-outline" size={50} color="#9CA3AF" />
-                  </View>
-                )}
+                <Image
+                  source={{ uri: facilities_pic_url }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                  onError={(e) => console.log("Image load error: ", e.nativeEvent.error)}
+                />
                 <LinearGradient
                   colors={['rgba(0,0,0,0.6)', 'transparent']}
                   className="absolute top-0 left-0 right-0 h-20"
                 />
               </View>
+
               
               {/* Content */}
               <View className="px-6">

@@ -439,6 +439,7 @@ export default function Home() {
     return true;
   };
   
+  console.log("Select cour: ", selectedCourt)
   return (
     <SafeAreaView style={styles.container}>
       {/* Modal for entering DOB */}
@@ -664,6 +665,7 @@ export default function Home() {
           amenities={selectedCourt.amenities}
           website={selectedCourt.website}
           stars={selectedCourt.stars}
+          facilities_pic_url={selectedCourt.facilities_pic_url}
           // Pass whether this court is the one the user is checked into
           isCheckedIn={currentCheckInCourt === selectedCourt.id}
           // Provide the check in/out handlers
