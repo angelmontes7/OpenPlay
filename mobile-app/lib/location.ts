@@ -1,4 +1,5 @@
 import * as Location from "expo-location";
+import { fetchAPI } from "./fetch";
 
 export interface UserLocation {
   latitude: number;
@@ -12,8 +13,8 @@ export const getUserLocation = async (): Promise<UserLocation | null> => {
     if (status !== "granted") {
       console.error("Permission to access location was denied.");
       return null;
+    
     }
-
     // Get the user's current location
     const location = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.High,

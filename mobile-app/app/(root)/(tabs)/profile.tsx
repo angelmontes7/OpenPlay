@@ -63,6 +63,7 @@ const Profile = () => {
                 
                 if (response && response.profilePicUrl !== undefined) {
                     setProfilePic(response.profilePicUrl);
+                    console.log("Profile pic: ", profilePic)
                 } else{
                   setProfilePic(images.defaultProfile)
                 }

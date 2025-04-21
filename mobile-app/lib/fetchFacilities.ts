@@ -54,6 +54,7 @@ export const calculateDistance = (
           amenities: facility.amenities,
           website: facility.website,
           stars: facility.stars,
+          facilities_pic_url: facility.facilities_pic_url
         };
       });
   
