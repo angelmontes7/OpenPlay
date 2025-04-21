@@ -63,7 +63,7 @@ const Wagers = () => {
     
         const fetchPrefs = async () => {
           try {
-            const res = await fetchAPI(`/(api)/preferences?clerkId=${user.id}`);
+            const res = await fetchAPI(`/api/database/preferences?clerkId=${user.id}`);
             setLocationAllowed(res.location_enabled);
           } catch (err) {
             console.error("Could not load prefs", err);
