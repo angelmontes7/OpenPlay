@@ -30,19 +30,21 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const data = await fetchAPI(`/api/database/messages/${facilityId}`, {
+        const data = await fetchAPI(`/api/database/messages?facility_id=${facilityId}`, {
           method: "GET",
         });
         
-        const formattedMessages: ChatMessage[] = data.map((msg: any) => ({
-          id: msg.id.toString(),
-          text: msg.text,
-          username: msg.username,
-          isSent: msg.sender_id === clerkId,
-          timestamp: new Date(msg.created_at),
-        }));
-  
-        setMessages(formattedMessages);
+        if (data?.messages && data.messages.length > 0){
+          const formattedMessages: ChatMessage[] = data?.messages.map((msg: any) => ({
+            id: msg.id.toString(),
+            text: msg.text,
+            username: msg.username,
+            isSent: msg.sender_id === clerkId,
+            timestamp: new Date(msg.created_at),
+          }));
+    
+          setMessages(formattedMessages);
+        }
       } catch (error) {
         console.error("Failed to fetch messages:", error);
       }
@@ -165,6 +167,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ visible, onClose, facilityId, fac
             contentContainerStyle={{ padding: 10, paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
           />
+          {messages.length === 0 && (
+            <Text className="text-center text-gray-400 mt-4">No messages yet. Say something!</Text>
+          )}
 
           {/* Input */}
           <View className="flex-row px-3 py-2 mb-5 bg-white border-t border-gray-300 items-center">
