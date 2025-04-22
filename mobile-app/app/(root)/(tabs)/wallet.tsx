@@ -138,7 +138,8 @@ const Wallet = () => {
           if (!connectedAccountId) {
             return Alert.alert("Error", "No connected account found.");
           }
-      
+          
+          console.log("Above payout fetch")
           // Attempt payout via your backend
           const response = await fetchAPI("/api/stripe/payout", {
             method: "POST",
@@ -150,14 +151,15 @@ const Wallet = () => {
               amount: parsedAmount,
             }),
           });
-      
+          
+          console.log("After payout fetch")
           if (response.needs_bank_account) {
             return Alert.alert(
               "Bank Account Required",
               "You need to add a bank account before withdrawing. Please go to your payment settings to add one."
             );
           }
-      
+          console.log("Past bankout")
           if (response.payout) {
             // Update balance in your database
             const balanceResponse = await fetchAPI("/api/database/balance", {
@@ -171,7 +173,7 @@ const Wallet = () => {
                 amount: parsedAmount,
               }),
             });
-      
+            console.log("Past balance")
             if (balanceResponse.balance) {
               setBalance(balanceResponse.balance);
       
@@ -187,7 +189,7 @@ const Wallet = () => {
                   amount: parsedAmount,
                 }),
               });
-      
+              console.log("Past transactions")
               // Fetch updated transaction history
               const transactionsResponse = await fetchAPI(`/api/database/transactions?clerkId=${user?.id}`, {
                 method: "GET",
