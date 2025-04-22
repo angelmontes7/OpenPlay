@@ -29,9 +29,6 @@ router.post("/", async (req, res) => {
     currency: "usd",
     customer: customer.id,
     payment_method_types: ["card"],
-    transfer_data: {
-      destination: connectedAccountId, // <-- This sends funds to the user's connected account
-    },
   });
 
   return res.status(200).json({
