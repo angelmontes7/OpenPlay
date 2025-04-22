@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Dimensions, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import Payment from './Payment';
 import { useUser } from "@clerk/clerk-expo";
 import { BlurView } from 'expo-blur';
@@ -75,111 +75,122 @@ const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose, onPayme
             ],
           }}
         >
-          {/* Gradient Header */}
-          <LinearGradient
-            colors={['#4338ca', '#3b82f6', '#0ea5e9']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="w-full h-16 px-6 flex-row justify-between items-center"
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={80} // Adjust if needed
           >
-            <Text className="text-2xl font-bold text-white">Add Funds</Text>
-            <TouchableOpacity onPress={onClose} className="p-2">
-              <Ionicons name="close" size={24} color="white" />
-            </TouchableOpacity>
-          </LinearGradient>
-
-          {/* Modal Content */}
-          <View className="p-6">
-            {/* Stripe Onboarding Notice */}
-            <View className="mb-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
-              <Text className="text-blue-200 text-xs text-center">
-                *Complete Stripe setup to add funds. You'll be redirected if not done after clicking confirm. Withdrawals will be available 7 days after funding.*
-              </Text>
-            </View>
-
-            {/* Input Field */}
-            <View className="mb-6 relative">
-              <View className="absolute top-0 left-0 w-full h-full bg-blue-500/10 rounded-xl blur-md" />
-              <TextInput
-                className="bg-slate-800/80 text-white text-lg p-4 rounded-xl border border-slate-600 h-14"
-                style={{
-                  textAlignVertical: 'center',
-                  lineHeight: 22,
-                }}
-                keyboardType="numeric"
-                value={inputAmount}
-                onChangeText={setInputAmount}
-                placeholder="Enter amount"
-                placeholderTextColor="#9ca3af"
-              />
-              <Text className="absolute right-4 top-4 text-blue-400 font-bold">USD</Text>
-            </View>
-
-            {/* Quick Amounts */}
-            <View className="flex-row justify-between mb-8">
-              {[50, 100, 200, 500].map((amount) => (
-                <TouchableOpacity
-                  key={amount}
-                  className={`py-2 px-4 rounded-lg ${
-                    inputAmount === amount.toString()
-                      ? 'bg-blue-600'
-                      : 'bg-slate-700'
-                  }`}
-                  onPress={() => setInputAmount(amount.toString())}
-                >
-                  <Text className="text-white font-medium">${amount}</Text>
+            <ScrollView
+              contentContainerStyle={{ paddingBottom: 24 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Gradient Header */}
+              <LinearGradient
+                colors={['#4338ca', '#3b82f6', '#0ea5e9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="w-full h-16 px-6 flex-row justify-between items-center"
+              >
+                <Text className="text-2xl font-bold text-white">Add Funds</Text>
+                <TouchableOpacity onPress={onClose} className="p-2">
+                  <Ionicons name="close" size={24} color="white" />
                 </TouchableOpacity>
-              ))}
-            </View>
+              </LinearGradient>
 
-            {/* Payment */}
-            <View className="mb-6">
-              <Payment
-                ref={paymentRef}
-                fullName={user?.fullName}
-                email={user?.emailAddresses[0]?.emailAddress}
-                amount={inputAmount}
-                onSuccess={() => onPaymentSuccess(inputAmount)}
-              />
-            </View>
+              {/* Modal Content */}
+              <View className="p-6">
+                {/* Stripe Onboarding Notice */}
+                <View className="mb-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
+                  <Text className="text-blue-200 text-xs text-center">
+                    *Complete Stripe setup to add funds. You'll be redirected if not done after clicking confirm. Withdrawals will be available 7 days after funding.*
+                  </Text>
+                </View>
 
-            {/* Buttons */}
-            <View className="w-full space-y-3">
-              <View className="flex-row w-full justify-between space-x-3">
-              <TouchableOpacity
-                  className="flex-1 h-12 rounded-xl overflow-hidden"
-                  onPress={onClose}
-                >
-                  <LinearGradient
-                    colors={['#6b7280', '#374151']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    className="w-full h-full justify-center items-center"
-                  >
-                    <Text className="text-white font-bold text-base">CANCEL</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="flex-1 h-12 rounded-xl overflow-hidden"
-                  onPress={handleConfirmPayment}
-                  disabled={!inputAmount}
-                >
-                  <LinearGradient
-                    colors={
-                      inputAmount
-                        ? ['#3b82f6', '#2563eb']
-                        : ['#64748b', '#475569']
-                    }
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    className="w-full h-full justify-center items-center"
-                  >
-                    <Text className="text-white font-bold text-base">CONFIRM</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                {/* Input Field */}
+                <View className="mb-6 relative">
+                  <View className="absolute top-0 left-0 w-full h-full bg-blue-500/10 rounded-xl blur-md" />
+                  <TextInput
+                    className="bg-slate-800/80 text-white text-lg p-4 rounded-xl border border-slate-600 h-14"
+                    style={{
+                      textAlignVertical: 'center',
+                      lineHeight: 22,
+                    }}
+                    keyboardType="numeric"
+                    value={inputAmount}
+                    onChangeText={setInputAmount}
+                    placeholder="Enter amount"
+                    placeholderTextColor="#9ca3af"
+                  />
+                  <Text className="absolute right-4 top-4 text-blue-400 font-bold">USD</Text>
+                </View>
+
+                {/* Quick Amounts */}
+                <View className="flex-row justify-between">
+                  {[50, 100, 200, 500].map((amount) => (
+                    <TouchableOpacity
+                      key={amount}
+                      className={`py-2 px-4 rounded-lg ${
+                        inputAmount === amount.toString()
+                          ? 'bg-blue-600'
+                          : 'bg-slate-700'
+                      }`}
+                      onPress={() => setInputAmount(amount.toString())}
+                    >
+                      <Text className="text-white font-medium">${amount}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Payment */}
+                <View className="mb-6">
+                  <Payment
+                    ref={paymentRef}
+                    fullName={user?.fullName}
+                    email={user?.emailAddresses[0]?.emailAddress}
+                    amount={inputAmount}
+                    onSuccess={() => onPaymentSuccess(inputAmount)}
+                  />
+                </View>
+
+                {/* Buttons */}
+                <View className="w-full space-y-3">
+                  <View className="flex-row w-full justify-between space-x-3">
+                  <TouchableOpacity
+                      className="flex-1 h-12 rounded-xl overflow-hidden"
+                      onPress={onClose}
+                    >
+                      <LinearGradient
+                        colors={['#6b7280', '#374151']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        className="w-full h-full justify-center items-center"
+                      >
+                        <Text className="text-white font-bold text-base">CANCEL</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="flex-1 h-12 rounded-xl overflow-hidden"
+                      onPress={handleConfirmPayment}
+                      disabled={!inputAmount}
+                    >
+                      <LinearGradient
+                        colors={
+                          inputAmount
+                            ? ['#3b82f6', '#2563eb']
+                            : ['#64748b', '#475569']
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        className="w-full h-full justify-center items-center"
+                      >
+                        <Text className="text-white font-bold text-base">CONFIRM</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </Animated.View>
       </BlurView>
     </Modal>
