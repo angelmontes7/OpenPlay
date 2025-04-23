@@ -1,14 +1,28 @@
 import * as Location from "expo-location";
+import { fetchAPI } from "./fetch";
 
 export interface UserLocation {
   latitude: number;
   longitude: number;
 }
 
-export const getUserLocation = async (): Promise<UserLocation | null> => {
+export const getUserLocation = async (clerkId?: string): Promise<UserLocation | null> => {
   try {
     // Request location permissions
     const { status } = await Location.requestForegroundPermissionsAsync();
+    
+    // Save user's preference to backend if clerkId provided
+    if (clerkId) {
+      await fetchAPI("/api/database/preferences", {
+        method: "POST",
+        body: JSON.stringify({
+          clerkId,
+          location_enabled: status === "granted",
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
     if (status !== "granted") {
       console.error("Permission to access location was denied.");
       return null;

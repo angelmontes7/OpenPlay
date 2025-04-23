@@ -207,7 +207,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchLocation = async () => {
-      const location = await getUserLocation();
+      const location = await getUserLocation(user?.id);
       if (location) {
         setLatitude(location.latitude);
         setLongitude(location.longitude);
