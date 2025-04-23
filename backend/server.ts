@@ -28,6 +28,7 @@ import wagerResetVotesApi from './routes/database/wager-reset-votes.route';
 import stripeRedirectRoutes from "./stripe-redirect"
 import stripeStatus from "./routes/stripe/status.route"
 import messagesApi from "./routes/database/messages.route"
+import averageRatingApi from "./routes/database/average-ratings.route"
 
 // Import Stripe-related APIs
 import connectedAccountApi from './routes/stripe/connected-account.route';
@@ -114,6 +115,7 @@ app.use('/api/database/wager-info', wagerInfoApi);
 app.use('/api/database/wager-participants', wagerParticipantsApi);
 app.use('/api/database/wager-reset-votes', wagerResetVotesApi);
 app.use('/api/database/messages', messagesApi);
+app.use('/api/database/average-ratings', averageRatingApi);
 
 // Stripe API routes
 app.use('/api/stripe/connected-account', connectedAccountApi);
