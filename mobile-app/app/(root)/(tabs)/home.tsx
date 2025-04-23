@@ -24,6 +24,7 @@ import FacilityDetails from '@/components/FacilityDetails';
 import { fetchFacilities } from "@/lib/fetchFacilities";
 import { getUserLocation, watchUserLocation } from "@/lib/location";
 import { LinearGradient } from 'expo-linear-gradient';
+import RatingModal from '@/components/RatingModal';
 
 let MapView: any = null;
 let Marker: any = null;
@@ -61,6 +62,7 @@ interface Court {
 export default function Home() {
   const { user } = useUser();
   const [courtData, setCourtData] = useState<Court[]>([]);
+  const [avgStars, setAvgStars] = useState<number>(0);
 
   const [isFacilityDetailsVisible, setIsFacilityDetailsVisible] = useState(false);
   const [selectedCourt, setSelectedCourt] = useState<{ name: string; details: string } | null>(null);
@@ -108,6 +110,8 @@ export default function Home() {
   const [currentCheckInCourt, setCurrentCheckInCourt] = useState<string | null>(null);
   const [liveHeadCount, setLiveHeadCount] = useState<number>(0);
 
+  const [showRatingModal, setShowRatingModal] = useState(false);
+
   // Function to check in a user
   const handleCheckIn = async (courtId: string) => {
     try {
@@ -138,9 +142,39 @@ export default function Home() {
         Alert.alert("Error", response.error);
       } else {
         setCurrentCheckInCourt(null);
+        setShowRatingModal(true);
+        setIsFacilityDetailsVisible(false);
       }
     } catch (error) {
       Alert.alert("Error", "Failed to check out");
+    }
+  };
+
+  //function to handle the rating
+  const handleConfirmRating = async (rating: number) => {
+    if (!user?.id || !selectedCourt?.id) {
+      Alert.alert("Error", "Missing user or court information.");
+      return;
+    }
+    try {
+      const response = await fetchAPI("/api/database/rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          courtId: selectedCourt.id,
+          rating,
+        }),
+      });
+      if (response.error) {
+        Alert.alert("Error", response.error);
+      } else {
+        Alert.alert("Thank you!", "Your rating has been recorded.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Unable to record rating.");
+    } finally {
+      setShowRatingModal(false);
     }
   };
 
@@ -169,6 +203,22 @@ export default function Home() {
     }
   
     return () => interval && clearInterval(interval);
+  }, [selectedCourt]);
+
+   //get rating
+  useEffect(() => {
+    const fetchAvg = async () => {
+      if (!selectedCourt?.id) return;
+      try {
+        const res = await fetchAPI(`/api/database/average-ratings?courtId=${selectedCourt.id}`);
+        console.log("Average Rating response:", res);
+        // pull out the number
+        setAvgStars(res.stars);
+      } catch (error) {
+        console.error("Error fetching avg rating", error);
+      }
+    };
+    fetchAvg();
   }, [selectedCourt]);
 
   // Check if user has DOB set.
@@ -439,7 +489,6 @@ export default function Home() {
     return true;
   };
   
-  console.log("Select cour: ", selectedCourt)
   return (
     <SafeAreaView style={styles.container}>
       {/* Modal for entering DOB */}
@@ -664,7 +713,7 @@ export default function Home() {
           description={selectedCourt.description}
           amenities={selectedCourt.amenities}
           website={selectedCourt.website}
-          stars={selectedCourt.stars}
+          stars={avgStars}
           facilities_pic_url={selectedCourt.facilities_pic_url}
           // Pass whether this court is the one the user is checked into
           isCheckedIn={currentCheckInCourt === selectedCourt.id}
@@ -714,6 +763,11 @@ export default function Home() {
           <Text style={{ padding: 20 }}>No courts found.</Text>
         </Animated.View>
       )}
+      <RatingModal
+       visible={showRatingModal}
+       onConfirm={handleConfirmRating}
+       onClose={() => setShowRatingModal(false)}
+      />
     </SafeAreaView>
   );
 }
