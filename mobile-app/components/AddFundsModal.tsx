@@ -70,19 +70,20 @@ const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose }) => {
         });
 
         if (response.balance) {
-
-            // Store the transaction
-            await fetchAPI("/api/database/transactions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    clerkId: user?.id,
-                    type: "add",
-                    amount: finalAmount,
-                }),
-            });
+          // Store the transaction
+          await fetchAPI("/api/database/transactions", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                  clerkId: user?.id,
+                  type: "add",
+                  amount: finalAmount,
+              }),
+          });
+          onClose();
+          Alert.alert("Success", "Added funds processed successfully.");
         }
     } catch (error) {
         console.error("Error updating balance:", error);
