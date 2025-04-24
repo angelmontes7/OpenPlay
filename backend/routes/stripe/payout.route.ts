@@ -51,9 +51,6 @@ router.post("/", async (req, res) => {
       currency: "usd",
       destination: connectedAccountId
     })
-    
-    // wait until funds are transfered into stripe account
-    await new Promise(resolve => setTimeout(resolve, 2000));
 
     console.log("Connected Account Balance after transfer:", balance);
   

@@ -73,7 +73,7 @@ const WithDrawFundsModal: React.FC<WithDrawFundsModalProps> = ({ visible, onClos
         );
       }
       console.log("Past bankout")
-      if (response.transfer) {
+      if (response.payout) {
         // Update balance in your database
         const balanceResponse = await fetchAPI("/api/database/balance", {
           method: "POST",
@@ -97,7 +97,7 @@ const WithDrawFundsModal: React.FC<WithDrawFundsModalProps> = ({ visible, onClos
             },
             body: JSON.stringify({
               clerkId: user?.id,
-              type: "withdraw",
+              type: "subtract",
               amount: parsedAmount,
             }),
           });
