@@ -1,10 +1,9 @@
 import { ScrollView, Text, View, Alert, TouchableOpacity } from "react-native";
 import React from "react";
-import RoundButton from "@/components/RoundButton";
 import { Ionicons } from "@expo/vector-icons";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { useUser } from "@clerk/clerk-expo";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { fetchAPI } from "@/lib/fetch";
 import ChargeCardModal from "@/components/ChargeCardModal";
 import StoredCardModal from "@/components/StoredCardModal";
@@ -16,14 +15,19 @@ import { useFocusEffect } from "@react-navigation/native";
 const Wallet = () => {
     const { user } = useUser();
     const [balance, setBalance] = useState(0); // Initial balance set to 0
-    const [amount, setAmount] = useState(""); // Initial amount set to an empty string
-    const [transactions, setTransactions] = useState([]); // State to store transactions
+    interface Transaction {
+        id: string;
+        type: string;
+        amount: number;
+        date: string;
+    }
+
+    const [transactions, setTransactions] = useState<Transaction[]>([]); // State to store transactions
     const [isCardModalVisible, setIsCardModalVisible] = useState(false); // State for card modal visibility
     const [isStoredCardModalVisible, setIsStoredCardModalVisible] = useState(false); // State for stored card modal visibility
     const [isAddFundsModalVisible, setIsAddFundsModalVisible] = useState(false); // State for add funds modal visibility
     const [isWithdrawFundsModalVisible, setIsWithdrawFundsModalVisible] = useState(false); // State for withdraw funds modal visibility
-    const [storedCards, setStoredCards] = useState([]); // Store an array of cards
-
+    
     //**** WHAT APPEARS WHEN THE WALLET IS OPENED UP ****/
     
     const fetchBalance = async () => {
@@ -78,35 +82,6 @@ const Wallet = () => {
     const onAddCard = () => {  
         setIsCardModalVisible(true);
     };
-
-    const handleAddCard = async (model: FormModel) => {
-        try {
-            const response = await fetchAPI("/api/database/charge-cards", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    clerkId: user?.id,
-                    holderName: model.holderName,
-                    cardNumber: model.cardNumber,
-                    expiryMonth: model.expiration.split("/")[0],
-                    expiryYear: model.expiration.split("/")[1],
-                    cvc: model.cvv,
-                }),
-            });
-
-            if (response.card) {
-                setStoredCards(response.cards);
-                setIsCardModalVisible(false);
-                Alert.alert("Success", "Card added successfully.");
-            }
-        } catch (error) {
-            console.error("Error adding card:", error);
-            Alert.alert("Error", "Failed to add card. Please try again.");
-        }
-    };
-
 
     //****STORED CARDS COMPONENTS****
     const onStoredCards = () => {
@@ -314,13 +289,12 @@ const Wallet = () => {
             <ChargeCardModal
               visible={isCardModalVisible}
               onClose={() => setIsCardModalVisible(false)}
-              onSubmit={handleAddCard}
             />
       
             <StoredCardModal
               visible={isStoredCardModalVisible}
               onClose={() => setIsStoredCardModalVisible(false)}
-              clerkId={user?.id}
+              clerkId={user?.id || ""}
             />
           </View>
         </StripeProvider>
