@@ -27,7 +27,14 @@ router.post("/", async (req, res) => {
       email: email,
       capabilities: {
         transfers: { requested: true },
-      }
+      },
+      settings: {
+        payouts: {
+          schedule: {
+            interval: 'manual',
+          },
+        },
+      },
     });
 
     const accountLink = await stripe.accountLinks.create({
