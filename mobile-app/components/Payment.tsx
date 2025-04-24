@@ -144,36 +144,6 @@ const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps
       Alert.alert("Payment Initialization Error", "An error occurred while initializing the payment sheet. Please try again.");
     }
   };
-
-  return (
-    <>
-      <ReactNativeModal
-        isVisible={success}
-        onBackdropPress={() => setSuccess(false)}
-      >
-        <View className="flex flex-col items-center justify-center bg-white p-7 rounded-2xl">
-          <Image source={images.check} className="w-28 h-28 mt-5" />
-
-          <Text className="text-2xl text-center font-JakartaBold mt-5">
-            Payment Successful
-          </Text>
-
-          <Text className="text-md text-general-200 font-JakartaRegular text-center mt-3">
-            Your funds have been successfully added.
-          </Text>
-
-          <CustomButton
-            title="Back to Wallet"
-            onPress={() => {
-              setSuccess(false);
-              router.push("/(root)/wallet");
-            }}
-            className="mt-5"
-          />
-        </View>
-      </ReactNativeModal>
-    </>
-  );
 });
 
 export default Payment;
