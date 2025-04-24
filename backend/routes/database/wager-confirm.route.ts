@@ -35,6 +35,33 @@ router.patch('/', async (req, res) => {
     const allVoted = votes.every((record: any) => record.winning_vote !== null);
     console.log("All voted:", allVoted);
 
+    // Case for handling only one participant
+    if (votes.length === 1) {
+      const [singleParticipant] = votes;
+      const refundAmount = parseFloat(singleParticipant.bet_amount);
+      
+      // Refund the full amount to the only participant
+      await sql`
+        UPDATE user_balances
+        SET balance = balance + ${refundAmount}
+        WHERE clerk_id = ${singleParticipant.user_id};
+      `;
+      
+      // Log the transaction
+      await sql`
+        INSERT INTO transactions (clerk_id, type, amount)
+        VALUES (${singleParticipant.user_id}, 'wager_refund', ${refundAmount});
+      `;
+      
+      // Update the wager status to closed
+      await sql`
+        UPDATE wagers SET status = 'closed', updated_at = NOW()
+        WHERE id = ${wagerId};
+      `;
+      
+      return res.status(200).json({ success: true, message: "Full refund issued to the single participant." });
+    }
+    
     // Check if all have voted
     if (allVoted) {
 
