@@ -1,19 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Dimensions, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, Animated, Dimensions, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import Payment from './Payment';
 import { useUser } from "@clerk/clerk-expo";
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { fetchAPI } from "@/lib/fetch";
+
 interface AddFundsModalProps {
   visible: boolean;
   onClose: () => void;
-  onPaymentSuccess: (amount: string) => void;
 }
 
 const { height } = Dimensions.get('window');
 
-const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose, onPaymentSuccess }) => {
+const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose }) => {
   const [inputAmount, setInputAmount] = useState('');
   const paymentRef = useRef<any>(null);
   const { user } = useUser();
@@ -42,6 +43,52 @@ const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose, onPayme
     }
   }, [visible]);
 
+  const onPaymentSuccess = async (amount: string) => {
+    try {
+        const amountToAdd = parseFloat(amount);
+
+        // Calculate Stripe fee (2.9% + $0.30)
+        const stripeFee = (amountToAdd * 0.029) + 0.30;
+        const finalAmount = amountToAdd - stripeFee; // Amount after deducting the fee
+
+        // Ensure the final amount is not negative
+        if (finalAmount <= 0) {
+          Alert.alert('Payment Error', 'Amount after fees is too low.');
+          return;
+        }
+
+        const response = await fetchAPI("/api/database/balance", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                clerkId: user?.id,
+                type: "add",
+                amount: finalAmount,
+            }),
+        });
+
+        if (response.balance) {
+
+            // Store the transaction
+            await fetchAPI("/api/database/transactions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    clerkId: user?.id,
+                    type: "add",
+                    amount: finalAmount,
+                }),
+            });
+        }
+    } catch (error) {
+        console.error("Error updating balance:", error);
+    }
+};
+  
   const handleConfirmPayment = async () => {
     if (inputAmount.trim() === '' || isNaN(Number(inputAmount))) {
       alert('Please enter a valid amount');
@@ -52,7 +99,7 @@ const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose, onPayme
       try {
         await paymentRef.current.openPaymentSheet();
       } catch (error) {
-        console.error('Payment failed:', error);
+        Alert.alert('Payment Failed', 'An error occurred while processing your payment.');
       }
     } else {
       console.error('Payment reference not available');
@@ -102,7 +149,7 @@ const AddFundsModal: React.FC<AddFundsModalProps> = ({ visible, onClose, onPayme
                 {/* Stripe Onboarding Notice */}
                 <View className="mb-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
                   <Text className="text-blue-200 text-xs text-center">
-                    *Complete Stripe setup to add funds. You'll be redirected if not done after clicking confirm. Withdrawals will be available 7 days after funding.*
+                    *Complete Stripe setup to add funds (2.9% + $0.30 fee applies). You'll be redirected if needed after confirming. Withdrawals available 7 days after funding.*
                   </Text>
                 </View>
 

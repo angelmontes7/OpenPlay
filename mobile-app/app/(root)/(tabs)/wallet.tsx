@@ -64,56 +64,9 @@ const Wallet = () => {
         }, [user?.id])
     );
 
-
-
     //**** ADD FUNDS COMPONENTS****//
     const onAddMoney = async () => {
         setIsAddFundsModalVisible(true);
-    };
-
-    const onPaymentSuccess = async (amount: string) => {
-        setIsAddFundsModalVisible(false);
-        try {
-            const response = await fetchAPI("/api/database/balance", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    clerkId: user?.id,
-                    type: "add",
-                    amount: parseFloat(amount),
-                }),
-            });
-
-            if (response.balance) {
-                setBalance(response.balance);
-
-                // Store the transaction
-                await fetchAPI("/api/database/transactions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        clerkId: user?.id,
-                        type: "add",
-                        amount: parseFloat(amount),
-                    }),
-                });
-
-                // Fetch the updated transactions
-                const transactionsResponse = await fetchAPI(`/api/database/transactions?clerkId=${user?.id}`, {
-                    method: "GET",
-                });
-
-                if (transactionsResponse.transactions) {
-                    setTransactions(transactionsResponse.transactions);
-                }
-            }
-        } catch (error) {
-            console.error("Error updating balance:", error);
-        }
     };
 
     //**** WITHDRAW FUNDS COMPONENTS****//
@@ -434,7 +387,6 @@ const Wallet = () => {
             <AddFundsModal
               visible={isAddFundsModalVisible}
               onClose={() => setIsAddFundsModalVisible(false)}
-              onPaymentSuccess={onPaymentSuccess}
             />
       
             <WithdrawFundsModal
