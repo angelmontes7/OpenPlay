@@ -39,8 +39,8 @@ router.post("/", async (req, res) => {
 
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: `${renderUrl}/api/stripe-redirect?status=refresh`,
-      return_url:  `${renderUrl}/api/stripe-redirect?status=success`,
+      refresh_url: `${renderUrl}/api/stripe/redirect?status=refresh`,
+      return_url:  `${renderUrl}/api/stripe/redirect?status=success`,
       type: 'account_onboarding'
     });
  

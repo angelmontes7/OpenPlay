@@ -88,7 +88,7 @@ router.patch('/', async (req, res) => {
         
         if (wager && winningParticipant) {
           // Calculate payout and company fee – 99% of total_amount
-          const totalAmount = parseFloat(wager.total_amount) * 100;
+          const totalAmount = parseFloat(wager.total_amount);
           const payout = totalAmount * 0.99; // 99% to user
           const companyFee = totalAmount - payout; // 1% to company
           
