@@ -69,6 +69,8 @@ router.post("/", async (req, res) => {
       WHERE clerk_id = ${clerkId}
     `;
 
+    const description = `1% fee from user withdrawal of $${(totalWithdrawCents / 100)}`;
+
     // 7. Log company fee
     await sql`
       INSERT INTO company_revenue (
@@ -82,7 +84,7 @@ router.post("/", async (req, res) => {
         'withdrawal fee',
         ${companyFeeCents / 100},
         'USD',
-        '1% fee from user withdrawal of $${(totalWithdrawCents / 100)}',
+        ${description},
         ${clerkId},
         NOW()
       )
