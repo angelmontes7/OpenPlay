@@ -112,7 +112,7 @@ router.patch('/', async (req, res) => {
             RETURNING *;
           `;
           
-          const description = `1% fee from closed wager of $${(totalAmount / 100)}`;
+          const description = `1% fee from closed wager of $${(totalAmount)}`;
 
           // 7. Log company fee
           await sql`
@@ -125,7 +125,7 @@ router.patch('/', async (req, res) => {
               created_at
             ) VALUES (
               'withdrawal fee',
-              ${companyFee / 100},
+              ${companyFee},
               'USD',
               ${description},
               ${userId},
@@ -164,7 +164,7 @@ router.patch('/', async (req, res) => {
               VALUES (${r.user_id}, 'wager_refund', ${refund});
             `;
           }
-          const description = `10% fee from disputed wager of $${(totalAmount / 100)}`;
+          const description = `10% fee from disputed wager of $${(totalAmount)}`;
 
           // 7. Log company fee
           await sql`
@@ -177,7 +177,7 @@ router.patch('/', async (req, res) => {
               created_at
             ) VALUES (
               'withdrawal fee',
-              ${totalAmount / 100},
+              ${totalAmount},
               'USD',
               ${description},
               ${userId},
