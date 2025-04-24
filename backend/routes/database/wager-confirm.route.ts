@@ -87,8 +87,10 @@ router.patch('/', async (req, res) => {
         `;
         
         if (wager && winningParticipant) {
-          // Calculate payout – 95% of total_amount
-          const payout = parseFloat(wager.total_amount) * 0.95;
+          // Calculate payout and company fee – 99% of total_amount
+          const totalAmount = parseFloat(wager.total_amount) * 100;
+          const payout = totalAmount * 0.99; // 99% to user
+          const companyFee = totalAmount - payout; // 1% to company
           
           // Update the wager to closed
           await sql`
@@ -109,6 +111,27 @@ router.patch('/', async (req, res) => {
             VALUES (${winningParticipant.user_id}, 'wager_win', ${payout})
             RETURNING *;
           `;
+          
+          const description = `1% fee from closed wager of $${(totalAmount / 100)}`;
+
+          // 7. Log company fee
+          await sql`
+            INSERT INTO company_revenue (
+              source,
+              amount,
+              currency,
+              description,
+              user_clerk_id,
+              created_at
+            ) VALUES (
+              'withdrawal fee',
+              ${companyFee / 100},
+              'USD',
+              ${description},
+              ${userId},
+              NOW()
+            )
+          `;
         }
       } else {
         // Case B or C: disagreement
@@ -126,10 +149,11 @@ router.patch('/', async (req, res) => {
           `;
         } else {
           // Case C: already disputed & still in disagreement -> refund 90% to everyone and close wager
-
+          let totalAmount = 0;
           // Refund each participant individually
           for (const r of votes) {
             const refund = parseFloat(r.bet_amount) * 0.90;
+            totalAmount += parseFloat(r.bet_amount) * 0.10
             await sql`
               UPDATE user_balances
               SET balance = balance + ${refund}
@@ -140,6 +164,26 @@ router.patch('/', async (req, res) => {
               VALUES (${r.user_id}, 'wager_refund', ${refund});
             `;
           }
+          const description = `10% fee from disputed wager of $${(totalAmount / 100)}`;
+
+          // 7. Log company fee
+          await sql`
+            INSERT INTO company_revenue (
+              source,
+              amount,
+              currency,
+              description,
+              user_clerk_id,
+              created_at
+            ) VALUES (
+              'withdrawal fee',
+              ${totalAmount / 100},
+              'USD',
+              ${description},
+              ${userId},
+              NOW()
+            )
+          `;
           // Close wager
           await sql`
             UPDATE wagers SET status = 'closed', updated_at = NOW()
