@@ -76,6 +76,7 @@ const NoParticipantsModal: React.FC<NoParticipantsModalProps> = ({
         }
 
         // Close the modal
+        onConfirmed()
         onClose();
     };
 

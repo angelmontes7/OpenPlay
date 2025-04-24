@@ -398,8 +398,6 @@ const Wagers = () => {
 
     setSelectedWager(wagerDetails);
 
-    console.log("Selected Wager: ", selectedWager);
-
     // Count the number of participants
     const numberOfParticipants = wagerDetails.filter(
       (w: any) => w.participant_details.participant_id !== null
