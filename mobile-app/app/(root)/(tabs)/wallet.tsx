@@ -74,98 +74,6 @@ const Wallet = () => {
         setIsWithdrawFundsModalVisible(true);
     };
 
-    const handleWithdraw = async (withdrawAmount: string) => {
-        try {
-          const parsedAmount = parseFloat(withdrawAmount);
-          if (!withdrawAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
-            return Alert.alert("Invalid amount", "Please enter a valid withdrawal amount.");
-          }
-      
-          // Get the user's Stripe connected account ID
-          const accountResponse = await fetchAPI(`/api/stripe/connected-account?clerkId=${user?.id}`, {
-            method: "GET",
-          });
-      
-          const connectedAccountId = accountResponse.connected_account_id;
-      
-          if (!connectedAccountId) {
-            return Alert.alert("Error", "No connected account found.");
-          }
-          
-          console.log("Above payout fetch")
-          // Attempt payout via your backend
-          const response = await fetchAPI("/api/stripe/payout", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              clerkId: user?.id,
-              amount: parsedAmount,
-            }),
-          });
-          
-          console.log("After payout fetch")
-          if (response.needs_bank_account) {
-            return Alert.alert(
-              "Bank Account Required",
-              "You need to add a bank account before withdrawing. Please go to your payment settings to add one."
-            );
-          }
-          console.log("Past bankout")
-          if (response.payout) {
-            // Update balance in your database
-            const balanceResponse = await fetchAPI("/api/database/balance", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                clerkId: user?.id,
-                type: "subtract",
-                amount: parsedAmount,
-              }),
-            });
-            console.log("Past balance")
-            if (balanceResponse.balance) {
-              setBalance(balanceResponse.balance);
-      
-              // Store withdrawal transaction
-              await fetchAPI("/api/database/transactions", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  clerkId: user?.id,
-                  type: "withdraw",
-                  amount: parsedAmount,
-                }),
-              });
-              console.log("Past transactions")
-              // Fetch updated transaction history
-              const transactionsResponse = await fetchAPI(`/api/database/transactions?clerkId=${user?.id}`, {
-                method: "GET",
-              });
-      
-              if (transactionsResponse.transactions) {
-                setTransactions(transactionsResponse.transactions);
-              }
-      
-              setIsWithdrawFundsModalVisible(false);
-              Alert.alert("Success", "Withdrawal processed successfully.");
-            }
-          } else {
-            Alert.alert("Error", "Withdrawal failed. Please try again.");
-          }
-        } catch (error) {
-          console.error("Error processing withdrawal:", error);
-          Alert.alert("Error", "Something went wrong. Please try again later.");
-        }
-    };
-      
-    
-
     //****ADD CARD COMPONENTS****//
     const onAddCard = () => {  
         setIsCardModalVisible(true);
@@ -386,13 +294,20 @@ const Wallet = () => {
             {/* MODALS */}
             <AddFundsModal
               visible={isAddFundsModalVisible}
-              onClose={() => setIsAddFundsModalVisible(false)}
+              onClose={() => {
+                setIsAddFundsModalVisible(false);
+                fetchBalance();
+                fetchTransactions();
+                }}
             />
       
             <WithdrawFundsModal
               visible={isWithdrawFundsModalVisible}
-              onClose={() => setIsWithdrawFundsModalVisible(false)}
-              onWithdrawSuccess={handleWithdraw}
+              onClose={() => {
+                setIsWithdrawFundsModalVisible(false);
+                fetchBalance();
+                fetchTransactions();
+                }}
               availableBalance={balance}
             />
       

@@ -51,21 +51,22 @@ router.post("/", async (req, res) => {
       currency: "usd",
       destination: connectedAccountId
     })
+    
+    // wait until funds are transfered into stripe account
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     console.log("Connected Account Balance after transfer:", balance);
-    /*
-    // Maybe used to manually pay user out right away instead of using stripes cycle
+  
+    // manually pay user out right away instead of using stripes cycle
     const payout = await stripe.payouts.create(
       {
-        amount: parseInt(amount) * 100,
+        amount: withdrawCents,
         currency: "usd",
       },
       {
         stripeAccount: connectedAccountId, // critical line!
       }
     );
-    */
-
 
     // 5 Update DB ledger: subtract from user
     await sql`
@@ -74,7 +75,7 @@ router.post("/", async (req, res) => {
       WHERE clerk_id = ${clerkId}
     `;
 
-    return res.status(200).json({ transfer });
+    return res.status(200).json({ transfer, payout });
   } catch (error) {
     console.error("Error in POST /api/payout:", error);
     return res.status(500).json({ error: "Internal Server Error" });
