@@ -25,15 +25,18 @@ import wagerConfirmApi from './routes/database/wager-confirm.route';
 import wagerInfoApi from './routes/database/wager-info.route';
 import wagerParticipantsApi from './routes/database/wager-participants.route';
 import wagerResetVotesApi from './routes/database/wager-reset-votes.route';
-import stripeRedirectRoutes from "./stripe-redirect"
-import stripeStatus from "./routes/stripe/status.route"
 import messagesApi from "./routes/database/messages.route"
+import averageRatingApi from "./routes/database/average-ratings.route"
+import rateFacilityApi from "./routes/database/rate.route"
+import companyRevenueApi from "./routes/database/company-revenue.route"
 
 // Import Stripe-related APIs
 import connectedAccountApi from './routes/stripe/connected-account.route';
 import createApi from './routes/stripe/create.route';
 import payApi from './routes/stripe/pay.route';
 import payoutApi from './routes/stripe/payout.route';
+import stripeRedirectRoutesApi from "./stripe-redirect"
+import stripeStatusApi from "./routes/stripe/status.route"
 
 // Import Supabase-related API's
 import uploadRoutes from './routes/supabase/upload.route'
@@ -114,14 +117,17 @@ app.use('/api/database/wager-info', wagerInfoApi);
 app.use('/api/database/wager-participants', wagerParticipantsApi);
 app.use('/api/database/wager-reset-votes', wagerResetVotesApi);
 app.use('/api/database/messages', messagesApi);
+app.use('/api/database/average-ratings', averageRatingApi);
+app.use('/api/database/rate', rateFacilityApi)
+app.use('/api/database/company-revenue', companyRevenueApi)
 
 // Stripe API routes
 app.use('/api/stripe/connected-account', connectedAccountApi);
 app.use('/api/stripe/create', createApi);
 app.use('/api/stripe/pay', payApi);
 app.use('/api/stripe/payout', payoutApi);
-app.use("/api/stripe/redirect", stripeRedirectRoutes);
-app.use("/api/stripe/status", stripeStatus)
+app.use("/api/stripe/redirect", stripeRedirectRoutesApi);
+app.use("/api/stripe/status", stripeStatusApi)
 
 // Supabase API routes
 app.use('/api/supabase/upload', uploadRoutes)

@@ -9,15 +9,17 @@ import {
   Modal,
 } from 'react-native'
 import LottieView from 'lottie-react-native'
+import { useUser } from "@clerk/clerk-expo";
 import CreditCardForm, { Button, FormModel } from 'rn-credit-card'
+import { fetchAPI } from '@/lib/fetch'
 
 interface ChargeCardModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (model: FormModel) => void;
 }
 
-const ChargeCardModal: React.FC<ChargeCardModalProps> = ({ visible, onClose, onSubmit }) => {
+const ChargeCardModal: React.FC<ChargeCardModalProps> = ({ visible, onClose }) => {
+  const { user } = useUser();
   const formMethods = useForm<FormModel>({
     // to trigger the validation on the blur event
     mode: 'onBlur',
@@ -31,7 +33,7 @@ const ChargeCardModal: React.FC<ChargeCardModalProps> = ({ visible, onClose, onS
   const { handleSubmit, formState, reset } = formMethods
 
   function handleFormSubmit(model: FormModel) {
-    onSubmit(model);
+    handleAddCard(model);
     reset();
     onClose(); // Hides the modal
   }
@@ -40,6 +42,32 @@ const ChargeCardModal: React.FC<ChargeCardModalProps> = ({ visible, onClose, onS
     reset();
     onClose();
   }
+  const handleAddCard = async (model: FormModel) => {
+    try {
+        const response = await fetchAPI("/api/database/charge-cards", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                clerkId: user?.id,
+                holderName: model.holderName,
+                cardNumber: model.cardNumber,
+                expiryMonth: model.expiration.split("/")[0],
+                expiryYear: model.expiration.split("/")[1],
+                cvc: model.cvv,
+            }),
+        });
+
+        if (response.card) {
+            Alert.alert("Success", "Card added successfully.");
+        }
+    } catch (error) {
+        console.error("Error adding card:", error);
+        Alert.alert("Error", "Failed to add card. Please try again.");
+    }
+};
+  
   return (
     <Modal
       visible={visible}

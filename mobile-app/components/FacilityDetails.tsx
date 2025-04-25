@@ -11,7 +11,6 @@ import {
   Image,
   Dimensions,
   Platform,
-  StatusBar
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,9 +54,8 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
-  const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const screenHeight = Dimensions.get('window').height;
-  
+  console.log("Facility details recievered averageratings", stars)
   useEffect(() => {
     if (visible) {
       Animated.parallel([
@@ -85,8 +83,9 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
 
   // Calculate star display
   const renderStars = () => {
+    const rating = Math.max(0, Math.min(5, stars || 0));
     const fullStars = Math.floor(stars);
-    const halfStar = stars % 1 >= 0.5;
+    const halfStar = rating - fullStars >= 0.5;
     const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
     
     return (
@@ -101,7 +100,7 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
       </View>
     );
   };
-  console.log("Facilities pic: ", facilities_pic_url)
+  
   return (
     <Modal
       visible={visible}

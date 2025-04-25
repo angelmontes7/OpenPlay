@@ -35,6 +35,33 @@ router.patch('/', async (req, res) => {
     const allVoted = votes.every((record: any) => record.winning_vote !== null);
     console.log("All voted:", allVoted);
 
+    // Case for handling only one participant
+    if (votes.length === 1) {
+      const [singleParticipant] = votes;
+      const refundAmount = parseFloat(singleParticipant.bet_amount);
+      
+      // Refund the full amount to the only participant
+      await sql`
+        UPDATE user_balances
+        SET balance = balance + ${refundAmount}
+        WHERE clerk_id = ${singleParticipant.user_id};
+      `;
+      
+      // Log the transaction
+      await sql`
+        INSERT INTO transactions (clerk_id, type, amount)
+        VALUES (${singleParticipant.user_id}, 'wager_refund', ${refundAmount});
+      `;
+      
+      // Update the wager status to closed
+      await sql`
+        UPDATE wagers SET status = 'closed', updated_at = NOW()
+        WHERE id = ${wagerId};
+      `;
+      
+      return res.status(200).json({ success: true, message: "Full refund issued to the single participant." });
+    }
+    
     // Check if all have voted
     if (allVoted) {
 
@@ -60,8 +87,10 @@ router.patch('/', async (req, res) => {
         `;
         
         if (wager && winningParticipant) {
-          // Calculate payout – 95% of total_amount
-          const payout = parseFloat(wager.total_amount) * 0.95;
+          // Calculate payout and company fee – 99% of total_amount
+          const totalAmount = parseFloat(wager.total_amount);
+          const payout = totalAmount * 0.99; // 99% to user
+          const companyFee = totalAmount - payout; // 1% to company
           
           // Update the wager to closed
           await sql`
@@ -82,6 +111,27 @@ router.patch('/', async (req, res) => {
             VALUES (${winningParticipant.user_id}, 'wager_win', ${payout})
             RETURNING *;
           `;
+          
+          const description = `1% fee from closed wager of $${(totalAmount)}`;
+
+          // 7. Log company fee
+          await sql`
+            INSERT INTO company_revenue (
+              source,
+              amount,
+              currency,
+              description,
+              user_clerk_id,
+              created_at
+            ) VALUES (
+              'withdrawal fee',
+              ${companyFee},
+              'USD',
+              ${description},
+              ${userId},
+              NOW()
+            )
+          `;
         }
       } else {
         // Case B or C: disagreement
@@ -99,10 +149,11 @@ router.patch('/', async (req, res) => {
           `;
         } else {
           // Case C: already disputed & still in disagreement -> refund 90% to everyone and close wager
-
+          let totalAmount = 0;
           // Refund each participant individually
           for (const r of votes) {
             const refund = parseFloat(r.bet_amount) * 0.90;
+            totalAmount += parseFloat(r.bet_amount) * 0.10
             await sql`
               UPDATE user_balances
               SET balance = balance + ${refund}
@@ -113,6 +164,26 @@ router.patch('/', async (req, res) => {
               VALUES (${r.user_id}, 'wager_refund', ${refund});
             `;
           }
+          const description = `10% fee from disputed wager of $${(totalAmount)}`;
+
+          // 7. Log company fee
+          await sql`
+            INSERT INTO company_revenue (
+              source,
+              amount,
+              currency,
+              description,
+              user_clerk_id,
+              created_at
+            ) VALUES (
+              'withdrawal fee',
+              ${totalAmount},
+              'USD',
+              ${description},
+              ${userId},
+              NOW()
+            )
+          `;
           // Close wager
           await sql`
             UPDATE wagers SET status = 'closed', updated_at = NOW()

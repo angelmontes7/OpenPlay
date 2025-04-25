@@ -1,10 +1,9 @@
 import { ScrollView, Text, View, Alert, TouchableOpacity } from "react-native";
 import React from "react";
-import RoundButton from "@/components/RoundButton";
 import { Ionicons } from "@expo/vector-icons";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { useUser } from "@clerk/clerk-expo";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { fetchAPI } from "@/lib/fetch";
 import ChargeCardModal from "@/components/ChargeCardModal";
 import StoredCardModal from "@/components/StoredCardModal";
@@ -16,14 +15,19 @@ import { useFocusEffect } from "@react-navigation/native";
 const Wallet = () => {
     const { user } = useUser();
     const [balance, setBalance] = useState(0); // Initial balance set to 0
-    const [amount, setAmount] = useState(""); // Initial amount set to an empty string
-    const [transactions, setTransactions] = useState([]); // State to store transactions
+    interface Transaction {
+        id: string;
+        type: string;
+        amount: number;
+        date: string;
+    }
+
+    const [transactions, setTransactions] = useState<Transaction[]>([]); // State to store transactions
     const [isCardModalVisible, setIsCardModalVisible] = useState(false); // State for card modal visibility
     const [isStoredCardModalVisible, setIsStoredCardModalVisible] = useState(false); // State for stored card modal visibility
     const [isAddFundsModalVisible, setIsAddFundsModalVisible] = useState(false); // State for add funds modal visibility
     const [isWithdrawFundsModalVisible, setIsWithdrawFundsModalVisible] = useState(false); // State for withdraw funds modal visibility
-    const [storedCards, setStoredCards] = useState([]); // Store an array of cards
-
+    
     //**** WHAT APPEARS WHEN THE WALLET IS OPENED UP ****/
     
     const fetchBalance = async () => {
@@ -64,56 +68,9 @@ const Wallet = () => {
         }, [user?.id])
     );
 
-
-
     //**** ADD FUNDS COMPONENTS****//
     const onAddMoney = async () => {
         setIsAddFundsModalVisible(true);
-    };
-
-    const onPaymentSuccess = async (amount: string) => {
-        setIsAddFundsModalVisible(false);
-        try {
-            const response = await fetchAPI("/api/database/balance", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    clerkId: user?.id,
-                    type: "add",
-                    amount: parseFloat(amount),
-                }),
-            });
-
-            if (response.balance) {
-                setBalance(response.balance);
-
-                // Store the transaction
-                await fetchAPI("/api/database/transactions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        clerkId: user?.id,
-                        type: "add",
-                        amount: parseFloat(amount),
-                    }),
-                });
-
-                // Fetch the updated transactions
-                const transactionsResponse = await fetchAPI(`/api/database/transactions?clerkId=${user?.id}`, {
-                    method: "GET",
-                });
-
-                if (transactionsResponse.transactions) {
-                    setTransactions(transactionsResponse.transactions);
-                }
-            }
-        } catch (error) {
-            console.error("Error updating balance:", error);
-        }
     };
 
     //**** WITHDRAW FUNDS COMPONENTS****//
@@ -121,129 +78,10 @@ const Wallet = () => {
         setIsWithdrawFundsModalVisible(true);
     };
 
-    const handleWithdraw = async (withdrawAmount: string) => {
-        try {
-          const parsedAmount = parseFloat(withdrawAmount);
-          if (!withdrawAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
-            return Alert.alert("Invalid amount", "Please enter a valid withdrawal amount.");
-          }
-      
-          // Get the user's Stripe connected account ID
-          const accountResponse = await fetchAPI(`/api/stripe/connected-account?clerkId=${user?.id}`, {
-            method: "GET",
-          });
-      
-          const connectedAccountId = accountResponse.connected_account_id;
-      
-          if (!connectedAccountId) {
-            return Alert.alert("Error", "No connected account found.");
-          }
-      
-          // Attempt payout via your backend
-          const response = await fetchAPI("/api/stripe/payout", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              clerkId: user?.id,
-              amount: parsedAmount,
-            }),
-          });
-      
-          if (response.needs_bank_account) {
-            return Alert.alert(
-              "Bank Account Required",
-              "You need to add a bank account before withdrawing. Please go to your payment settings to add one."
-            );
-          }
-      
-          if (response.payout) {
-            // Update balance in your database
-            const balanceResponse = await fetchAPI("/api/database/balance", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                clerkId: user?.id,
-                type: "subtract",
-                amount: parsedAmount,
-              }),
-            });
-      
-            if (balanceResponse.balance) {
-              setBalance(balanceResponse.balance);
-      
-              // Store withdrawal transaction
-              await fetchAPI("/api/database/transactions", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  clerkId: user?.id,
-                  type: "withdraw",
-                  amount: parsedAmount,
-                }),
-              });
-      
-              // Fetch updated transaction history
-              const transactionsResponse = await fetchAPI(`/api/database/transactions?clerkId=${user?.id}`, {
-                method: "GET",
-              });
-      
-              if (transactionsResponse.transactions) {
-                setTransactions(transactionsResponse.transactions);
-              }
-      
-              setIsWithdrawFundsModalVisible(false);
-              Alert.alert("Success", "Withdrawal processed successfully.");
-            }
-          } else {
-            Alert.alert("Error", "Withdrawal failed. Please try again.");
-          }
-        } catch (error) {
-          console.error("Error processing withdrawal:", error);
-          Alert.alert("Error", "Something went wrong. Please try again later.");
-        }
-    };
-      
-    
-
     //****ADD CARD COMPONENTS****//
     const onAddCard = () => {  
         setIsCardModalVisible(true);
     };
-
-    const handleAddCard = async (model: FormModel) => {
-        try {
-            const response = await fetchAPI("/api/database/charge-cards", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    clerkId: user?.id,
-                    holderName: model.holderName,
-                    cardNumber: model.cardNumber,
-                    expiryMonth: model.expiration.split("/")[0],
-                    expiryYear: model.expiration.split("/")[1],
-                    cvc: model.cvv,
-                }),
-            });
-
-            if (response.card) {
-                setStoredCards(response.cards);
-                setIsCardModalVisible(false);
-                Alert.alert("Success", "Card added successfully.");
-            }
-        } catch (error) {
-            console.error("Error adding card:", error);
-            Alert.alert("Error", "Failed to add card. Please try again.");
-        }
-    };
-
 
     //****STORED CARDS COMPONENTS****
     const onStoredCards = () => {
@@ -431,27 +269,32 @@ const Wallet = () => {
             {/* MODALS */}
             <AddFundsModal
               visible={isAddFundsModalVisible}
-              onClose={() => setIsAddFundsModalVisible(false)}
-              onPaymentSuccess={onPaymentSuccess}
+              onClose={() => {
+                setIsAddFundsModalVisible(false);
+                fetchBalance();
+                fetchTransactions();
+                }}
             />
       
             <WithdrawFundsModal
               visible={isWithdrawFundsModalVisible}
-              onClose={() => setIsWithdrawFundsModalVisible(false)}
-              onWithdrawSuccess={handleWithdraw}
+              onClose={() => {
+                setIsWithdrawFundsModalVisible(false);
+                fetchBalance();
+                fetchTransactions();
+                }}
               availableBalance={balance}
             />
       
             <ChargeCardModal
               visible={isCardModalVisible}
               onClose={() => setIsCardModalVisible(false)}
-              onSubmit={handleAddCard}
             />
       
             <StoredCardModal
               visible={isStoredCardModalVisible}
               onClose={() => setIsStoredCardModalVisible(false)}
-              clerkId={user?.id}
+              clerkId={user?.id || ""}
             />
           </View>
         </StripeProvider>

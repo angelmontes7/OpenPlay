@@ -14,6 +14,8 @@ router.post("/", async (req, res) => {
     }
 
     const sql = neon(`${process.env.DATABASE_URL}`);
+
+    // 1 Look up users connected account id
     const result = await sql`
       SELECT connected_account_id
       FROM users
@@ -21,27 +23,38 @@ router.post("/", async (req, res) => {
     `;
 
     if (result.length === 0) {
-      return res.status(404).json({ error: "Connected account not found" });
+      return res.status(400).json({ error: "Connected account not found" });
     }
 
-    const connectedAccountId = result[0].connected_account_id;
+    // 2 Check platform balance to make sure there is enough funds
+    const { available } = await stripe.balance.retrieve();
+    const usdAvailable = available.find(b => b.currency === "usd")?.amount || 0;
+    const totalWithdrawCents = Math.round(parseFloat(amount) * 100);
+    const userReceivesCents = Math.floor(totalWithdrawCents * 0.99); // 99% to user
+    const companyFeeCents = totalWithdrawCents - userReceivesCents; // 1% to company
 
-    const balance = await stripe.balance.retrieve({
-      stripeAccount: connectedAccountId,
-    });
+    if (usdAvailable < totalWithdrawCents) {
+      return res.status(400).json({ error: "Insufficient platform funds" });
+    }
     
-    console.log("Connected Account Balance:", balance);
-    
-    // Check for external bank account
+    // 3 Check if user has a bank account on file in their express/stripe account
+    const connectedAccountId = result[0].connected_account_id;
     const account = await stripe.accounts.retrieve(connectedAccountId);
     if (!account.external_accounts || account.external_accounts.data.length === 0) {
       return res.status(400).json({ needs_bank_account: true, error: "No bank account on file" });
     }
 
-    // Initiate payout from the connected account's default external account (e.g., bank)
+    // 4 Transfer 99% of funds to users Stripe account
+    const transfer = await stripe.transfers.create({
+      amount: userReceivesCents,
+      currency: "usd",
+      destination: connectedAccountId
+    })
+  
+    // 5 manually pay user out right away instead of using stripes cycle
     const payout = await stripe.payouts.create(
       {
-        amount: parseInt(amount) * 100,
+        amount: userReceivesCents,
         currency: "usd",
       },
       {
@@ -49,13 +62,35 @@ router.post("/", async (req, res) => {
       }
     );
 
+    // 6 Update DB ledger: subtract from user
     await sql`
       UPDATE user_balances
       SET balance = balance - ${amount}
       WHERE clerk_id = ${clerkId}
     `;
 
-    return res.status(200).json({ payout });
+    const description = `1% fee from user withdrawal of $${(totalWithdrawCents / 100)}`;
+
+    // 7. Log company fee
+    await sql`
+      INSERT INTO company_revenue (
+        source,
+        amount,
+        currency,
+        description,
+        user_clerk_id,
+        created_at
+      ) VALUES (
+        'withdrawal fee',
+        ${companyFeeCents / 100},
+        'USD',
+        ${description},
+        ${clerkId},
+        NOW()
+      )
+    `;
+
+    return res.status(200).json({ transfer, payout });
   } catch (error) {
     console.error("Error in POST /api/payout:", error);
     return res.status(500).json({ error: "Internal Server Error" });
