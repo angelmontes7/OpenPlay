@@ -1,8 +1,9 @@
+// Access to neon database, express, setting router
 import { neon } from '@neondatabase/serverless';
 import express from 'express';
-
 const router = express.Router();
 
+// Updates users checked in log with a checkout timestamp
 router.post('/', async (req, res) => {
     try {
         const { userId, courtId } = req.body;

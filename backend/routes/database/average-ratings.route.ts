@@ -1,9 +1,9 @@
-
+// Access to neon database, express, setting router
 const { neon } = require("@neondatabase/serverless");
 import express from 'express';
-
 const router = express.Router();
 
+// Returns the avg stars based on court id
 router.get('/', async(req, res) => {
     const sql = neon(`${process.env.DATABASE_URL}`);
     try {

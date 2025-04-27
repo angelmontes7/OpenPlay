@@ -1,8 +1,9 @@
+// Access to neon database, express, setting router
 import { neon } from '@neondatabase/serverless';
 import express from 'express';
-
 const router = express.Router();
 
+// Checks user into sports facility by inserting users id in correlation to court id
 router.post('/', async (req, res) => {
   try {
     const { userId, courtId } = req.body;
