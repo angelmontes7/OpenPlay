@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { useNavigate } from 'react-router-dom';
 import { fetchAPI } from "../../../../lib/fetch";
+import { Link } from 'react-router-dom';
+import './Profile.css'
 
 const getUserPreferences = async (clerkId) => {
   const data = await fetchAPI(`/api/database/preferences?clerkId=${clerkId}`);
@@ -150,7 +152,7 @@ const Profile = () => {
     switch (activeSection) {
       case "privacy":
         return (
-          <div className="container">
+          <div className="priv-container">
             <h2>Privacy Settings</h2>
             <label>
               Location
@@ -201,29 +203,184 @@ const Profile = () => {
             )}
           </div>
         );
+        case "notifications":
+        return (
+          <div className="noti-container">
+            <h2>Notification Settings</h2>
+            <label>
+              Email Notifications
+              <input
+                type="checkbox"
+                checked={emailNotifications}
+                onChange={(e) => handlePreferenceToggle("email_notifications", e.target.checked)}
+              />
+            </label>
+            <label>
+              Push Notifications
+              <input
+                type="checkbox"
+                checked={pushNotifications}
+                onChange={(e) => handlePreferenceToggle("push_notifications", e.target.checked)}
+              />
+            </label>
+            <label>
+              SMS Notifications
+              <input
+                type="checkbox"
+                checked={smsNotifications}
+                onChange={(e) => handlePreferenceToggle("sms_notifications", e.target.checked)}
+              />
+            </label>
+            <label>
+              Social Notifications
+              <input
+                type="checkbox"
+                checked={socialNotifications}
+                onChange={(e) => handlePreferenceToggle("social_notifications", e.target.checked)}
+              />
+            </label>
+            <label>
+              Game Notifications
+              <input
+                type="checkbox"
+                checked={gameNotifications}
+                onChange={(e) => handlePreferenceToggle("game_notifications", e.target.checked)}
+              />
+            </label>
+          </div>
+        );
+        case "support":
+        return (
+            <div className="support-container">
+            {/* FAQs Section */}
+            <div className="card-section">
+                <h2>FAQs</h2>
+                {[
+                { question: "How do I reset my password?", answer: "Go to Settings > Privacy and click 'Change Password'." },
+                { question: "How can I contact support?", answer: "You can email us at support@openplay.com." },
+                { question: "Where can I find OpenPlay’s Terms of Service?", answer: "Check our website at www.openplay.com/terms." }
+                ].map((faq, index) => (
+                <details key={index} className="faq-item">
+                    <summary>{faq.question}</summary>
+                    <p>{faq.answer}</p>
+                </details>
+                ))}
+            </div>
+
+            {/* Contact Us Section */}
+            <div className="card-section">
+                <h2>Contact Us</h2>
+                <p>📩 <a href="mailto:support@openplay.com" className="link">support@openplay.com</a></p>
+            </div>
+
+            {/* Socials Section */}
+            <section class='social-media'>
+                <div class='social-media-wrap'>
+                    <div class='footer-logo'>
+                    <Link to='/' className='social-logo'>
+                        OpenPlay
+                        <i class='fab fa-typo3' />
+                    </Link>
+                    </div>
+                    <small class='website-rights'>OpenPlay © 2025</small>
+                    <div class='social-icons'>
+                    <Link
+                        class='social-icon-link facebook'
+                        to='/'
+                        target='_blank'
+                        aria-label='Facebook'
+                    >
+                        <i class='fab fa-facebook-f' />
+                    </Link>
+                    <Link
+                        class='social-icon-link instagram'
+                        to='/'
+                        target='_blank'
+                        aria-label='Instagram'
+                    >
+                        <i class='fab fa-instagram' />
+                    </Link>
+                    <Link
+                        class='social-icon-link youtube'
+                        to='/'
+                        target='_blank'
+                        aria-label='Youtube'
+                    >
+                        <i class='fab fa-youtube' />
+                    </Link>
+                    <Link
+                        class='social-icon-link twitter'
+                        to='/'
+                        target='_blank'
+                        aria-label='Twitter'
+                    >
+                        <i class='fab fa-twitter' />
+                    </Link>
+                    <Link
+                        class='social-icon-link twitter'
+                        to='/'
+                        target='_blank'
+                        aria-label='LinkedIn'
+                    >
+                        <i class='fab fa-linkedin' />
+                    </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* Community Forum Button */}
+            <div className="community-button">
+                <button onClick={() => window.open("https://community.openplay.com", "_blank")}>
+                Join Community Forum
+                </button>
+            </div>
+            </div>
+        );
       default:
         return (
-          <div className="section-list">
-            <div onClick={() => setActiveSection("privacy")}>Privacy</div>
-            <div onClick={() => setActiveSection("notifications")}>Notifications</div>
-          </div>
+            <div className="section-list">
+                <div
+                className={`section-item ${activeSection === "privacy" ? "active" : ""}`}
+                onClick={() => setActiveSection("privacy")}
+                >
+                Privacy
+                </div>
+                <div
+                className={`section-item ${activeSection === "notifications" ? "active" : ""}`}
+                onClick={() => setActiveSection("notifications")}
+                >
+                Notifications
+                </div>
+                <div
+                className={`section-item ${activeSection === "support" ? "active" : ""}`}
+                onClick={() => setActiveSection("support")}
+                >
+                Support
+            </div>
+            </div>
         );
     }
   };
 
   return (
     <div className="profile">
-      <div className="header">
-        <button onClick={() => navigate("/settings")}>Back</button>
-        <h1>OpenPlay</h1>
-      </div>
-      {renderContent()}
-      <div className="action-buttons">
-        <button onClick={() => navigate("/settings")}>Settings</button>
-        <button title="Log Out" onClick={async () => await signOut()} />
+      <div className="card">
+        <div className="header">
+          <h1>OpenPlay</h1>
+        </div>
+  
+        {renderContent()}
+  
+        <div className="action-buttons">
+            
+          <button onClick={() => setActiveSection("default")}>Back</button>
+          <button title="Log Out" onClick={async () => await signOut()}>
+            Log Out
+          </button>
+        </div>
       </div>
     </div>
-  );
+  );  
 };
 
 export default Profile;
