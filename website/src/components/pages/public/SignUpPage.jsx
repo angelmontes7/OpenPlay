@@ -137,9 +137,9 @@ const SignUpPage = () => {
                 <p className="error-message">{verification.error}</p>
               )}
             </div>
-            <Button className="verify-button" onClick={onVerifyPress}>
+            <button className="verify-button" onClick={onVerifyPress}>
               Verify Email
-            </Button>
+            </button>
           </div>
         ) : (
           <>

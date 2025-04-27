@@ -31,7 +31,7 @@ function Navbar() {
         <nav className='navbar'>
             <div className="navbar-container">
                 <Link to="/" className="navbar-logo" onClick={closeMobileMenu}>
-                    OpenPlay <i className='fa-solid fa-medal' />
+                    OpenPlay <i className='fab fa-typo3' />
                 </Link>
                 <div className='menu-icon' onClick={handleClick}>
                   <i className={click ? 'fas fa-times' : 'fas fa-bars'} />
