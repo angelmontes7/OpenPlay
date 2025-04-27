@@ -1,0 +1,132 @@
+.transactions{
+    /* Background Image */
+    background-image: url('/images/transactions-background.jpg');
+    background-size: cover; 
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.transaction-container {
+    background: white;
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #ddd;
+  }
+  
+  .balance-section {
+    background: linear-gradient(to right, #4338ca, #3b82f6, #0ea5e9);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    color: white;
+  }
+  
+  .balance-section h2 {
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+  }
+  
+  .balance {
+    font-size: 2.5rem;
+    font-weight: bold;
+  }
+  
+  .transactions-section {
+    margin-top: 30px;
+    
+  }
+  
+  .transactions-section h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .no-transactions p {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #555;
+  }
+  
+  .transactions-list {
+    margin-top: 20px;
+  }
+  
+  .transaction-item {
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .transaction-info {
+    display: flex;
+    align-items: center;
+  }
+  
+  .transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #ddd;
+    margin-right: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .transaction-details h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .transaction-details p {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  .transaction-amount {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  .transaction-amount.positive {
+    color: green;
+  }
+  
+  .transaction-amount.negative {
+    color: red;
+  }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .pagination button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .pagination button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .pagination span {
+    font-size: 1rem;
+    margin: 0 10px;
+  }
+  
