@@ -7,14 +7,14 @@ export default function Products() {
         {
             name: "OpenPlay",
             description: "Experience OpenPlay on your favorite device",
-            appStoreUrl: "https://apps.apple.com/", // Replace with OpenPlay's App Store URL
-            googlePlayUrl: "https://play.google.com/store", // Replace with OpenPlay's Google Play URL
+            appStoreUrl: "https://apps.apple.com/",
+            googlePlayUrl: "https://play.google.com/store", 
         },
         {
             name: "RandomApp",
             description: "Discover RandomApp for all your random needs",
-            appStoreUrl: "https://apps.apple.com/randomapp", // Replace with RandomApp's App Store URL
-            googlePlayUrl: "https://play.google.com/store/randomapp", // Replace with RandomApp's Google Play URL
+            appStoreUrl: "https://apps.apple.com/",
+            googlePlayUrl: "https://play.google.com/store",
         },
     ];
 
