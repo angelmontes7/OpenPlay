@@ -1,0 +1,383 @@
+.profile {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f7fa;
+    padding: 2rem;
+
+    /* Background Image */
+    background-image: url('/images/profile-background.jpg');
+    background-size: cover; 
+    background-position: center center;
+    background-repeat: no-repeat;
+  }
+  
+  .card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    width: 600px;
+    max-width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+    color: #333;
+  }
+  
+  .header button {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: #4f46e5;
+    cursor: pointer;
+  }
+  
+  .section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .section-item {
+    padding: 1rem;
+    background: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+  }
+  
+  .section-item:hover {
+    background: #f0f0f0;
+  }
+  
+  .section-item.active {
+    background: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+  }
+  
+  .action-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .action-buttons button {
+    flex: 1;
+    padding: 0.8rem;
+    border: none;
+    background: #4f46e5;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background 0.3s;
+    margin: 0 0.5rem;
+  }
+  
+  .action-buttons button:hover {
+    background: #4338ca;
+  }
+
+
+  /* case: Privacy */
+  .priv-container {
+    background: #f9f9f9;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #ddd;
+    width: 1000px;
+    max-width: 500px;
+    margin: 1rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  /* Title */
+  .priv-container h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  /* Label for the settings (checkboxes) */
+  .priv-container label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    color: #4b5563;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+  }
+  
+  /* Hover effect for labels */
+  .priv-container label:hover {
+    background: #f1f5f9;
+  }
+  
+  /* Checkbox styling */
+  .priv-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #4f46e5; /* Purple accent color */
+    cursor: pointer;
+  }
+  
+  /* Username, Email, and Password styling */
+  .priv-container div {
+    font-size: 1.1rem;
+    color: #4b5563;
+    padding: 0.8rem 0;
+    background: #fff;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    padding: 10px;
+  }
+  
+  /* Button to change password */
+  .priv-container button {
+    background: #4f46e5;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    align-self: center;
+    margin-top: 1rem;
+  }
+  
+  /* Hover effect for the change password button */
+  .priv-container button:hover {
+    background: #4338ca;
+  }
+  
+  /* Password change form fields */
+  .priv-container input[type="password"] {
+    width: 100%;
+    padding: 0.8rem;
+    margin: 1rem 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #4b5563;
+    background-color: #f9f9f9;
+    transition: border 0.3s ease;
+  }
+  
+  /* Input focus state */
+  .priv-container input[type="password"]:focus {
+    border-color: #4f46e5;
+    outline: none;
+  }
+  
+  /* Error message for password mismatch */
+  .priv-container .error {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+  }
+  
+  /* case: Notification */
+  .noti-container {
+    background: #f9f9f9;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #ddd;
+    width: 1000px;
+    max-width: 500px;
+    margin: 1rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .noti-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #333;
+    text-align: center;
+  }
+  
+  .noti-container label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .noti-container label:hover {
+    background: #f1f5f9;
+  }
+  
+  .noti-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #4f46e5; /* Makes the checkbox purple (or customize it) */
+    cursor: pointer;
+  }
+  
+  /* case: Support */
+  .support-container {
+    max-width: 800px;
+    width: 520px;
+    margin-top: -10px;
+    padding: 2rem;
+    background: #f9f9f9;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .card-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  
+  .card-section h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .faq-item {
+    margin-bottom: 1rem;
+    background: #f1f5f9;
+    padding: 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .faq-item summary {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #1e293b;
+    list-style: none;
+  }
+  
+  .faq-item p {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: #475569;
+  }
+  
+  .link {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .link:hover {
+    text-decoration: underline;
+  }
+  
+  .social-media {
+    background: #1f2937;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+  }
+  
+  .social-media-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .footer-logo .social-logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+  }
+  
+  .website-rights {
+    color: #9ca3af;
+    font-size: 0.9rem;
+  }
+  
+  .social-icons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .social-icon-link {
+    color: white;
+    font-size: 1.5rem;
+    transition: color 0.3s;
+  }
+  
+  .social-icon-link:hover {
+    color: #4f46e5;
+  }
+  
+  .community-button {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .community-button button {
+    background: #4f46e5;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .community-button button:hover {
+    background: #4338ca;
+  }
+  

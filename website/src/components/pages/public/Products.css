@@ -1,0 +1,191 @@
+/* Products.css */
+.products-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f5f7ff 0%, #e4e9ff 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.products-card {
+    width: 100%;
+    max-width: 1000px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.products-header {
+    background: linear-gradient(to right, #3563e9, #4e44ce);
+    padding: 2.5rem;
+    color: white;
+    text-align: center;
+}
+
+.products-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.products-header p {
+    margin-top: 0.75rem;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.products-content {
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    text-align: center;
+}
+
+.download-section h2,
+.direct-download h2 {
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin: 0 0 0.75rem 0;
+}
+
+.download-section p,
+.direct-download p {
+    color: #4a5568;
+    font-size: 1rem;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.5;
+}
+
+.qr-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+}
+
+.qr-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.qr-frame {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.store-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.store-icon {
+    width: 24px;
+    height: 24px;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.direct-download {
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 3rem;
+}
+
+.download-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.download-button {
+    display: inline-block;
+    padding: 0.875rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    min-width: 180px;
+}
+
+.download-button.apple {
+    background-color: #000000;
+    color: white;
+}
+
+.download-button.google {
+    background-color: #4285F4;
+    color: white;
+}
+
+.download-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.products-footer {
+    background-color: #f8fafc;
+    padding: 1.5rem 2.5rem;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+}
+
+.products-footer p {
+    margin: 0;
+    color: #64748b;
+}
+
+.products-footer a {
+    color: #3563e9;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.products-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .qr-container {
+        justify-content: space-around;
+    }
+    
+    .products-content {
+        padding: 3rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .products-header {
+        padding: 2rem;
+    }
+    
+    .products-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .products-content {
+        padding: 2rem;
+    }
+    
+    .download-button {
+        width: 100%;
+    }
+}

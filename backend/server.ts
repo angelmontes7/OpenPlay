@@ -58,8 +58,16 @@ const io = new SocketIOServer(httpServer, {
   },
 });
 
+
 // Middleware
-app.use(cors());
+// Middleware
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://openplay-4o4a.onrender.com"], // Allow frontend origins
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
+    credentials: true, // Allow cookies and credentials
+  })
+);
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
