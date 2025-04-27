@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSignIn } from "@clerk/clerk-react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
-import { Button } from "../../Button";
+import './SignInPage.css';  // Import the CSS file
 
 const SignInPage = () => {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -36,67 +36,61 @@ const SignInPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+    <div className="sign-in-container">
+      <div className="form-container">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Welcome Back
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to continue
-          </p>
+          <h2 className="title">Welcome Back</h2>
+          <p className="subtitle">Sign in to continue</p>
         </div>
 
-        <div className="space-y-6">
-          {error && (
-            <p className="text-red-500 text-center text-sm">{error}</p>
-          )}
+        <div className="form-fields">
+          {error && <p className="error-message">{error}</p>}
 
-          <div className="flex flex-col gap-1">
+          <div className="input-field">
             <label>Email</label>
-            <div className="flex items-center gap-2">
+            <div className="input-wrapper">
               <User size={20} />
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="Email address"
-                className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input"
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1 relative">
+          <div className="input-field">
             <label>Password</label>
-            <div className="flex items-center gap-2">
+            <div className="input-wrapper">
               <Lock size={20} />
               <input
                 type={showPassword ? "text" : "password"}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Password"
-                className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input"
               />
-              <button type="button" onClick={() => setShowPassword(!showPassword)}>
+              <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
 
-          <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={onSignInPress}>
+          <button className="submit-btn" onClick={onSignInPress}>
             Log In
-          </Button>
+          </button>
 
-          <div className="text-center mt-4">
-            <Link to="/forgot-password" className="text-blue-600 text-sm hover:underline">
+          <div className="link-container">
+            <Link to="/forgot-password" className="forgot-password">
               Forgot password?
             </Link>
           </div>
 
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
+          <div className="link-container">
+            <p className="no-account">
               Don't have an account?{" "}
-              <Link to="/sign-up" className="text-blue-600 font-semibold hover:underline">
+              <Link to="/sign-up" className="sign-up-link">
                 Sign Up
               </Link>
             </p>

@@ -3,7 +3,7 @@ import { useSignUp } from "@clerk/clerk-react";
 import { useNavigate, Link } from "react-router-dom";
 import { fetchAPI } from "../../../../lib/fetch";
 import { CheckCircle, Eye, EyeOff, Lock, Calendar, User } from "lucide-react";
-import { Button } from "../../Button";
+import './SignUpPage.css';  
 
 const SignUpPage = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -109,22 +109,20 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+    <div className="sign-up-container">
+      <div className="form-container">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <h2 className="title">Create your account</h2>
+          <p className="subtitle">
             Join the sports betting community!
           </p>
         </div>
 
         {verification.state === "pending" ? (
-          <div className="space-y-6">
+          <div className="verification-form">
             <div>
-              <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700">
-                Verification Code
-              </label>
-              <div className="mt-1 flex items-center gap-2">
+              <label htmlFor="verificationCode" className="label">Verification Code</label>
+              <div className="input-wrapper">
                 <Lock size={20} />
                 <input
                   id="verificationCode"
@@ -132,61 +130,61 @@ const SignUpPage = () => {
                   value={verification.code}
                   onChange={(e) => setVerification({ ...verification, code: e.target.value })}
                   placeholder="Enter 6-digit code"
-                  className="flex-1 p-2 border rounded"
+                  className="input"
                 />
               </div>
               {verification.error && (
-                <p className="text-red-500 text-sm mt-2">{verification.error}</p>
+                <p className="error-message">{verification.error}</p>
               )}
             </div>
-            <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={onVerifyPress}>
+            <Button className="verify-button" onClick={onVerifyPress}>
               Verify Email
             </Button>
           </div>
         ) : (
           <>
-            <div className="space-y-4">
+            <div className="form-fields">
               {/* Username */}
-              <div className="flex flex-col gap-1">
+              <div className="input-field">
                 <label>Username</label>
-                <div className="flex items-center gap-2">
+                <div className="input-wrapper">
                   <User size={20} />
                   <input
                     type="text"
                     value={form.username}
                     onChange={(e) => setForm({ ...form, username: e.target.value })}
                     placeholder="Unique username"
-                    className="flex-1 p-2 border rounded"
+                    className="input"
                   />
                 </div>
               </div>
 
               {/* Email */}
-              <div className="flex flex-col gap-1">
+              <div className="input-field">
                 <label>Email</label>
-                <div className="flex items-center gap-2">
+                <div className="input-wrapper">
                   <User size={20} />
                   <input
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="Email address"
-                    className="flex-1 p-2 border rounded"
+                    className="input"
                   />
                 </div>
               </div>
 
               {/* Password */}
-              <div className="flex flex-col gap-1 relative">
+              <div className="input-field">
                 <label>Password</label>
-                <div className="flex items-center gap-2">
+                <div className="input-wrapper">
                   <Lock size={20} />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     placeholder="Password"
-                    className="flex-1 p-2 border rounded"
+                    className="input"
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -195,16 +193,16 @@ const SignUpPage = () => {
               </div>
 
               {/* Confirm Password */}
-              <div className="flex flex-col gap-1 relative">
+              <div className="input-field">
                 <label>Confirm Password</label>
-                <div className="flex items-center gap-2">
+                <div className="input-wrapper">
                   <Lock size={20} />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={form.confirmPassword}
                     onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
                     placeholder="Confirm password"
-                    className="flex-1 p-2 border rounded"
+                    className="input"
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -213,37 +211,37 @@ const SignUpPage = () => {
               </div>
 
               {form.password && form.confirmPassword && (
-                <p className={`text-sm ${form.password === form.confirmPassword ? "text-green-500" : "text-red-500"}`}>
+                <p className={`password-match-message ${form.password === form.confirmPassword ? "valid" : "invalid"}`}>
                   {form.password === form.confirmPassword ? "Passwords match" : "Passwords do not match"}
                 </p>
               )}
 
               {/* Date of Birth */}
-              <div className="flex flex-col gap-1">
+              <div className="input-field">
                 <label>Date of Birth (MM-DD-YYYY)</label>
-                <div className="flex items-center gap-2">
+                <div className="input-wrapper">
                   <Calendar size={20} />
                   <input
                     type="text"
                     value={form.dob}
                     onChange={(e) => setForm({ ...form, dob: formatDOB(e.target.value) })}
                     placeholder="MM-DD-YYYY"
-                    className="flex-1 p-2 border rounded"
+                    className="input"
                   />
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500">* Age verification required for betting features.</p>
+              <p className="age-verification">* Age verification required for betting features.</p>
             </div>
 
-            <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700" onClick={onSignUpPress}>
+            <button className="submit-button" onClick={onSignUpPress}>
               Create Account
-            </Button>
+            </button>
 
-            <div className="text-center mt-6">
-              <p className="text-sm text-gray-600">
+            <div className="sign-in-link-container">
+              <p className="sign-in-link">
                 Already have an account?{" "}
-                <Link to="/sign-in" className="text-blue-600 font-semibold hover:underline">
+                <Link to="/sign-in" className="link">
                   Sign In
                 </Link>
               </p>

@@ -1,0 +1,115 @@
+/* Layout */
+.sign-in-container {
+    min-height: 100vh;
+    background-color: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+  }
+  
+  .form-container {
+    max-width: 28rem;
+    width: 100%;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .title {
+    text-align: center;
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: #1f2937;
+  }
+  
+  .subtitle {
+    margin-top: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .form-fields {
+    margin-top: 1.5rem;
+  }
+  
+  .error-message {
+    color: #ef4444;
+    text-align: center;
+    font-size: 0.875rem;
+  }
+  
+  /* Input Fields */
+  .input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .input {
+    flex: 1;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    outline: none;
+  }
+  
+  .input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+  }
+  
+  /* Button */
+  .submit-btn {
+    width: 100%;
+    margin-top: 1rem;
+    background-color: #74a6f6;
+    padding: 0.75rem;
+    text-align: center; 
+    border-radius: 20px; 
+  }
+  
+  .submit-btn:hover {
+    background-color: #2563eb; 
+  }
+  
+  /* Links */
+  .link-container {
+    text-align: center;
+    margin-top: 1rem;
+  }
+  
+  .forgot-password,
+  .sign-up-link {
+    color: #2563eb;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+  
+  .forgot-password:hover,
+  .sign-up-link:hover {
+    text-decoration: underline;
+  }
+  
+  .no-account {
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  /* Password Toggle Button */
+  .toggle-password {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  

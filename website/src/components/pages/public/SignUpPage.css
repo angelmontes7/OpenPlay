@@ -1,0 +1,125 @@
+/* Layout */
+.sign-up-container {
+    min-height: 100vh;
+    background-color: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+  }
+  
+  .form-container {
+    max-width: 28rem;
+    width: 100%;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .title {
+    text-align: center;
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: #1f2937;
+  }
+  
+  .subtitle {
+    margin-top: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .verification-form, .form-fields {
+    margin-top: 2rem;
+  }
+  
+  .input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .label {
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+  }
+  
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  .password-match-message {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  .password-match-message.valid {
+    color: #10b981;
+  }
+  
+  .password-match-message.invalid {
+    color: #ef4444;
+  }
+  
+  .age-verification {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+  }
+  
+  .submit-button {
+    width: 100%;
+    margin-top: 1rem;
+    background-color: #74a6f6;
+    padding: 0.75rem;
+    text-align: center; 
+    border-radius: 20px; 
+  }
+  
+  .submit-button:hover {
+    background-color: #2563eb; 
+  }
+  
+  
+  .sign-in-link-container {
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+  
+  .sign-in-link {
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .sign-in-link .link {
+    color: #3b82f6;
+    font-weight: 600;
+  }
+  
+  .sign-in-link .link:hover {
+    text-decoration: underline;
+  }
+  
