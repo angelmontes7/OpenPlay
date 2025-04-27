@@ -1,9 +1,11 @@
 import React, {useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from './Button';
+import { useAuth } from '@clerk/clerk-react';
 import './Navbar.css';
 
 function Navbar() {
+  const { isSignedIn, signOut } = useAuth();
   const [click, setClick] = useState(false)
   const [button, setButton] = useState(true)
 
@@ -35,28 +37,65 @@ function Navbar() {
                   <i className={click ? 'fas fa-times' : 'fas fa-bars'} />
                 </div>
                 <ul className={click ? 'nav-menu active' : 'nav-menu'}>
-                  <li className='nav-item'>
-                    <Link to='/' className='nav-links' onClick={closeMobileMenu}>
-                      Home
-                    </Link>
-                  </li>
-                  <li className='nav-item'>
-                    <Link to='/services' className='nav-links' onClick={closeMobileMenu}>
-                      Services
-                    </Link>
-                  </li>
-                  <li className='nav-item'>
-                    <Link to='/products' className='nav-links' onClick={closeMobileMenu}>
-                      Products
-                    </Link>
-                  </li>
-                  <li className='nav-item'>
-                    <Link to='/sign-up' className='nav-links-mobile' onClick={closeMobileMenu}>
-                      Sign up
-                    </Link>
-                  </li>
+                  {isSignedIn ? (
+                    <>
+                      <li className="nav-item">
+                        <Link to="/dashboard" className="nav-links" onClick={closeMobileMenu}>
+                          Dashboard
+                        </Link>
+                      </li>
+                      <li className="nav-item">
+                        <Link to="/transactions" className="nav-links" onClick={closeMobileMenu}>
+                          Transactions
+                        </Link>
+                      </li>
+                      <li className="nav-item">
+                        <Link to="/profile" className="nav-links" onClick={closeMobileMenu}>
+                          Profile
+                        </Link>
+                      </li>
+                      <li className="nav-item">
+                        <button className="nav-links-mobile" onClick={() => signOut()}>
+                          Sign Out
+                        </button>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="nav-item">
+                        <Link to="/" className="nav-links" onClick={closeMobileMenu}>
+                          Home
+                        </Link>
+                      </li>
+                      <li className="nav-item">
+                        <Link to="/services" className="nav-links" onClick={closeMobileMenu}>
+                          Services
+                        </Link>
+                      </li>
+                      <li className="nav-item">
+                        <Link to="/products" className="nav-links" onClick={closeMobileMenu}>
+                          Products
+                        </Link>
+                      </li>
+                      <li className="nav-item">
+                        <Link to="/sign-up" className="nav-links-mobile" onClick={closeMobileMenu}>
+                          Sign Up
+                        </Link>
+                      </li>
+                    </>
+                  )}
                 </ul>
-                {button && <Button buttonStyle='btn--outline'>Sign Up</Button>}
+                {button && isSignedIn ? (
+                  <button className="btn--outline" onClick={() => signOut()}>
+                    Sign Out
+                  </button>
+                ) : (
+                  button && (
+                    <Link to="/sign-up">
+                      <button className="btn--outline">Sign Up</button>
+                    </Link>
+                  )
+                )}
             </div>
         </nav>
     
