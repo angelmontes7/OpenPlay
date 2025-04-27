@@ -5,6 +5,12 @@
     justify-content: center;
     background: #f5f7fa;
     padding: 2rem;
+
+    /* Background Image */
+    background-image: url('/images/profile-background.jpg');
+    background-size: cover; 
+    background-position: center center;
+    background-repeat: no-repeat;
   }
   
   .card {
