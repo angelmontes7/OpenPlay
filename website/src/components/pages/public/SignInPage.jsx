@@ -26,7 +26,7 @@ const SignInPage = () => {
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
-        navigate("/home");
+        navigate("/dashboard");
       } else {
         console.error("Unexpected sign-in state:", signInAttempt);
       }
