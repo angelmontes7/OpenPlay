@@ -136,41 +136,125 @@
     cursor: pointer;
   }
   
-  /* Social Icons (in case: Support) */
-  .social-icon-link {
-    color: #242424;
-    font-size: 24px;
+  /* case: Support */
+  .support-container {
+    max-width: 800px;
+    width: 520px;
+    margin-top: -10px;
+    padding: 2rem;
+    background: #f9f9f9;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .card-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  
+  .card-section h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .faq-item {
+    margin-bottom: 1rem;
+    background: #f1f5f9;
+    padding: 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .faq-item summary {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #1e293b;
+    list-style: none;
+  }
+  
+  .faq-item p {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: #475569;
+  }
+  
+  .link {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .link:hover {
+    text-decoration: underline;
   }
   
   .social-media {
-    max-width: 1000px;
-    width: 100%;
+    background: #1f2937;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
   }
   
   .social-media-wrap {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    width: 90%;
-    max-width: 1000px;
-    margin: 40px auto 0 auto;
+    gap: 1rem;
+  }
+  
+  .footer-logo .social-logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+  }
+  
+  .website-rights {
+    color: #9ca3af;
+    font-size: 0.9rem;
   }
   
   .social-icons {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 240px;
+    gap: 1rem;
+    margin-top: 1rem;
   }
   
-  .social-logo {
-    color: #242424;
-    justify-self: start;
-    margin-left: 20px;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 2rem;
-    display: flex;
-    align-items: center;
-    margin-bottom: 16px;
+  .social-icon-link {
+    color: white;
+    font-size: 1.5rem;
+    transition: color 0.3s;
   }
+  
+  .social-icon-link:hover {
+    color: #4f46e5;
+  }
+  
+  .community-button {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .community-button button {
+    background: #4f46e5;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .community-button button:hover {
+    background: #4338ca;
+  }
+  

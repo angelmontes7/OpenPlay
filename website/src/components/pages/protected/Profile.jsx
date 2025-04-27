@@ -356,7 +356,7 @@ const Profile = () => {
                 onClick={() => setActiveSection("support")}
                 >
                 Support
-            </div>
+                </div>
             </div>
         );
     }
