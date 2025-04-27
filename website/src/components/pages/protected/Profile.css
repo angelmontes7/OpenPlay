@@ -89,7 +89,54 @@
     background: #4338ca;
   }
   
-  /* Social Icons */
+  /* case: Notification */
+  .noti-container {
+    background: #f9f9f9;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #ddd;
+    width: 1000px;
+    max-width: 500px;
+    margin: 1rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .noti-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #333;
+    text-align: center;
+  }
+  
+  .noti-container label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .noti-container label:hover {
+    background: #f1f5f9;
+  }
+  
+  .noti-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #4f46e5; /* Makes the checkbox purple (or customize it) */
+    cursor: pointer;
+  }
+  
+  /* Social Icons (in case: Support) */
   .social-icon-link {
     color: #242424;
     font-size: 24px;
