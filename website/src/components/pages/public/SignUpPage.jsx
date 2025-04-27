@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useSignUp } from "@clerk/clerk-react";
 import { useNavigate, Link } from "react-router-dom";
-import { fetchAPI } from "../../../lib/fetch";
+import { fetchAPI } from "../../../../lib/fetch";
 import { CheckCircle, Eye, EyeOff, Lock, Calendar, User } from "lucide-react";
-import { Button } from "../Button";
+import { Button } from "../../Button";
 
 const SignUpPage = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
