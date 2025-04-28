@@ -85,19 +85,6 @@ const SignUpPage = () => {
           }),
         });
 
-        const response = await fetchAPI("/api/stripe/connected-account", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clerkId: signUpAttempt.createdUserId,
-            email: form.email,
-          }),
-        });
-
-        if (response.onboardingLink) {
-          window.open(response.onboardingLink, "_blank");
-        }
-
         await setActive({ session: signUpAttempt.createdSessionId });
         navigate("/home");
       } else {
