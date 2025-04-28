@@ -1,13 +1,15 @@
+// Access to neon database, express, setting router
 import { neon } from '@neondatabase/serverless';
 import express from 'express';
-
 const router = express.Router();
 
+// Updates balance
 router.post('/', async (req, res) => {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);
         const { clerkId, type, amount } = req.body;
 
+        // Error checkers
         if (!clerkId || !type || !amount) {
             return res.status(400).json({ error: "Missing required fields" });
         }
@@ -19,6 +21,7 @@ router.post('/', async (req, res) => {
         if (amount <= 0) {
             return res.status(400).json({ error: "Amount must be greater than zero" });
         }
+
 
         // Retrieve current balance
         const balanceResult = await sql`
@@ -62,6 +65,7 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Returns users balance
 router.get('/', async(req, res) => {
     try {
         const sql = neon(`${process.env.DATABASE_URL}`);

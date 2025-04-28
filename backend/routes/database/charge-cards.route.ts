@@ -1,8 +1,9 @@
+// Access to neon database, express, setting router
 import { neon } from '@neondatabase/serverless';
 import express from 'express';
-
 const router = express.Router();
 
+// Saves users card info into database
 router.post('/', async (req, res) => {
   try {
     const { clerkId, holderName, cardNumber, expiryMonth, expiryYear, cvc } = req.body;
@@ -26,6 +27,7 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Returns users card info
 router.get('/', async(req, res) => {
   try {
     const { clerkId } = req.query

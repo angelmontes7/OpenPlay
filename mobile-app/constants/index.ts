@@ -1,6 +1,4 @@
 import arrowDown from "@/assets/icons/arrow-down.png";
-import arrowUp from "@/assets/icons/arrow-up.png";
-import backArrow from "@/assets/icons/back-arrow.png";
 import chat from "@/assets/icons/chat.png";
 import checkmark from "@/assets/icons/check.png";
 import close from "@/assets/icons/close.png";
@@ -22,7 +20,6 @@ import star from "@/assets/icons/star.png";
 import target from "@/assets/icons/target.png";
 import to from "@/assets/icons/to.png";
 import check from "@/assets/images/check.png";
-import message from "@/assets/images/message.png";
 import noResult from "@/assets/images/no-result.png";
 import onboarding1 from "@/assets/images/onboarding1.png";
 import onboarding2 from "@/assets/images/onboarding2.png";
@@ -40,14 +37,11 @@ export const images = {
     onboarding3,
     check,
     noResult,
-    message,
     defaultProfile,
 };
 
 export const icons = {
     arrowDown,
-    arrowUp,
-    backArrow,
     chat,
     checkmark,
     close,

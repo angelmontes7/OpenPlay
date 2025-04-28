@@ -66,26 +66,6 @@ export const googleOAuth = async (startOAuthFlow: any) => {
         });
       }
 
-      try {
-        const response = await fetchAPI("/api/stripe/connected-account", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                clerkId: updatedSignUp.createdUserId,
-                email: updatedSignUp.emailAddress,
-            }),
-        });
-
-        if (response.onboardingLink) {
-        // Open the Stripe onboarding link using Expo's WebBrowser
-            await WebBrowser.openBrowserAsync(response.onboardingLink);
-        }
-      } catch (error) {
-          console.error('Error creating connected account', error);
-      }
-
       if (updatedSignUp.createdSessionId) {
         await setActive({ session: updatedSignUp.createdSessionId });
         return {
