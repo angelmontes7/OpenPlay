@@ -199,7 +199,7 @@ export default function Home() {
       };
   
       fetchHeadCount();
-      interval = setInterval(fetchHeadCount, 10000);
+      interval = setInterval(fetchHeadCount, 1000);
     }
   
     return () => interval && clearInterval(interval);

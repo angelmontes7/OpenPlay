@@ -39,6 +39,8 @@ const Wagers = () => {
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [noParticipantsModalVisible, setNoParticipantsModalVisible] = useState(false);
   const [userData, setUserData] = useState<{ clerk_id: string; username: string }[]>([]);
+
+  // Fetch user preferences
   useFocusEffect(
     useCallback(() => {
       if (!user?.id) return;
@@ -58,25 +60,7 @@ const Wagers = () => {
     }, [user?.id])
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!user?.id) return;
-  
-      const fetchPrefs = async () => {
-        try {
-          const res = await fetchAPI(`/api/database/preferences?clerkId=${user.id}`);
-          setLocationAllowed(res.location_enabled);
-        } catch (err) {
-          console.error("Could not load prefs", err);
-        } finally {
-          setPrefsLoaded(true);
-        }
-      };
-  
-      fetchPrefs();
-    }, [user?.id])
-  );
-
+  // Fetch user Data (DOB, balance, wagers)
   const fetchUserData = async () => {
     try {
       const response = await fetchAPI("/api/database/user", {
@@ -250,9 +234,10 @@ const Wagers = () => {
 
 
   // Initial data fetching
-  useEffect(() => {
-    fetchAvailableWagers();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchAvailableWagers();
+    }, []));
 
   useEffect(() => {
     fetchUserWagers();
