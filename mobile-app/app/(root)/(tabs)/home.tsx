@@ -191,7 +191,6 @@ export default function Home() {
           }
   
           const response = await fetchAPI(`/api/database/head-count?courtId=${selectedCourt.id}`);
-          console.log("Raw response:", response);
           setLiveHeadCount(response.count);
         } catch (error) {
           console.error("Error fetching head count:", error);

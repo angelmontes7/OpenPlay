@@ -55,7 +55,7 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const screenHeight = Dimensions.get('window').height;
-  console.log("Facility details recievered averageratings", stars)
+
   useEffect(() => {
     if (visible) {
       Animated.parallel([

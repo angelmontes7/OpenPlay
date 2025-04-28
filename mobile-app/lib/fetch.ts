@@ -6,7 +6,6 @@ const BASE_URL = "https://openplay-4o4a.onrender.com";
  
 
 export const fetchAPI = async (endpoint: string, options?: RequestInit) => {
-    console.log(`fetch: ${BASE_URL}${endpoint}`)
     try {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             ...options

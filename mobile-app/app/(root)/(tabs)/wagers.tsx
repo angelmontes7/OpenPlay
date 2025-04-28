@@ -237,6 +237,8 @@ const Wagers = () => {
   useFocusEffect(
     useCallback(() => {
       fetchAvailableWagers();
+      fetchUserWagers();
+      fetchBalance();
     }, []));
 
   useEffect(() => {
