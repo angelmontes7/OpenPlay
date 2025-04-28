@@ -13,15 +13,31 @@ import { PaymentProps } from "@/types/type";
 const Payment = forwardRef(({ fullName, email, amount, onSuccess }: PaymentProps, ref) => {
   const { user } = useUser();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const { userId } = useAuth();
   const [success, setSuccess] = useState<boolean>(false);
   const [connectedId, setConnectedId] = useState<string | null>(null);
 
   const openPaymentSheet = async () => {
     const connectedIdValue = await fetchConnectedId();
     if (!connectedIdValue) {
-      Alert.alert("Missing account", "No connected account found.");
-      return;
+        try {
+            const response = await fetchAPI("/api/stripe/connected-account", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    clerkId: user.id,
+                    email: email,
+                }),
+            });
+
+            if (response.onboardingLink) {
+            // Open the Stripe onboarding link using Expo's WebBrowser
+                await WebBrowser.openBrowserAsync(response.onboardingLink);
+            }
+          } catch (error) {
+            console.error('Error creating connected account', error);
+        }
     }
 
     try {
