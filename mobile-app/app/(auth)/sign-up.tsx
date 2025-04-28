@@ -95,27 +95,6 @@ const SignUp = () => {
                     }),
                 });
                 
-                try {
-                    const response = await fetchAPI("/api/stripe/connected-account", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            clerkId: signUpAttempt.createdUserId,
-                            email: form.email,
-                        }),
-                    });
-
-                    if (response.onboardingLink) {
-                    // Open the Stripe onboarding link using Expo's WebBrowser
-                        await WebBrowser.openBrowserAsync(response.onboardingLink);
-                    }
-                } catch (error) {
-                    console.error('Error creating connected account', error);
-                }
-                
-
                 await setActive({ session: signUpAttempt.createdSessionId })
                 setVerification({ ...verification, state: 'success' })
             } else {
