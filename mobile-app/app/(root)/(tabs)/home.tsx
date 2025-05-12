@@ -28,11 +28,9 @@ import RatingModal from '@/components/RatingModal';
 
 let MapView: any = null;
 let Marker: any = null;
-if (Platform.OS !== 'web') {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Marker = maps.Marker;
-}
+const maps = require('react-native-maps');
+MapView = maps.default;
+Marker = maps.Marker;
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60;
@@ -210,7 +208,6 @@ export default function Home() {
       if (!selectedCourt?.id) return;
       try {
         const res = await fetchAPI(`/api/database/average-ratings?courtId=${selectedCourt.id}`);
-        console.log("Average Rating response:", res);
         // pull out the number
         setAvgStars(res.stars);
       } catch (error) {
