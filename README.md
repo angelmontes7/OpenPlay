@@ -8,7 +8,16 @@
 
 > - Onboarding
 
+
+https://github.com/user-attachments/assets/319d507e-c981-4f59-88f7-65790b7faf35
+
+
 > - SignUp/SignIn
+
+
+
+https://github.com/user-attachments/assets/81f49eee-26a9-42cb-af26-d9b6008bce36
+
 
 > - Home Page
 
@@ -19,6 +28,11 @@
 > - Wallet
 
 > - Profile
+
+
+
+https://github.com/user-attachments/assets/cf668502-b11b-4fa8-91d1-7d98970eb359
+
 
 > - Web dashboard showing profit/loss
 
