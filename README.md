@@ -6,19 +6,19 @@
 
 ## 📸 Preview
 
-> - SignUp
+> - Onboarding
 
-> - SignIn
+> - SignUp/SignIn
 
 > - Home Page
 
-> - Setting up Payments
-
-> - Withdrawing funds
-
-> - Storing Card Info
+> - Chat
 
 > - Wager Tab
+
+> - Wallet
+
+> - Profile
 
 > - Web dashboard showing profit/loss
 
