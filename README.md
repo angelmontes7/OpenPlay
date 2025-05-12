@@ -7,36 +7,32 @@
 ## 📸 Preview
 
 > - Onboarding
-
-
 https://github.com/user-attachments/assets/319d507e-c981-4f59-88f7-65790b7faf35
 
-
 > - SignUp/SignIn
-
-
-
 https://github.com/user-attachments/assets/81f49eee-26a9-42cb-af26-d9b6008bce36
 
-
 > - Home Page
+https://github.com/user-attachments/assets/1b9d9084-7ad8-4959-94f2-64581c446ece
 
 > - Chat
+https://github.com/user-attachments/assets/63d7b24b-7f86-47dc-8c04-43981dda10bf
 
 > - Wager Tab
+https://github.com/user-attachments/assets/1f21ff11-ddb7-40ca-ab76-21f97a6ef9c2
 
 > - Wallet
+https://github.com/user-attachments/assets/c581c824-0b0e-496a-af8a-2c9b53f404e0
 
 > - Profile
-
-
-
 https://github.com/user-attachments/assets/cf668502-b11b-4fa8-91d1-7d98970eb359
 
-
 > - Web dashboard showing profit/loss
+https://github.com/user-attachments/assets/283d759a-aade-4a69-9aa3-b8264a87b42f
 
 > - Marketing site landing page
+https://github.com/user-attachments/assets/a03f410e-132b-4c2b-ad71-d43e8d36fbea
+
 
 ---
 
