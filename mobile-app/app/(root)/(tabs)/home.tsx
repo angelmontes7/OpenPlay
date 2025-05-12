@@ -210,7 +210,6 @@ export default function Home() {
       if (!selectedCourt?.id) return;
       try {
         const res = await fetchAPI(`/api/database/average-ratings?courtId=${selectedCourt.id}`);
-        console.log("Average Rating response:", res);
         // pull out the number
         setAvgStars(res.stars);
       } catch (error) {
