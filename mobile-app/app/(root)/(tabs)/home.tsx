@@ -28,11 +28,9 @@ import RatingModal from '@/components/RatingModal';
 
 let MapView: any = null;
 let Marker: any = null;
-if (Platform.OS !== 'web') {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Marker = maps.Marker;
-}
+const maps = require('react-native-maps');
+MapView = maps.default;
+Marker = maps.Marker;
 
 const { height } = Dimensions.get('window');
 const SEARCH_BAR_HEIGHT = 60;
